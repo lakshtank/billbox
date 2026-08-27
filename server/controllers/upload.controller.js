@@ -214,9 +214,20 @@ const uploadBatch = async (req, res) => {
 
     const fileEntries = req.files.map((file) => {
       const isPdf = file.mimetype === 'application/pdf';
+      let fileData = null;
+      if (fs.existsSync(file.path)) {
+        try {
+          const buf = fs.readFileSync(file.path);
+          fileData = buf.toString('base64');
+        } catch (err) {
+          console.warn('Could not read batch file buffer:', err.message);
+        }
+      }
       return {
         originalName: file.originalname,
         fileUrl: `/uploads/${file.filename}`,
+        fileData,
+        mimeType: file.mimetype,
         fileType: isPdf ? 'pdf' : 'image',
         status: 'queued',
         errorMessage: '',
@@ -292,19 +303,16 @@ const saveBatchFile = async (req, res) => {
     });
 
     if (!batchDoc) {
-      return sendError(res, 404, 'Batch upload not found.');
-    }
-
-    if (isNaN(idx) || idx < 0 || idx >= batchDoc.files.length) {
-      return sendError(res, 400, 'Invalid file index in batch.');
+      return sendError(res, 404, 'Batch upload process not found.');
     }
 
     const batchFile = batchDoc.files[idx];
-    if (batchFile.status === 'saved' && batchFile.receiptId) {
-      const existingReceipt = await Receipt.findOne({ _id: batchFile.receiptId, userId: req.userId });
-      if (existingReceipt) {
-        return sendSuccess(res, 200, 'Receipt already saved', { receipt: existingReceipt });
-      }
+    if (!batchFile) {
+      return sendError(res, 404, 'Specified file not found in batch.');
+    }
+
+    if (batchFile.status === 'saved') {
+      return sendError(res, 400, 'This file has already been saved as a receipt.');
     }
 
     const {
@@ -370,6 +378,8 @@ const saveBatchFile = async (req, res) => {
     const receipt = await Receipt.create({
       userId: req.userId,
       fileUrl: batchFile.fileUrl || null,
+      fileData: batchFile.fileData || null,
+      mimeType: batchFile.mimeType || (normalizedFileType === 'pdf' ? 'application/pdf' : 'image/jpeg'),
       fileType: normalizedFileType,
       storeName: storeName ? String(storeName).trim() : '',
       invoiceNumber: invoiceNumber ? String(invoiceNumber).trim() : '',

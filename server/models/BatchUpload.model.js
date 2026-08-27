@@ -12,6 +12,8 @@ const batchUploadSchema = new mongoose.Schema(
       {
         originalName: { type: String, required: true },
         fileUrl: { type: String, default: '' },
+        fileData: { type: String, default: null },
+        mimeType: { type: String, default: null },
         fileType: { type: String, enum: ['image', 'pdf'], default: 'image' },
         status: {
           type: String,
