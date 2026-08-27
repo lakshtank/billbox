@@ -180,6 +180,317 @@ Extract the structured details and return ONLY a valid JSON object matching this
   return null;
 };
 
+const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
+  const storeVal = sanitizeTextString(llmResult.storeName);
+  const invVal = sanitizeTextString(llmResult.invoiceNumber);
+
+  const storeConf = storeVal && storeVal !== 'Not mentioned' ? Math.max(85, computeWordConfidence(storeVal, wordData)) : 0;
+  const invConf = invVal && invVal !== 'Not mentioned' ? Math.max(85, computeWordConfidence(invVal, wordData)) : 0;
+
+  let purchaseDateVal = null;
+  let dateConf = 0;
+  if (llmResult.purchaseDate && llmResult.purchaseDate !== 'Not mentioned') {
+    const d = new Date(llmResult.purchaseDate);
+    if (!isNaN(d.getTime())) {
+      purchaseDateVal = d.toISOString();
+      dateConf = 90;
+    }
+  }
+
+  let dueDateVal = null;
+  if (llmResult.dueDate && llmResult.dueDate !== 'Not mentioned') {
+    const d = new Date(llmResult.dueDate);
+    if (!isNaN(d.getTime())) {
+      dueDateVal = d.toISOString();
+    }
+  }
+
+  const detectedCurrency = (() => {
+    const sample = (llmResult.currency || '') + ' ' + (rawText || '');
+    if (/\b(USD|\$|Dollars?)\b|\$/i.test(sample)) {
+      if (/\b(CAD|C\$|Canadian)\b/i.test(sample)) return 'CAD';
+      if (/\b(AUD|A\$|Australian)\b/i.test(sample)) return 'AUD';
+      return 'USD';
+    }
+    if (/\b(INR|₹|Rs\.?|Rupees?)\b|₹|Rs\.?/i.test(sample)) return 'INR';
+    if (/\b(EUR|€|Euros?)\b|€/i.test(sample)) return 'EUR';
+    if (/\b(GBP|£|Pounds?)\b|£/i.test(sample)) return 'GBP';
+    if (/\b(CAD|C\$)\b/i.test(sample)) return 'CAD';
+    if (/\b(AUD|A\$)\b/i.test(sample)) return 'AUD';
+    return 'INR';
+  })();
+
+  const subtotalVal = typeof llmResult.subtotal === 'number' && !isNaN(llmResult.subtotal) ? Number(llmResult.subtotal) : null;
+  const discountVal = typeof llmResult.discountAmount === 'number' && !isNaN(llmResult.discountAmount) ? Number(llmResult.discountAmount) : 0;
+  const discountPercentVal = typeof llmResult.discountPercent === 'number' && !isNaN(llmResult.discountPercent) ? Number(llmResult.discountPercent) : 0;
+  let shippingVal = typeof llmResult.shippingAmount === 'number' && !isNaN(llmResult.shippingAmount) ? Number(llmResult.shippingAmount) : 0;
+  const taxVal = typeof llmResult.taxAmount === 'number' && !isNaN(llmResult.taxAmount) ? Number(llmResult.taxAmount) : 0;
+  const grandTotalVal = typeof llmResult.grandTotal === 'number' && !isNaN(llmResult.grandTotal) ? Number(llmResult.grandTotal) : null;
+  const grandTotalConf = grandTotalVal != null ? 90 : 0;
+
+  // Filter out non-merchandise fee line items
+  const FEE_ITEM_REGEX = /^(?:protect\s*promise|handling|convenience|platform|delivery|shipping|packaging|service|installation)\s*(?:fee|charges?|amount)?$/i;
+  const isFeeItem = (name) => {
+    if (!name) return false;
+    if (FEE_ITEM_REGEX.test(name.trim())) return true;
+    if (/protect\s*promise\s*fee|handling\s*fee|delivery\s*(?:fee|charge)|platform\s*fee|packaging\s*fee/i.test(name)) return true;
+    return false;
+  };
+
+  // Extract Multi-Product Items Array
+  const rawItems = Array.isArray(llmResult.items) ? llmResult.items : [];
+  const extractedItems = [];
+
+  for (let idx = 0; idx < rawItems.length; idx++) {
+    const item = rawItems[idx];
+    const prodName = sanitizeTextString(item.productName);
+
+    if (isFeeItem(prodName)) {
+      const feeAmt = typeof item.lineTotal === 'number' ? item.lineTotal : (typeof item.unitPrice === 'number' ? item.unitPrice : 0);
+      shippingVal += feeAmt;
+      continue;
+    }
+
+    const brandVal = sanitizeTextString(item.brand);
+    const categoryVal = sanitizeTextString(item.category) || 'Others';
+    const quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+    const qtyNeedsReview = item.quantity === 'Not mentioned' || item.quantity == null || isNaN(Number(item.quantity));
+
+    const unitPrice = typeof item.unitPrice === 'number' && !isNaN(item.unitPrice)
+      ? Number(item.unitPrice)
+      : (typeof item.lineTotal === 'number' && !isNaN(item.lineTotal) ? Number(item.lineTotal) / quantity : null);
+
+    const originalUnitPrice = typeof item.originalUnitPrice === 'number' && !isNaN(item.originalUnitPrice)
+      ? Number(item.originalUnitPrice)
+      : unitPrice;
+
+    const discountAmount = typeof item.discountAmount === 'number' && !isNaN(item.discountAmount)
+      ? Number(item.discountAmount)
+      : 0;
+
+    const discountPercent = typeof item.discountPercent === 'number' && !isNaN(item.discountPercent)
+      ? Number(item.discountPercent)
+      : 0;
+
+    const lineTotal = typeof item.lineTotal === 'number' && !isNaN(item.lineTotal)
+      ? Number(item.lineTotal)
+      : (unitPrice != null ? unitPrice * quantity : null);
+
+    const warrantyValue = typeof item.warrantyPeriodValue === 'number' && !isNaN(item.warrantyPeriodValue)
+      ? Number(item.warrantyPeriodValue)
+      : null;
+
+    const warrantyUnit = ['days', 'weeks', 'months', 'years'].includes(item.warrantyPeriodUnit)
+      ? item.warrantyPeriodUnit
+      : 'months';
+
+    const prodConf = prodName && prodName !== 'Not mentioned' ? Math.max(85, computeWordConfidence(prodName, wordData)) : 0;
+
+    extractedItems.push({
+      id: `item-${idx + 1}-${Date.now()}`,
+      productName: prodName === 'Not mentioned' ? '' : prodName,
+      brand: brandVal === 'Not mentioned' ? '' : brandVal,
+      category: categoryVal,
+      quantity,
+      originalUnitPrice,
+      unitPrice,
+      discountAmount,
+      discountPercent,
+      lineTotal,
+      warrantyPeriodValue: warrantyValue,
+      warrantyPeriodUnit: warrantyUnit,
+      confidence: prodConf,
+      needsReview: prodConf < 60 || !prodName || prodName === 'Not mentioned' || qtyNeedsReview,
+      qtyNeedsReview,
+    });
+  }
+
+  // If no items were extracted in array, fallback to a single primary item if LLM top-level fields were present
+  if (extractedItems.length === 0) {
+    const fallbackProdName = sanitizeTextString(llmResult.productName);
+    if (fallbackProdName && fallbackProdName !== 'Not mentioned') {
+      extractedItems.push({
+        id: `item-1-${Date.now()}`,
+        productName: fallbackProdName,
+        brand: sanitizeTextString(llmResult.brand) === 'Not mentioned' ? '' : sanitizeTextString(llmResult.brand),
+        category: sanitizeTextString(llmResult.category) || 'Others',
+        quantity: 1,
+        unitPrice: grandTotalVal,
+        lineTotal: grandTotalVal,
+        warrantyPeriodValue: typeof llmResult.warrantyPeriodValue === 'number' ? Number(llmResult.warrantyPeriodValue) : null,
+        warrantyPeriodUnit: ['days', 'weeks', 'months', 'years'].includes(llmResult.warrantyPeriodUnit) ? llmResult.warrantyPeriodUnit : 'months',
+        confidence: 85,
+        needsReview: false,
+      });
+    }
+  }
+
+  const sumLineTotals = extractedItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
+  const matchesGrandTotal = grandTotalVal != null && Math.abs(sumLineTotals - grandTotalVal) <= 1.00;
+  const matchesSubtotal = subtotalVal != null && Math.abs(sumLineTotals - subtotalVal) <= 1.00;
+  const matchesReconciled = grandTotalVal != null && Math.abs((sumLineTotals - discountVal + taxVal + shippingVal) - grandTotalVal) <= 1.00;
+
+  const lineTotalMismatch = extractedItems.length > 0 && grandTotalVal != null && !matchesGrandTotal && !matchesSubtotal && !matchesReconciled;
+
+  return {
+    extracted: {
+      storeName: {
+        value: storeVal === 'Not mentioned' ? '' : storeVal,
+        confidence: storeConf,
+        needsReview: storeConf < 60 || !storeVal || storeVal === 'Not mentioned',
+      },
+      invoiceNumber: {
+        value: invVal === 'Not mentioned' ? '' : invVal,
+        confidence: invConf,
+        needsReview: invConf < 60,
+      },
+      purchaseDate: {
+        value: purchaseDateVal,
+        confidence: dateConf,
+        needsReview: !purchaseDateVal,
+      },
+      dueDate: {
+        value: dueDateVal,
+      },
+      subtotal: {
+        value: subtotalVal,
+      },
+      shippingAmount: {
+        value: shippingVal,
+      },
+      taxAmount: {
+        value: taxVal,
+      },
+      grandTotal: {
+        value: grandTotalVal,
+        confidence: grandTotalConf,
+        needsReview: grandTotalVal == null,
+      },
+      totalAmount: {
+        value: grandTotalVal,
+        confidence: grandTotalConf,
+        needsReview: grandTotalVal == null,
+      },
+      currency: {
+        value: detectedCurrency,
+      },
+      items: extractedItems,
+      subtotalMismatch: lineTotalMismatch,
+      needsReview: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some((i) => i.qtyNeedsReview),
+    },
+    hasAnyLowConfidence: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some((i) => i.qtyNeedsReview),
+  };
+};
+
+/**
+ * Direct multimodal extraction using Gemini Vision on the raw document buffer (Fast & 100% reliable on Vercel)
+ */
+const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategories = []) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !fileBuffer) return null;
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const defaultCategories = ['Electronics', 'Appliances', 'Medical', 'Fashion', 'Furniture', 'Groceries', 'Others'];
+    const categoriesToPass = Array.isArray(userCategories) && userCategories.length > 0
+      ? userCategories
+      : defaultCategories;
+
+    const base64Data = fileBuffer.toString('base64');
+    let effectiveMimeType = mimeType || 'application/pdf';
+    if (fileBuffer[0] === 0x25 && fileBuffer[1] === 0x50) {
+      effectiveMimeType = 'application/pdf';
+    } else if (fileBuffer[0] === 0xff && fileBuffer[1] === 0xd8) {
+      effectiveMimeType = 'image/jpeg';
+    } else if (fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50) {
+      effectiveMimeType = 'image/png';
+    }
+
+    const prompt = `You are an expert receipt & invoice data parser. Analyze the attached purchase document (${effectiveMimeType}):
+
+UNIVERSAL EXTRACTION PHILOSOPHY:
+For EVERY field (receipt-level and each item line), follow this exact order:
+1. EXPLICIT: Use value stated directly on receipt.
+2. INFERRED: Infer value from surrounding context and real-world knowledge (e.g. infer brand from item description like "Godrej Fab..." -> "Godrej", infer category from product type like "Liquid Detergent" -> "Groceries").
+3. NOT MENTIONED: If value cannot be determined by explicit label or inference, return the literal string "Not mentioned". Never return null, empty string, or ungrounded guess. Never default silently.
+
+RULES FOR MULTI-ITEM RECEIPTS:
+- Extract all purchased line items into an "items" array.
+- ONLY include actual tangible or digital merchandise/products (e.g. "ZEBRONICS Gaming Mouse", "MacBook Pro", "Godrej Detergent").
+- DO NOT extract transaction fees, service fees, delivery/shipping charges, convenience charges, handling fees, protect promise fees, or packaging charges as items in the "items" array (e.g. "Handling Fee", "Protect Promise Fee", "Delivery Fee", "Platform Fee", "Shipping Fee", "Packaging Fee" must NOT be in "items"; include their total in "shippingAmount" instead).
+- Each row is extracted independently. If one row is ambiguous, garbled, or a junk row, extract what is determinable for that row without blocking other valid rows.
+- Do NOT attribute the full receipt total to any individual product line item.
+- "grandTotal" is the final bottom-line amount paid by the customer for the entire transaction (post-tax/post-shipping). Do NOT confuse subtotal or tax breakdown base with grandTotal.
+
+Extract the structured details and return ONLY a valid JSON object matching this schema (no markdown formatting, no explanations):
+{
+  "storeName": "Merchant/vendor name issuing receipt ('Sold By', letterhead name). If unknown, 'Not mentioned'.",
+  "invoiceNumber": "Invoice or order number. If unknown, 'Not mentioned'.",
+  "purchaseDate": "Transaction date as YYYY-MM-DD. If unknown, 'Not mentioned'.",
+  "dueDate": "Payment due date as YYYY-MM-DD if present, else 'Not mentioned'.",
+  "subtotal": "subtotal before tax/shipping as a number (e.g. 214.40) or 'Not mentioned'",
+  "discountAmount": "Overall subtotal or receipt-level coupon discount amount as a number (e.g. 50.00) or 0",
+  "shippingAmount": "shipping/handling fee as a number (e.g. 0.00) or 'Not mentioned'",
+  "taxAmount": "total tax (GST/VAT) as a number (e.g. 38.60) or 'Not mentioned'",
+  "grandTotal": "final bottom-line total amount paid for entire receipt as a number (e.g. 253.00) or 'Not mentioned'",
+  "currency": "Currency code detected from document (e.g. 'USD', 'INR', 'EUR', 'GBP', 'CAD', 'AUD'). Detect from explicit symbols ($, ₹, Rs., Rs, €, £, C$, A$), ISO codes (USD, INR, EUR, GBP), or words ('Dollars', 'Rupees', 'Euros', 'Pounds'). Normalize '₹', 'Rs.', 'Rs', 'Rupees', 'INR' to 'INR'; '$', 'USD', 'Dollars' to 'USD'; '€', 'EUR' to 'EUR'; '£', 'GBP' to 'GBP'. If unknown or no currency symbol present, return 'INR'.",
+  "rawText": "Full text transcript read from the document",
+  "items": [
+    {
+      "productName": "Description of item purchased. Must not contain vendor boilerplate.",
+      "brand": "Brand or manufacturer. Explicit 'Brand:' label if present, or inferred from product description. If unknown, 'Not mentioned'.",
+      "category": "Classify product into a category. Check user categories first: ${JSON.stringify(categoriesToPass)}. Reuse exact existing name if matching, or invent concise category. If unknown, 'Not mentioned'.",
+      "quantity": 1,
+      "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 425.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
+      "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 253.00) or 'Not mentioned'",
+      "discountAmount": "Total discount or savings amount for this line item as a number (e.g. 172.00) or 0",
+      "discountPercent": "Percentage discount if explicitly stated (e.g. 40) or 0",
+      "lineTotal": "Final total amount paid for this line item as a number (e.g. 253.00) or 'Not mentioned'",
+      "warrantyPeriodValue": "numeric warranty duration (number, e.g. 12) or 'Not mentioned'",
+      "warrantyPeriodUnit": "days | weeks | months | years. If warranty is 'Not mentioned', return 'months'."
+    }
+  ]
+}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                mimeType: effectiveMimeType,
+                data: base64Data,
+              },
+            },
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      config: {
+        responseMimeType: 'application/json',
+      },
+    });
+
+    if (response && response.text) {
+      const parsedData = JSON.parse(response.text.trim());
+      console.log('[OCR Pipeline] Direct Gemini Vision extraction succeeded (model: gemini-3.6-flash)');
+      const mapped = mapLlmResultToExtracted(parsedData, parsedData.rawText || '', []);
+      return {
+        extracted: mapped.extracted,
+        rawText: parsedData.rawText || '',
+        handwritingDetected: false,
+      };
+    }
+  } catch (err) {
+    console.error('[OCR Pipeline] Direct Gemini Vision extraction error:', err.message);
+  }
+  return null;
+};
+
 // ─── Main Stage 2 Field Extractor ────────────────────────────────────────────
 
 const extractFields = async (rawText, wordData = [], userCategories = []) => {
@@ -188,245 +499,7 @@ const extractFields = async (rawText, wordData = [], userCategories = []) => {
 
   if (llmResult) {
     try {
-      const storeVal = sanitizeTextString(llmResult.storeName);
-      const invVal = sanitizeTextString(llmResult.invoiceNumber);
-
-      const storeConf = storeVal && storeVal !== 'Not mentioned' ? Math.max(85, computeWordConfidence(storeVal, wordData)) : 0;
-      const invConf = invVal && invVal !== 'Not mentioned' ? Math.max(85, computeWordConfidence(invVal, wordData)) : 0;
-
-      let purchaseDateVal = null;
-      let dateConf = 0;
-      if (llmResult.purchaseDate && llmResult.purchaseDate !== 'Not mentioned') {
-        const d = new Date(llmResult.purchaseDate);
-        if (!isNaN(d.getTime())) {
-          purchaseDateVal = d.toISOString();
-          dateConf = 90;
-        }
-      }
-
-      let dueDateVal = null;
-      if (llmResult.dueDate && llmResult.dueDate !== 'Not mentioned') {
-        const d = new Date(llmResult.dueDate);
-        if (!isNaN(d.getTime())) {
-          dueDateVal = d.toISOString();
-        }
-      }
-
-      const detectedCurrency = (() => {
-        const sample = (llmResult.currency || '') + ' ' + (rawText || '');
-        if (/\b(USD|\$|Dollars?)\b|\$/i.test(sample)) {
-          if (/\b(CAD|C\$|Canadian)\b/i.test(sample)) return 'CAD';
-          if (/\b(AUD|A\$|Australian)\b/i.test(sample)) return 'AUD';
-          return 'USD';
-        }
-        if (/\b(INR|₹|Rs\.?|Rupees?)\b|₹|Rs\.?/i.test(sample)) return 'INR';
-        if (/\b(EUR|€|Euros?)\b|€/i.test(sample)) return 'EUR';
-        if (/\b(GBP|£|Pounds?)\b|£/i.test(sample)) return 'GBP';
-        if (/\b(CAD|C\$)\b/i.test(sample)) return 'CAD';
-        if (/\b(AUD|A\$)\b/i.test(sample)) return 'AUD';
-        return 'INR';
-      })();
-
-      const subtotalVal = typeof llmResult.subtotal === 'number' && !isNaN(llmResult.subtotal) ? Number(llmResult.subtotal) : null;
-      const discountVal = typeof llmResult.discountAmount === 'number' && !isNaN(llmResult.discountAmount) ? Number(llmResult.discountAmount) : 0;
-      const discountPercentVal = typeof llmResult.discountPercent === 'number' && !isNaN(llmResult.discountPercent) ? Number(llmResult.discountPercent) : 0;
-      let shippingVal = typeof llmResult.shippingAmount === 'number' && !isNaN(llmResult.shippingAmount) ? Number(llmResult.shippingAmount) : 0;
-      const taxVal = typeof llmResult.taxAmount === 'number' && !isNaN(llmResult.taxAmount) ? Number(llmResult.taxAmount) : 0;
-      const grandTotalVal = typeof llmResult.grandTotal === 'number' && !isNaN(llmResult.grandTotal) ? Number(llmResult.grandTotal) : null;
-      const grandTotalConf = grandTotalVal != null ? 90 : 0;
-
-      // Filter out non-merchandise fee line items
-      const FEE_ITEM_REGEX = /^(?:protect\s*promise|handling|convenience|platform|delivery|shipping|packaging|service|installation)\s*(?:fee|charges?|amount)?$/i;
-      const isFeeItem = (name) => {
-        if (!name) return false;
-        if (FEE_ITEM_REGEX.test(name.trim())) return true;
-        if (/protect\s*promise\s*fee|handling\s*fee|delivery\s*(?:fee|charge)|platform\s*fee|packaging\s*fee/i.test(name)) return true;
-        return false;
-      };
-
-      // Extract Multi-Product Items Array
-      const rawItems = Array.isArray(llmResult.items) ? llmResult.items : [];
-      const extractedItems = [];
-
-      for (let idx = 0; idx < rawItems.length; idx++) {
-        const item = rawItems[idx];
-        const prodName = sanitizeTextString(item.productName);
-
-        // If this is a fee/charge item, accumulate its price into shippingVal instead of creating a product
-        if (isFeeItem(prodName)) {
-          const feeAmt = typeof item.lineTotal === 'number' ? item.lineTotal : (typeof item.unitPrice === 'number' ? item.unitPrice : 0);
-          shippingVal += feeAmt;
-          continue;
-        }
-
-        const brand = sanitizeTextString(item.brand);
-        
-        let category = sanitizeTextString(item.category) || 'Others';
-        if (category === 'Not mentioned') category = 'Others';
-        if (Array.isArray(userCategories) && userCategories.length > 0) {
-          const match = userCategories.find(
-            (c) => c.toLowerCase().trim() === category.toLowerCase().trim()
-          );
-          if (match) category = match;
-        }
-
-        let quantity = typeof item.quantity === 'number' && item.quantity > 0 ? Number(item.quantity) : 1;
-        let unitPrice = typeof item.unitPrice === 'number' && !isNaN(item.unitPrice) ? Number(item.unitPrice) : null;
-        let originalUnitPrice = typeof item.originalUnitPrice === 'number' && !isNaN(item.originalUnitPrice) ? Number(item.originalUnitPrice) : null;
-        let discountAmount = typeof item.discountAmount === 'number' && !isNaN(item.discountAmount) ? Number(item.discountAmount) : 0;
-        let discountPercent = typeof item.discountPercent === 'number' && !isNaN(item.discountPercent) ? Number(item.discountPercent) : 0;
-        let lineTotal = typeof item.lineTotal === 'number' && !isNaN(item.lineTotal) ? Number(item.lineTotal) : null;
-
-        // Discount & Reconciliation Engine
-        if (originalUnitPrice != null && lineTotal != null) {
-          if (unitPrice == null || unitPrice === originalUnitPrice) {
-            unitPrice = Number((lineTotal / quantity).toFixed(2));
-          }
-          if (discountAmount === 0 && (originalUnitPrice * quantity) > lineTotal) {
-            discountAmount = Number(((originalUnitPrice * quantity) - lineTotal).toFixed(2));
-          }
-          if (discountPercent === 0 && (originalUnitPrice * quantity) > 0 && discountAmount > 0) {
-            discountPercent = Math.round((discountAmount / (originalUnitPrice * quantity)) * 100);
-          }
-        } else if (unitPrice != null && lineTotal != null && discountAmount > 0) {
-          originalUnitPrice = Number((unitPrice + (discountAmount / quantity)).toFixed(2));
-        } else if (unitPrice != null && lineTotal != null) {
-          const expectedNoDiscount = unitPrice * quantity;
-          if (Math.abs(expectedNoDiscount - lineTotal) > 0.02) {
-            if (expectedNoDiscount > lineTotal) {
-              originalUnitPrice = unitPrice;
-              unitPrice = Number((lineTotal / quantity).toFixed(2));
-              discountAmount = Number((expectedNoDiscount - lineTotal).toFixed(2));
-              discountPercent = Math.round((discountAmount / expectedNoDiscount) * 100);
-            }
-          } else {
-            originalUnitPrice = unitPrice;
-          }
-        }
-
-        if (originalUnitPrice == null && unitPrice != null) {
-          originalUnitPrice = unitPrice;
-        }
-
-        if (lineTotal == null && unitPrice != null) {
-          lineTotal = (unitPrice * quantity) - discountAmount;
-        }
-
-        // Quantity Math Reconciliation Check
-        let qtyNeedsReview = false;
-        if (unitPrice != null && lineTotal != null) {
-          const calculatedPaid = unitPrice * quantity;
-          if (Math.abs(calculatedPaid - lineTotal) > 0.02) {
-            qtyNeedsReview = true;
-          }
-        }
-
-        let warrantyValue = null;
-        let warrantyUnit = 'months';
-        if (typeof item.warrantyPeriodValue === 'number' && item.warrantyPeriodValue > 0) {
-          warrantyValue = Number(item.warrantyPeriodValue);
-          warrantyUnit = ['days', 'weeks', 'months', 'years'].includes(item.warrantyPeriodUnit)
-            ? item.warrantyPeriodUnit
-            : 'months';
-        }
-
-        const prodConf = prodName && prodName !== 'Not mentioned' ? Math.max(85, computeWordConfidence(prodName, wordData)) : 50;
-
-        extractedItems.push({
-          id: `item-${idx + 1}-${Date.now()}`,
-          productName: prodName === 'Not mentioned' ? '' : prodName,
-          brand: brand === 'Not mentioned' ? '' : brand,
-          category,
-          quantity,
-          originalUnitPrice,
-          unitPrice,
-          discountAmount,
-          discountPercent,
-          lineTotal,
-          warrantyPeriodValue: warrantyValue,
-          warrantyPeriodUnit: warrantyUnit,
-          confidence: prodConf,
-          needsReview: prodConf < 60 || !prodName || prodName === 'Not mentioned' || qtyNeedsReview,
-          qtyNeedsReview,
-        });
-      }
-
-      // If no items were extracted in array, fallback to a single primary item if LLM top-level fields were present
-      if (extractedItems.length === 0) {
-        const fallbackProdName = sanitizeTextString(llmResult.productName);
-        if (fallbackProdName && fallbackProdName !== 'Not mentioned') {
-          extractedItems.push({
-            id: `item-1-${Date.now()}`,
-            productName: fallbackProdName,
-            brand: sanitizeTextString(llmResult.brand) === 'Not mentioned' ? '' : sanitizeTextString(llmResult.brand),
-            category: sanitizeTextString(llmResult.category) || 'Others',
-            quantity: 1,
-            unitPrice: grandTotalVal,
-            lineTotal: grandTotalVal,
-            warrantyPeriodValue: typeof llmResult.warrantyPeriodValue === 'number' ? Number(llmResult.warrantyPeriodValue) : null,
-            warrantyPeriodUnit: ['days', 'weeks', 'months', 'years'].includes(llmResult.warrantyPeriodUnit) ? llmResult.warrantyPeriodUnit : 'months',
-            confidence: 85,
-            needsReview: false,
-          });
-        }
-      }
-
-      // Mathematical Line Items & Grand Total Validation
-      const sumLineTotals = extractedItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
-      const matchesGrandTotal = grandTotalVal != null && Math.abs(sumLineTotals - grandTotalVal) <= 1.00;
-      const matchesSubtotal = subtotalVal != null && Math.abs(sumLineTotals - subtotalVal) <= 1.00;
-      const matchesReconciled = grandTotalVal != null && Math.abs((sumLineTotals - discountVal + taxVal + shippingVal) - grandTotalVal) <= 1.00;
-
-      const lineTotalMismatch = extractedItems.length > 0 && grandTotalVal != null && !matchesGrandTotal && !matchesSubtotal && !matchesReconciled;
-
-      return {
-        extracted: {
-          storeName: {
-            value: storeVal === 'Not mentioned' ? '' : storeVal,
-            confidence: storeConf,
-            needsReview: storeConf < 60 || !storeVal || storeVal === 'Not mentioned',
-          },
-          invoiceNumber: {
-            value: invVal === 'Not mentioned' ? '' : invVal,
-            confidence: invConf,
-            needsReview: invConf < 60,
-          },
-          purchaseDate: {
-            value: purchaseDateVal,
-            confidence: dateConf,
-            needsReview: !purchaseDateVal,
-          },
-          dueDate: {
-            value: dueDateVal,
-          },
-          subtotal: {
-            value: subtotalVal,
-          },
-          shippingAmount: {
-            value: shippingVal,
-          },
-          taxAmount: {
-            value: taxVal,
-          },
-          grandTotal: {
-            value: grandTotalVal,
-            confidence: grandTotalConf,
-            needsReview: grandTotalVal == null,
-          },
-          totalAmount: {
-            value: grandTotalVal,
-            confidence: grandTotalConf,
-            needsReview: grandTotalVal == null,
-          },
-          currency: {
-            value: detectedCurrency,
-          },
-          items: extractedItems,
-          subtotalMismatch: lineTotalMismatch,
-          needsReview: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some(i => i.qtyNeedsReview),
-        },
-        hasAnyLowConfidence: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some(i => i.qtyNeedsReview),
-      };
+      return mapLlmResultToExtracted(llmResult, rawText, wordData);
     } catch (err) {
       console.error('[OCR Pipeline] Error parsing LLM JSON response:', err);
     }
@@ -1073,4 +1146,4 @@ const computeWordConfidence = (targetText, wordData) => {
   return Math.round(matched.reduce((s, c) => s + c, 0) / matched.length);
 };
 
-module.exports = { extractFields };
+module.exports = { extractFields, extractFieldsDirectFromDocument };

@@ -4,7 +4,7 @@ const BatchUpload = require('../models/BatchUpload.model');
 const Receipt = require('../models/Receipt.model');
 const Product = require('../models/Product.model');
 const { runOCR } = require('../services/ocr.service');
-const { extractFields } = require('../services/fieldExtractor.service');
+const { extractFields, extractFieldsDirectFromDocument } = require('../services/fieldExtractor.service');
 const { calculateWarrantyExpiryDate, calculateWarrantyStatus, parseFlexibleDate } = require('../services/warranty.service');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -26,36 +26,64 @@ const uploadSingle = async (req, res) => {
     const fileUrl = `/uploads/${req.file.filename}`;
 
     // Read file buffer for cloud persistence in MongoDB Atlas
+    let fileBuffer = null;
     let fileData = null;
     if (fs.existsSync(filePath)) {
-      const fileBuffer = fs.readFileSync(filePath);
+      fileBuffer = fs.readFileSync(filePath);
       fileData = fileBuffer.toString('base64');
     }
-
-    // Stage 1: Run OCR runner
-    const { rawText, wordData } = await runOCR(filePath, mimeType);
 
     // Fetch user categories to guide Gemini classification
     const userCategories = await getUserCategoryNames(req.userId);
 
-    // Stage 2: Extract structured fields & confidence scores
+    // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision (bypasses heavy Tesseract WASM on Vercel)
+    if (fileBuffer && process.env.GEMINI_API_KEY) {
+      try {
+        const directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, userCategories);
+        if (directResult && directResult.extracted) {
+          return sendSuccess(res, 200, 'File uploaded and AI processed', {
+            fileUrl,
+            fileType,
+            fileData,
+            mimeType,
+            extracted: directResult.extracted,
+            ocrRaw: directResult.rawText || '',
+            handwritingDetected: false,
+          });
+        }
+      } catch (directErr) {
+        console.warn('Direct Gemini Vision extraction fallback:', directErr.message);
+      }
+    }
+
+    // Step 2: Fallback traditional OCR runner
+    let rawText = '';
+    let wordData = [];
+    try {
+      const ocrRes = await runOCR(filePath, mimeType);
+      rawText = ocrRes.rawText || '';
+      wordData = ocrRes.wordData || [];
+    } catch (ocrErr) {
+      console.warn('OCR fallback warning:', ocrErr.message);
+    }
+
     const { extracted, handwritingDetected } = await extractFields(rawText, wordData, userCategories);
 
-    return sendSuccess(res, 200, 'File uploaded and OCR processed', {
+    return sendSuccess(res, 200, 'File uploaded and processed', {
       fileUrl,
       fileType,
       fileData,
       mimeType,
       extracted,
       ocrRaw: rawText,
-      handwritingDetected,
+      handwritingDetected: handwritingDetected || false,
     });
   } catch (error) {
     console.error('Upload single error:', error);
     return sendError(
       res,
       500,
-      `OCR processing error: ${error.message || 'Failed to process receipt'}`
+      `Processing error: ${error.message || 'Failed to process receipt'}`
     );
   }
 };
@@ -74,9 +102,37 @@ const processBatchFilesSequentially = async (batchId, files) => {
         { $set: { 'files.$.status': 'processing' } }
       );
 
-      // Run OCR & Field extraction
-      const { rawText, wordData } = await runOCR(file.path, file.mimetype);
-      const { extracted, handwritingDetected, isNonReceipt, lowConfidenceWarning } = await extractFields(rawText, wordData, userCategories);
+      let extracted = null;
+      let rawText = '';
+      let handwritingDetected = false;
+      let isNonReceipt = false;
+      let lowConfidenceWarning = false;
+
+      // Try Direct Gemini Vision on file buffer first
+      if (fs.existsSync(file.path) && process.env.GEMINI_API_KEY) {
+        try {
+          const buf = fs.readFileSync(file.path);
+          const direct = await extractFieldsDirectFromDocument(buf, file.mimetype, userCategories);
+          if (direct && direct.extracted) {
+            extracted = direct.extracted;
+            rawText = direct.rawText || '';
+          }
+        } catch (e) {
+          console.warn('Batch direct extraction fallback:', e.message);
+        }
+      }
+
+      // Fallback OCR runner
+      if (!extracted) {
+        const ocrRes = await runOCR(file.path, file.mimetype);
+        rawText = ocrRes.rawText || '';
+        const wordData = ocrRes.wordData || [];
+        const res = await extractFields(rawText, wordData, userCategories);
+        extracted = res.extracted;
+        handwritingDetected = res.handwritingDetected;
+        isNonReceipt = res.isNonReceipt;
+        lowConfidenceWarning = res.lowConfidenceWarning;
+      }
 
       // If zero text or no readable words extracted at all, fail the file gracefully
       const isZeroText = !rawText || rawText.trim().length < 3;
