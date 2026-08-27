@@ -72,7 +72,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const categoryRoutes = require('./routes/category.routes');
 const publicReceiptRoutes = require('./routes/publicReceipt.routes');
@@ -147,8 +148,11 @@ app.use((req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err.message);
-  sendError(res, 500, 'An unexpected error occurred.');
+  console.error('Unhandled error:', err.message || err);
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return sendError(res, 413, 'File payload is too large. Please upload a smaller file.');
+  }
+  sendError(res, err.status || 500, err.message || 'An unexpected error occurred.');
 });
 
 const cron = require('node-cron');
