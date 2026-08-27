@@ -197,16 +197,22 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
         ? 'manual'
         : 'image';
 
+    const safeNum = (val, defaultVal = null) => {
+      if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+      const n = Number(val);
+      return isNaN(n) ? defaultVal : n;
+    };
+
     const payload = {
       storeName: storeName.trim(),
       invoiceNumber: invoiceNumber.trim(),
       purchaseDate: validPurchaseDate,
       dueDate: validDueDate,
-      subtotal: subtotal ? Number(subtotal) : null,
-      shippingAmount: Number(shippingAmount || 0),
-      taxAmount: Number(taxAmount || 0),
-      grandTotal: grandTotal ? Number(grandTotal) : null,
-      totalAmount: grandTotal ? Number(grandTotal) : null,
+      subtotal: safeNum(subtotal, null),
+      shippingAmount: safeNum(shippingAmount, 0),
+      taxAmount: safeNum(taxAmount, 0),
+      grandTotal: safeNum(grandTotal, null),
+      totalAmount: safeNum(grandTotal, null),
       currency,
       notes: notes.trim(),
       fileUrl,
@@ -214,19 +220,22 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
       mimeType,
       fileType: normalizedFileType,
       ocrRaw,
-      products: items.map((item) => ({
-        productName: item.productName.trim(),
-        brand: item.brand ? item.brand.trim() : '',
-        category: item.category || 'Others',
-        quantity: Number(item.quantity) || 1,
-        originalUnitPrice: item.originalUnitPrice ? Number(item.originalUnitPrice) : (item.unitPrice ? Number(item.unitPrice) : null),
-        unitPrice: item.unitPrice ? Number(item.unitPrice) : null,
-        discountAmount: item.discountAmount ? Number(item.discountAmount) : 0,
-        discountPercent: item.discountPercent ? Number(item.discountPercent) : 0,
-        lineTotal: item.lineTotal ? Number(item.lineTotal) : null,
-        warrantyPeriodValue: item.warrantyPeriodValue ? Number(item.warrantyPeriodValue) : null,
-        warrantyPeriodUnit: item.warrantyPeriodUnit || 'months',
-      })),
+      products: items.map((item) => {
+        const uPrice = safeNum(item.unitPrice, null);
+        return {
+          productName: item.productName.trim(),
+          brand: item.brand ? item.brand.trim() : '',
+          category: item.category || 'Others',
+          quantity: safeNum(item.quantity, 1) > 0 ? safeNum(item.quantity, 1) : 1,
+          originalUnitPrice: safeNum(item.originalUnitPrice, uPrice),
+          unitPrice: uPrice,
+          discountAmount: safeNum(item.discountAmount, 0),
+          discountPercent: safeNum(item.discountPercent, 0),
+          lineTotal: safeNum(item.lineTotal, null),
+          warrantyPeriodValue: safeNum(item.warrantyPeriodValue, null),
+          warrantyPeriodUnit: item.warrantyPeriodUnit || 'months',
+        };
+      }),
     };
 
     createMutation.mutate(payload, {

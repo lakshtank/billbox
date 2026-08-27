@@ -111,7 +111,13 @@ const getReceiptById = async (req, res) => {
   }
 };
 
-// Helper to save products for a receipt
+const safeNum = (val, defaultVal = null) => {
+  if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+  const n = Number(val);
+  return isNaN(n) ? defaultVal : n;
+};
+
+// Helper: Save Product line items associated with a Receipt
 const saveProductsForReceipt = async (userId, receiptId, purchaseDate, itemsArray = []) => {
   const createdProducts = [];
   const itemsToProcess = Array.isArray(itemsArray) && itemsArray.length > 0
@@ -133,10 +139,15 @@ const saveProductsForReceipt = async (userId, receiptId, purchaseDate, itemsArra
     }
 
     const category = item.category || 'Others';
-    const periodValue = item.warrantyPeriodValue != null ? Number(item.warrantyPeriodValue) : null;
-    const periodUnit = item.warrantyPeriodUnit || 'months';
+    const periodValue = safeNum(item.warrantyPeriodValue, null);
+    
+    let periodUnit = 'months';
+    const rawUnit = (item.warrantyPeriodUnit || '').toLowerCase().trim();
+    if (rawUnit === 'days' || rawUnit === 'day') periodUnit = 'days';
+    else if (rawUnit === 'weeks' || rawUnit === 'week') periodUnit = 'weeks';
+    else if (rawUnit === 'years' || rawUnit === 'year') periodUnit = 'years';
 
-    const warrantyExpiryDate = calculateWarrantyExpiryDate(purchaseDate, periodValue, periodUnit);
+    const warrantyExpiryDate = periodValue != null ? calculateWarrantyExpiryDate(purchaseDate, periodValue, periodUnit) : null;
     const warrantyStatus = calculateWarrantyStatus(warrantyExpiryDate);
 
     let periodMonths =
@@ -150,22 +161,22 @@ const saveProductsForReceipt = async (userId, receiptId, purchaseDate, itemsArra
               : periodValue
         : null;
 
-    const qty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
-    const lineTot = item.lineTotal != null ? Number(item.lineTotal) : (item.unitPrice != null ? Number(item.unitPrice) * qty : null);
-
-    const origUnitPrice = item.originalUnitPrice != null ? Number(item.originalUnitPrice) : (item.unitPrice != null ? Number(item.unitPrice) : null);
-    const discAmt = item.discountAmount != null ? Number(item.discountAmount) : 0;
-    const discPct = item.discountPercent != null ? Number(item.discountPercent) : 0;
+    const qty = safeNum(item.quantity, 1) > 0 ? safeNum(item.quantity, 1) : 1;
+    const unitPrice = safeNum(item.unitPrice, null);
+    const origUnitPrice = safeNum(item.originalUnitPrice, unitPrice);
+    const discAmt = safeNum(item.discountAmount, 0);
+    const discPct = safeNum(item.discountPercent, 0);
+    const lineTot = safeNum(item.lineTotal, unitPrice != null ? unitPrice * qty : null);
 
     const product = await Product.create({
       receiptId,
       userId,
       productName: prodName,
-      brand: item.brand || '',
+      brand: item.brand ? String(item.brand).trim() : '',
       category,
       quantity: qty,
       originalUnitPrice: origUnitPrice,
-      unitPrice: item.unitPrice != null ? Number(item.unitPrice) : null,
+      unitPrice,
       discountAmount: discAmt,
       discountPercent: discPct,
       lineTotal: lineTot,
@@ -211,22 +222,22 @@ const createReceipt = async (req, res) => {
     const parsedPurchaseDate = parseFlexibleDate(purchaseDate) || new Date();
     const parsedDueDate = parseFlexibleDate(dueDate);
 
-    const finalGrandTotal = grandTotal != null ? Number(grandTotal) : (totalAmount != null ? Number(totalAmount) : null);
+    const finalGrandTotal = safeNum(grandTotal != null ? grandTotal : totalAmount, null);
     const itemsList = Array.isArray(products) && products.length > 0 ? products : (Array.isArray(items) ? items : []);
 
+    const subtotalVal = safeNum(subtotal, null);
+    const shippingVal = safeNum(shippingAmount, 0);
+    const taxVal = safeNum(taxAmount, 0);
+    const discountVal = safeNum(discountAmount, 0);
+    const discountPercentVal = safeNum(discountPercent, 0);
+
     // Calculate line total vs grand total validation mismatch
-    const sumLineTotals = itemsList.reduce((acc, item) => acc + (Number(item.lineTotal || item.unitPrice || 0)), 0);
-    const grandVal = finalGrandTotal != null ? Number(finalGrandTotal) : null;
-    const subVal = subtotal != null ? Number(subtotal) : null;
-    const taxVal = Number(taxAmount || 0);
-    const shipVal = Number(shippingAmount || 0);
-    const discVal = Number(discountAmount || 0);
+    const sumLineTotals = itemsList.reduce((acc, item) => acc + safeNum(item.lineTotal != null ? item.lineTotal : item.unitPrice, 0), 0);
+    const matchesGrand = finalGrandTotal != null && Math.abs(sumLineTotals - finalGrandTotal) <= 1.00;
+    const matchesSub = subtotalVal != null && Math.abs(sumLineTotals - subtotalVal) <= 1.00;
+    const matchesReconciled = finalGrandTotal != null && Math.abs((sumLineTotals - discountVal + taxVal + shippingVal) - finalGrandTotal) <= 1.00;
 
-    const matchesGrand = grandVal != null && Math.abs(sumLineTotals - grandVal) <= 1.00;
-    const matchesSub = subVal != null && Math.abs(sumLineTotals - subVal) <= 1.00;
-    const matchesReconciled = grandVal != null && Math.abs((sumLineTotals - discVal + taxVal + shipVal) - grandVal) <= 1.00;
-
-    const needsReview = itemsList.length > 0 && grandVal != null && !matchesGrand && !matchesSub && !matchesReconciled;
+    const needsReview = itemsList.length > 0 && finalGrandTotal != null && !matchesGrand && !matchesSub && !matchesReconciled;
 
     let fileData = req.body.fileData || null;
     let mimeType = req.body.mimeType || null;
@@ -267,19 +278,19 @@ const createReceipt = async (req, res) => {
       fileData,
       mimeType,
       fileType: normalizedFileType,
-      storeName: storeName || '',
-      invoiceNumber: invoiceNumber || '',
+      storeName: storeName ? String(storeName).trim() : '',
+      invoiceNumber: invoiceNumber ? String(invoiceNumber).trim() : '',
       purchaseDate: parsedPurchaseDate,
       dueDate: parsedDueDate,
-      subtotal: subtotal != null ? Number(subtotal) : null,
-      discountAmount: discountAmount != null ? Number(discountAmount) : 0,
-      discountPercent: discountPercent != null ? Number(discountPercent) : 0,
-      shippingAmount: shippingAmount != null ? Number(shippingAmount) : 0,
-      taxAmount: taxAmount != null ? Number(taxAmount) : 0,
+      subtotal: subtotalVal,
+      discountAmount: discountVal,
+      discountPercent: discountPercentVal,
+      shippingAmount: shippingVal,
+      taxAmount: taxVal,
       grandTotal: finalGrandTotal,
       totalAmount: finalGrandTotal,
       currency: currency || 'INR',
-      notes: notes || '',
+      notes: notes ? String(notes).trim() : '',
       needsReview,
       ocrRaw: ocrRaw || '',
       ocrConfidence: ocrConfidence || {},
