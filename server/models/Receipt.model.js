@@ -20,6 +20,8 @@ const receiptSchema = new mongoose.Schema(
 
     // File Reference
     fileUrl: { type: String, default: null },
+    fileData: { type: String, default: null }, // Base64 representation of the original uploaded file for cloud persistence
+    mimeType: { type: String, default: null },
     fileType: {
       type: String,
       enum: ['image', 'pdf', 'manual'],

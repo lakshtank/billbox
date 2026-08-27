@@ -228,9 +228,27 @@ const createReceipt = async (req, res) => {
 
     const needsReview = itemsList.length > 0 && grandVal != null && !matchesGrand && !matchesSub && !matchesReconciled;
 
+    let fileData = null;
+    let mimeType = null;
+    if (fileUrl) {
+      const rel = fileUrl.replace(/^\/uploads\//, '');
+      const localPath = path.join(__dirname, '../uploads', rel);
+      if (fs.existsSync(localPath)) {
+        const buf = fs.readFileSync(localPath);
+        fileData = buf.toString('base64');
+        const ext = path.extname(localPath).toLowerCase();
+        if (ext === '.pdf') mimeType = 'application/pdf';
+        else if (ext === '.png') mimeType = 'image/png';
+        else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+        else if (ext === '.webp') mimeType = 'image/webp';
+      }
+    }
+
     const receipt = await Receipt.create({
       userId: req.userId,
       fileUrl: fileUrl || null,
+      fileData,
+      mimeType,
       fileType: fileType || 'manual',
       storeName: storeName || '',
       invoiceNumber: invoiceNumber || '',

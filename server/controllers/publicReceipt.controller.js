@@ -174,14 +174,38 @@ const getPublicReceiptFile = async (req, res) => {
     }
 
     const receipt = await Receipt.findOne({ publicToken })
-      .select('fileUrl storeName publicToken invoiceNumber purchaseDate grandTotal totalAmount currency')
+      .select(
+        'fileUrl fileData mimeType fileType storeName publicToken invoiceNumber purchaseDate grandTotal totalAmount currency'
+      )
       .populate('products', 'productName brand category quantity unitPrice lineTotal');
 
     if (!receipt) {
       return sendError(res, 404, 'Receipt not found.');
     }
 
-    // Check if physical file exists on disk
+    const safeVendor = (receipt.storeName || 'receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
+
+    // 1. If exact original file data is stored in MongoDB Atlas, stream the original file
+    if (receipt.fileData) {
+      const buffer = Buffer.from(receipt.fileData, 'base64');
+      const isPdf =
+        receipt.fileType === 'pdf' ||
+        receipt.mimeType === 'application/pdf' ||
+        receipt.fileUrl?.toLowerCase().includes('.pdf');
+      const ext = isPdf
+        ? '.pdf'
+        : receipt.mimeType?.includes('png')
+        ? '.png'
+        : '.jpg';
+      const contentType =
+        receipt.mimeType || (isPdf ? 'application/pdf' : 'image/jpeg');
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${safeVendor}${ext}"`);
+      return res.send(buffer);
+    }
+
+    // 2. Check if physical file exists on disk (standalone server)
     let absolutePath = null;
     if (receipt.fileUrl) {
       const relativePath = receipt.fileUrl.replace(/^\/uploads\//, '');
@@ -199,7 +223,6 @@ const getPublicReceiptFile = async (req, res) => {
       else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
       else if (ext === '.webp') contentType = 'image/webp';
 
-      const safeVendor = (receipt.storeName || 'receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
       const fileName = `${safeVendor}${ext}`;
 
       res.setHeader('Content-Type', contentType);
@@ -208,10 +231,8 @@ const getPublicReceiptFile = async (req, res) => {
       return res.sendFile(absolutePath);
     }
 
-    // Fallback for cloud/serverless environments where ephemeral disk is fresh:
-    // Generate clean PDF directly from MongoDB record
+    // 3. Fallback: Generate clean PDF dynamically from MongoDB record
     const pdfBytes = await generateReceiptPdf(receipt);
-    const safeVendor = (receipt.storeName || 'receipt').replace(/[^a-zA-Z0-9_-]/g, '_');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${safeVendor}_receipt.pdf"`);
