@@ -31,7 +31,12 @@ const AddReceipt = () => {
     createMutation.mutate(payload, {
       onSuccess: (data) => {
         toast.success('Receipt saved successfully!');
-        navigate(`/receipts/${data.receipt._id}`);
+        const receiptId = data?.receipt?._id || data?._id;
+        if (receiptId) {
+          navigate(`/receipts/${receiptId}`);
+        } else {
+          navigate('/receipts');
+        }
       },
       onError: (err) => {
         const message = err.response?.data?.message || 'Failed to save receipt.';
@@ -41,7 +46,12 @@ const AddReceipt = () => {
   };
 
   const handleReviewSuccess = (data) => {
-    navigate(`/receipts/${data.receipt._id}`);
+    const receiptId = data?.receipt?._id || data?._id;
+    if (receiptId) {
+      navigate(`/receipts/${receiptId}`);
+    } else {
+      navigate('/receipts');
+    }
   };
 
   return (

@@ -155,22 +155,39 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
     e.preventDefault();
     if (!validate()) return;
 
+    let validPurchaseDate = new Date().toISOString();
+    if (purchaseDate) {
+      const parsed = new Date(purchaseDate);
+      if (!isNaN(parsed.getTime())) {
+        validPurchaseDate = parsed.toISOString();
+      }
+    }
+
+    let validDueDate = null;
+    if (dueDate) {
+      const parsed = new Date(dueDate);
+      if (!isNaN(parsed.getTime())) {
+        validDueDate = parsed.toISOString();
+      }
+    }
+
     const payload = {
       storeName: storeName.trim(),
       invoiceNumber: invoiceNumber.trim(),
-      purchaseDate: new Date(purchaseDate).toISOString(),
-      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      purchaseDate: validPurchaseDate,
+      dueDate: validDueDate,
       subtotal: subtotal ? Number(subtotal) : null,
       shippingAmount: Number(shippingAmount || 0),
       taxAmount: Number(taxAmount || 0),
       grandTotal: grandTotal ? Number(grandTotal) : null,
       totalAmount: grandTotal ? Number(grandTotal) : null,
       currency,
+      fileType: 'manual',
       notes: notes.trim(),
       products: products.map((p) => ({
         productName: p.productName.trim(),
-        brand: p.brand.trim(),
-        category: p.category,
+        brand: p.brand ? p.brand.trim() : '',
+        category: p.category || 'Others',
         quantity: Number(p.quantity) || 1,
         unitPrice: p.unitPrice ? Number(p.unitPrice) : null,
         lineTotal: p.lineTotal ? Number(p.lineTotal) : null,
