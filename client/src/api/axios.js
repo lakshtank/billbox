@@ -20,13 +20,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Redirect to login on 401 only if not already on auth/public routes
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('billbox_token');
-      window.location.href = '/login';
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.pathname.startsWith('/login') &&
+        !window.location.pathname.startsWith('/register') &&
+        !window.location.pathname.startsWith('/public/')
+      ) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
