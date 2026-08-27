@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const BatchUpload = require('../models/BatchUpload.model');
 const Receipt = require('../models/Receipt.model');
 const Product = require('../models/Product.model');
@@ -24,6 +25,13 @@ const uploadSingle = async (req, res) => {
     // Construct relative file URL for client access
     const fileUrl = `/uploads/${req.file.filename}`;
 
+    // Read file buffer for cloud persistence in MongoDB Atlas
+    let fileData = null;
+    if (fs.existsSync(filePath)) {
+      const fileBuffer = fs.readFileSync(filePath);
+      fileData = fileBuffer.toString('base64');
+    }
+
     // Stage 1: Run OCR runner
     const { rawText, wordData } = await runOCR(filePath, mimeType);
 
@@ -36,6 +44,8 @@ const uploadSingle = async (req, res) => {
     return sendSuccess(res, 200, 'File uploaded and OCR processed', {
       fileUrl,
       fileType,
+      fileData,
+      mimeType,
       extracted,
       ocrRaw: rawText,
       handwritingDetected,

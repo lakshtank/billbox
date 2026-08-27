@@ -3,10 +3,22 @@ const path = require('path');
 const fs = require('fs');
 const { sendError } = require('../utils/apiResponse');
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../uploads');
+const os = require('os');
+
+// In serverless/cloud environments, the project folder is read-only; use os.tmpdir() (/tmp)
+const isServerless = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
+);
+const uploadDir = isServerless
+  ? path.join(os.tmpdir(), 'billbox_uploads')
+  : path.join(__dirname, '../uploads');
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (e) {
+    console.error('Failed to create uploadDir:', e.message);
+  }
 }
 
 // Storage configuration

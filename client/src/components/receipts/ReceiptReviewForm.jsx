@@ -23,6 +23,8 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
 
   const extracted = ocrData?.extracted || {};
   const fileUrl = ocrData?.fileUrl || null;
+  const fileData = ocrData?.fileData || null;
+  const mimeType = ocrData?.mimeType || null;
   const fileType = ocrData?.fileType || 'image';
   const ocrRaw = ocrData?.ocrRaw || '';
 
@@ -183,6 +185,8 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
       currency,
       notes: notes.trim(),
       fileUrl,
+      fileData,
+      mimeType,
       fileType,
       ocrRaw,
       products: items.map((item) => ({

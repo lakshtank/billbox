@@ -228,19 +228,27 @@ const createReceipt = async (req, res) => {
 
     const needsReview = itemsList.length > 0 && grandVal != null && !matchesGrand && !matchesSub && !matchesReconciled;
 
-    let fileData = null;
-    let mimeType = null;
-    if (fileUrl) {
+    let fileData = req.body.fileData || null;
+    let mimeType = req.body.mimeType || null;
+    if (!fileData && fileUrl) {
       const rel = fileUrl.replace(/^\/uploads\//, '');
-      const localPath = path.join(__dirname, '../uploads', rel);
-      if (fs.existsSync(localPath)) {
-        const buf = fs.readFileSync(localPath);
-        fileData = buf.toString('base64');
-        const ext = path.extname(localPath).toLowerCase();
-        if (ext === '.pdf') mimeType = 'application/pdf';
-        else if (ext === '.png') mimeType = 'image/png';
-        else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
-        else if (ext === '.webp') mimeType = 'image/webp';
+      const os = require('os');
+      const candidatePaths = [
+        path.join(__dirname, '../uploads', rel),
+        path.join(os.tmpdir(), 'billbox_uploads', rel),
+        path.join(os.tmpdir(), rel),
+      ];
+      for (const p of candidatePaths) {
+        if (fs.existsSync(p)) {
+          const buf = fs.readFileSync(p);
+          fileData = buf.toString('base64');
+          const ext = path.extname(p).toLowerCase();
+          if (ext === '.pdf') mimeType = 'application/pdf';
+          else if (ext === '.png') mimeType = 'image/png';
+          else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+          else if (ext === '.webp') mimeType = 'image/webp';
+          break;
+        }
       }
     }
 
