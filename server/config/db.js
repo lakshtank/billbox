@@ -6,7 +6,7 @@ if (!cached) {
 }
 
 const connectDB = async () => {
-  const uri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/billbox';
+  const uri = process.env.MONGODB_URL || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/billbox';
 
   if (cached.conn) {
     return cached.conn;

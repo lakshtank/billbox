@@ -182,7 +182,7 @@ cp .env.example .env
 Open `server/.env` and fill in your values:
 ```env
 PORT=5000
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/billbox?retryWrites=true&w=majority
+MONGODB_URL=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/billbox?retryWrites=true&w=majority
 JWT_SECRET=your_super_secret_jwt_key_2026
 JWT_EXPIRES_IN=7d
 CLIENT_URL=http://localhost:5173
@@ -240,7 +240,7 @@ Open **`http://localhost:5173`** in your browser.
 | Variable | Required | Default | Description |
 | :--- | :---: | :---: | :--- |
 | `PORT` | No | `5000` | Express server port |
-| `MONGODB_URI` | **Yes** | — | MongoDB Atlas or local connection string |
+| `MONGODB_URL` | **Yes** | — | MongoDB Atlas or local connection string |
 | `JWT_SECRET` | **Yes** | — | Secret string used to sign JSON Web Tokens |
 | `JWT_EXPIRES_IN` | No | `7d` | Expiration duration for user sessions |
 | `CLIENT_URL` | No | `http://localhost:5173` | Allowed CORS frontend origin |
@@ -313,7 +313,7 @@ BillBox is pre-configured with root `vercel.json` and `api/index.js` to run both
 2. Go to **[vercel.com](https://vercel.com)** and click **Add New &rarr; Project**.
 3. Import your GitHub repository.
 4. Add the following **Environment Variables**:
-   - `MONGODB_URI`: *(Your MongoDB Atlas connection URI)*
+   - `MONGODB_URL`: *(Your MongoDB Atlas connection URI)*
    - `JWT_SECRET`: `your_random_production_secret_key`
    - `JWT_EXPIRES_IN`: `7d`
    - `GEMINI_API_KEY`: *(Your Google Gemini API Key)*
@@ -326,7 +326,7 @@ BillBox is pre-configured with root `vercel.json` and `api/index.js` to run both
 - **Frontend on Vercel:** Root Directory = `client`, Build Command = `npm run build`, Output Directory = `dist`.
   - Set `VITE_API_BASE_URL` = `https://your-backend.onrender.com/api`
 - **Backend on Render:** Web Service with Root Directory = `server`, Build Command = `npm install`, Start Command = `node server.js`.
-  - Set `MONGODB_URI`, `JWT_SECRET`, `CLIENT_URL` = `https://your-frontend.vercel.app`
+  - Set `MONGODB_URL`, `JWT_SECRET`, `CLIENT_URL` = `https://your-frontend.vercel.app`
 
 ---
 

@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     console.error('Serverless Database Connection Error:', err);
     return res.status(500).json({
       success: false,
-      message: 'Database connection failed. Please check MONGODB_URI in Vercel environment variables.',
+      message: 'Database connection failed. Please check MONGODB_URL in Vercel environment variables.',
     });
   }
 };

@@ -5,7 +5,7 @@ const Product = require('../models/Product.model');
 
 async function runMigration() {
   try {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/billbox';
+    const mongoUri = process.env.MONGODB_URL || 'mongodb://localhost:27017/billbox';
     console.log('[Migration] Connecting to MongoDB:', mongoUri);
     await mongoose.connect(mongoUri);
 
