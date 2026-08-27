@@ -169,7 +169,7 @@ Extract the structured details and return ONLY a valid JSON object matching this
 }\`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash-lite',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json'
