@@ -54,7 +54,7 @@ const StoreDetail = () => {
       {/* Receipt Viewer Modal */}
       {activeViewerReceipt && (
         <ReceiptViewer
-          fileUrl={activeViewerReceipt.fileUrl}
+          fileUrl={activeViewerReceipt.publicToken ? `/api/public/receipts/${activeViewerReceipt.publicToken}/file` : activeViewerReceipt.fileUrl}
           fileName={`${stats.storeName} Receipt`}
           fileType={activeViewerReceipt.fileType}
           onClose={() => setActiveViewerReceipt(null)}

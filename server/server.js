@@ -80,7 +80,37 @@ const productRoutes = require('./routes/product.routes');
 const storeRoutes = require('./routes/store.routes');
 const reminderRoutes = require('./routes/reminder.routes');
 
-// Serve uploaded files statically
+const fs = require('fs');
+
+// Serve uploaded files statically or dynamically generate PDF if missing on cloud ephemeral disk
+app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const safeFilename = path.basename(filename);
+    const localFilePath = path.join(__dirname, 'uploads', safeFilename);
+
+    if (fs.existsSync(localFilePath)) {
+      return res.sendFile(localFilePath);
+    }
+
+    const Receipt = require('./models/Receipt.model');
+    const receipt = await Receipt.findOne({
+      fileUrl: { $regex: safeFilename }
+    }).populate('products');
+
+    if (receipt && receipt.publicToken) {
+      const { getPublicReceiptFile } = require('./controllers/publicReceipt.controller');
+      req.params.publicToken = receipt.publicToken;
+      return getPublicReceiptFile(req, res);
+    }
+
+    return res.status(404).json({ success: false, message: 'File not found' });
+  } catch (err) {
+    console.error('Upload stream error:', err);
+    return res.status(500).json({ success: false, message: 'Error streaming file' });
+  }
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ensure DB connection for all requests (serverless & standalone)

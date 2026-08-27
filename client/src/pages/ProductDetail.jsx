@@ -160,7 +160,7 @@ const ProductDetail = () => {
       {/* Original Receipt Viewer Modal */}
       {showViewer && receipt?.fileUrl && (
         <ReceiptViewer
-          fileUrl={receipt.fileUrl}
+          fileUrl={receipt.publicToken ? `/api/public/receipts/${receipt.publicToken}/file` : receipt.fileUrl}
           fileName={`${receipt.storeName || product.productName} Receipt`}
           fileType={receipt.fileType}
           onClose={() => setShowViewer(false)}

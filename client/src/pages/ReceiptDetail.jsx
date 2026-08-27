@@ -128,7 +128,7 @@ const ReceiptDetail = () => {
       {/* Document Viewer Modal */}
       {showViewer && receipt.fileUrl && (
         <ReceiptViewer
-          fileUrl={receipt.fileUrl}
+          fileUrl={receipt.publicToken ? `/api/public/receipts/${receipt.publicToken}/file` : receipt.fileUrl}
           fileName={`${vendorName} Receipt`}
           fileType={receipt.fileType}
           onClose={() => setShowViewer(false)}
