@@ -4,11 +4,10 @@ import { X, Copy, Check, Share2, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatDate } from '../../utils/formatters';
 
-// TODO: re-enable real public link generation once app is deployed with a real domain — see VITE_PUBLIC_BASE_URL
-const IS_PUBLIC_SHARING_ENABLED = false;
+const IS_PUBLIC_SHARING_ENABLED = true;
 
 // Public Base URL configuration for share links & QR codes.
-// On deployment, set VITE_PUBLIC_BASE_URL in your env (e.g. https://billbox.app)
+// Dynamically detects current window origin (works on localhost & production domains)
 const PUBLIC_BASE_URL = (
   import.meta.env.VITE_PUBLIC_BASE_URL ||
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
@@ -19,7 +18,7 @@ const ShareModal = ({ receipt, onClose }) => {
 
   if (!receipt) return null;
 
-  // Real public URL construction (used when IS_PUBLIC_SHARING_ENABLED is true)
+  // Real public URL construction
   const realPublicUrl = receipt.publicToken ? `${PUBLIC_BASE_URL}/public/r/${receipt.publicToken}` : '';
   const realTruncatedUrl = realPublicUrl.replace(/^https?:\/\//, '');
 
@@ -38,12 +37,13 @@ const ShareModal = ({ receipt, onClose }) => {
   }, [onClose]);
 
   const handleCopyLink = () => {
-    if (!IS_PUBLIC_SHARING_ENABLED) {
-      toast('Sharing will be available once this app is deployed', { icon: 'ℹ️' });
+    if (!realPublicUrl) {
+      toast.error('Shareable token not available for this receipt.');
       return;
     }
     navigator.clipboard.writeText(realPublicUrl);
     setCopiedLink(true);
+    toast.success('Shareable link copied to clipboard!');
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
