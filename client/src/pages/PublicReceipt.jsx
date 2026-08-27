@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import { Download, FileText, ExternalLink, ShieldCheck } from 'lucide-react';
 import ReceiptViewer from '../components/receipts/ReceiptViewer';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { formatDate, formatCurrency } from '../utils/formatters';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const PublicReceipt = () => {
   const { publicToken } = useParams();
@@ -21,7 +19,7 @@ const PublicReceipt = () => {
       try {
         setIsLoading(true);
         setIsError(false);
-        const { data } = await axios.get(`${API_BASE_URL}/public/receipts/${publicToken}`);
+        const { data } = await api.get(`/public/receipts/${publicToken}`);
         if (data.success && data.data.receipt) {
           setReceipt(data.data.receipt);
         } else {
@@ -45,7 +43,13 @@ const PublicReceipt = () => {
     setIsDownloading(true);
 
     try {
-      const fileApiUrl = `${API_BASE_URL}/public/receipts/${publicToken}/file`;
+      const baseUrl =
+        typeof window !== 'undefined' &&
+        window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1'
+          ? '/api'
+          : 'http://localhost:5000/api';
+      const fileApiUrl = `${baseUrl}/public/receipts/${publicToken}/file`;
       const response = await fetch(fileApiUrl);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
@@ -66,7 +70,13 @@ const PublicReceipt = () => {
       }, 200);
     } catch (err) {
       console.error('Public download error:', err);
-      window.open(`${API_BASE_URL}/public/receipts/${publicToken}/file`, '_blank');
+      const baseUrl =
+        typeof window !== 'undefined' &&
+        window.location.hostname !== 'localhost' &&
+        window.location.hostname !== '127.0.0.1'
+          ? '/api'
+          : 'http://localhost:5000/api';
+      window.open(`${baseUrl}/public/receipts/${publicToken}/file`, '_blank');
       setIsDownloading(false);
     }
   };
