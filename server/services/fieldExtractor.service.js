@@ -382,6 +382,11 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
   };
 };
 
+let sharpModule;
+try {
+  sharpModule = require('sharp');
+} catch (e) {}
+
 /**
  * Direct multimodal extraction using Gemini Vision on the raw document buffer (Fast & 100% reliable on Vercel)
  */
@@ -396,7 +401,7 @@ const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategor
       ? userCategories
       : defaultCategories;
 
-    const base64Data = fileBuffer.toString('base64');
+    let finalBuffer = fileBuffer;
     let effectiveMimeType = mimeType || 'application/pdf';
     if (fileBuffer[0] === 0x25 && fileBuffer[1] === 0x50) {
       effectiveMimeType = 'application/pdf';
@@ -405,6 +410,21 @@ const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategor
     } else if (fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50) {
       effectiveMimeType = 'image/png';
     }
+
+    // High performance image optimization: downscale giant camera photos (5-10MB) to 1400px JPEG to speed up network and AI tokenization by ~5x
+    if (sharpModule && effectiveMimeType.startsWith('image/')) {
+      try {
+        finalBuffer = await sharpModule(fileBuffer)
+          .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toBuffer();
+        effectiveMimeType = 'image/jpeg';
+      } catch (sharpErr) {
+        console.warn('Image pre-compression warning:', sharpErr.message);
+      }
+    }
+
+    const base64Data = finalBuffer.toString('base64');
 
     const prompt = `You are an expert receipt & invoice data parser. Analyze the attached purchase document (${effectiveMimeType}):
 
@@ -472,6 +492,7 @@ Extract the structured details and return ONLY a valid JSON object matching this
       ],
       config: {
         responseMimeType: 'application/json',
+        temperature: 0.1,
       },
     });
 

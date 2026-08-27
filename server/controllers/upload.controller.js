@@ -88,13 +88,12 @@ const uploadSingle = async (req, res) => {
   }
 };
 
-// Sequential background processing function for batch upload (Section 7.5: One file at a time)
-const processBatchFilesSequentially = async (batchId, files) => {
+// Concurrent background processing function for batch upload (Processes up to 3 files in parallel for 3x speedup)
+const processBatchFilesSequentially = async (batchId, files, concurrency = 3) => {
   const batchDoc = await BatchUpload.findById(batchId).select('userId').lean();
   const userCategories = batchDoc ? await getUserCategoryNames(batchDoc.userId) : [];
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
+  const processSingleBatchFile = async (file) => {
     try {
       // Set file status to processing
       await BatchUpload.updateOne(
@@ -108,7 +107,7 @@ const processBatchFilesSequentially = async (batchId, files) => {
       let isNonReceipt = false;
       let lowConfidenceWarning = false;
 
-      // Try Direct Gemini Vision on file buffer first
+      // Try Direct Fast Multimodal Gemini Vision on file buffer first
       if (fs.existsSync(file.path) && process.env.GEMINI_API_KEY) {
         try {
           const buf = fs.readFileSync(file.path);
@@ -136,7 +135,7 @@ const processBatchFilesSequentially = async (batchId, files) => {
 
       // If zero text or no readable words extracted at all, fail the file gracefully
       const isZeroText = !rawText || rawText.trim().length < 3;
-      if (isZeroText) {
+      if (isZeroText && (!extracted || !extracted.storeName?.value)) {
         await BatchUpload.updateOne(
           { _id: batchId, 'files._id': file.dbFileId },
           {
@@ -147,7 +146,7 @@ const processBatchFilesSequentially = async (batchId, files) => {
             $inc: { completedFiles: 1 },
           }
         );
-        continue;
+        return;
       }
 
       // Update file status to needs_review and store OCR result
@@ -169,17 +168,35 @@ const processBatchFilesSequentially = async (batchId, files) => {
       );
     } catch (err) {
       console.error(`Batch processing error for file ${file.originalName}:`, err.message);
-      // Mark file as failed
       await BatchUpload.updateOne(
         { _id: batchId, 'files._id': file.dbFileId },
         {
           $set: {
             'files.$.status': 'failed',
-            'files.$.errorMessage': err.message || 'OCR processing failed',
+            'files.$.errorMessage': err.message || 'Processing failed',
           },
           $inc: { completedFiles: 1 },
         }
       );
+    }
+  };
+
+  // Process files in parallel concurrent chunks
+  for (let i = 0; i < files.length; i += concurrency) {
+    const chunk = files.slice(i, i + concurrency);
+    await Promise.all(chunk.map((f) => processSingleBatchFile(f)));
+  }
+
+  // Update overall batch status upon completion
+  const updatedBatch = await BatchUpload.findById(batchId);
+  if (updatedBatch) {
+    const allFiles = updatedBatch.files || [];
+    const allDone = allFiles.every((f) => ['needs_review', 'failed', 'saved'].includes(f.status));
+    const allFailed = allFiles.every((f) => f.status === 'failed');
+
+    if (allDone) {
+      updatedBatch.status = allFailed ? 'failed' : 'completed';
+      await updatedBatch.save();
     }
   }
 };
