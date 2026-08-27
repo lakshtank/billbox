@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // Dynamically resolve API baseURL (in production, use relative /api; in dev, fallback to http://localhost:5000/api)
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
