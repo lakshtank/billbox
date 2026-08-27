@@ -48,6 +48,17 @@ const reminderRoutes = require('./routes/reminder.routes');
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Ensure DB connection for all requests (serverless & standalone)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection error:', err.message);
+    return res.status(500).json({ success: false, message: 'Database connection failed' });
+  }
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/receipts', receiptRoutes);
@@ -79,7 +90,7 @@ const cron = require('node-cron');
 const { runWarrantyReminderCheck } = require('./services/reminder.service');
 
 // Start standalone server when executed directly (local dev or traditional hosting)
-if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+if (require.main === module) {
   connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`BillBox server running on port ${PORT}`);
