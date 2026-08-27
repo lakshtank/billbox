@@ -4,7 +4,7 @@ const { getPublicReceipt, getPublicReceiptFile } = require('../controllers/publi
 const router = express.Router();
 
 // PUBLIC routes - NO authentication middleware
-router.get('/:publicToken', getPublicReceipt);
 router.get('/:publicToken/file', getPublicReceiptFile);
+router.get('/:publicToken', getPublicReceipt);
 
 module.exports = router;
