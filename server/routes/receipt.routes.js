@@ -19,26 +19,26 @@ router.use(auth);
 
 const receiptValidation = [
   body('purchaseDate')
-    .optional()
+    .optional({ values: 'falsy' })
     .notEmpty()
     .withMessage('Purchase date cannot be empty if provided.'),
   body('grandTotal')
-    .optional({ values: 'null' })
+    .optional({ values: 'falsy' })
     .isNumeric()
     .withMessage('Grand total must be a number.'),
   body('products')
-    .optional()
+    .optional({ values: 'falsy' })
     .isArray()
     .withMessage('Products must be an array.'),
 ];
 
 const updateValidation = [
   body('grandTotal')
-    .optional({ values: 'null' })
+    .optional({ values: 'falsy' })
     .isNumeric()
     .withMessage('Grand total must be a number.'),
   body('products')
-    .optional()
+    .optional({ values: 'falsy' })
     .isArray()
     .withMessage('Products must be an array.'),
 ];

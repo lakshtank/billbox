@@ -121,21 +121,35 @@ const createProduct = async (req, res) => {
       }
     }
 
-    const calculatedLineTotal = lineTotal != null ? Number(lineTotal) : unitPrice != null ? Number(unitPrice) * Number(quantity) : null;
+    const safeNum = (val, defaultVal = null) => {
+      if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+      const n = Number(val);
+      return isNaN(n) ? defaultVal : n;
+    };
+
+    const calculatedQty = safeNum(quantity, 1) > 0 ? safeNum(quantity, 1) : 1;
+    const calculatedUnitPrice = safeNum(unitPrice, null);
+    const calculatedLineTotal = lineTotal != null ? safeNum(lineTotal, null) : (calculatedUnitPrice != null ? calculatedUnitPrice * calculatedQty : null);
+
+    let parsedExpiry = null;
+    if (warrantyExpiryDate) {
+      const p = new Date(warrantyExpiryDate);
+      if (!isNaN(p.getTime())) parsedExpiry = p;
+    }
 
     const product = await Product.create({
       userId,
       productName: productName.trim(),
       brand: brand ? brand.trim() : '',
       category: category || 'Others',
-      quantity: Math.max(1, Number(quantity) || 1),
-      unitPrice: unitPrice != null ? Number(unitPrice) : null,
+      quantity: calculatedQty,
+      unitPrice: calculatedUnitPrice,
       lineTotal: calculatedLineTotal,
       receiptId: receiptId || undefined,
-      warrantyPeriodValue: warrantyPeriodValue != null ? Number(warrantyPeriodValue) : null,
+      warrantyPeriodValue: safeNum(warrantyPeriodValue, null),
       warrantyPeriodUnit: warrantyPeriodUnit || 'months',
-      warrantyPeriodMonths: warrantyPeriodMonths != null ? Number(warrantyPeriodMonths) : null,
-      warrantyExpiryDate: warrantyExpiryDate ? new Date(warrantyExpiryDate) : null,
+      warrantyPeriodMonths: safeNum(warrantyPeriodMonths, null),
+      warrantyExpiryDate: parsedExpiry,
       warrantyStatus: warrantyStatus || 'none',
     });
 
@@ -173,6 +187,12 @@ const updateProduct = async (req, res) => {
       return sendError(res, 404, 'Product not found');
     }
 
+    const safeNum = (val, defaultVal = null) => {
+      if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+      const n = Number(val);
+      return isNaN(n) ? defaultVal : n;
+    };
+
     if (updates.productName !== undefined) {
       if (!updates.productName.trim()) {
         return sendError(res, 400, 'Product name cannot be empty');
@@ -182,19 +202,24 @@ const updateProduct = async (req, res) => {
 
     if (updates.brand !== undefined) product.brand = updates.brand.trim();
     if (updates.category !== undefined) product.category = updates.category;
-    if (updates.quantity !== undefined) product.quantity = Math.max(1, Number(updates.quantity) || 1);
-    if (updates.unitPrice !== undefined) product.unitPrice = updates.unitPrice != null ? Number(updates.unitPrice) : null;
+    if (updates.quantity !== undefined) product.quantity = Math.max(1, safeNum(updates.quantity, 1));
+    if (updates.unitPrice !== undefined) product.unitPrice = safeNum(updates.unitPrice, null);
     if (updates.lineTotal !== undefined) {
-      product.lineTotal = updates.lineTotal != null ? Number(updates.lineTotal) : null;
+      product.lineTotal = safeNum(updates.lineTotal, null);
     } else if (updates.unitPrice !== undefined || updates.quantity !== undefined) {
       product.lineTotal = product.unitPrice != null ? product.unitPrice * product.quantity : null;
     }
 
-    if (updates.warrantyPeriodValue !== undefined) product.warrantyPeriodValue = updates.warrantyPeriodValue;
+    if (updates.warrantyPeriodValue !== undefined) product.warrantyPeriodValue = safeNum(updates.warrantyPeriodValue, null);
     if (updates.warrantyPeriodUnit !== undefined) product.warrantyPeriodUnit = updates.warrantyPeriodUnit;
-    if (updates.warrantyPeriodMonths !== undefined) product.warrantyPeriodMonths = updates.warrantyPeriodMonths;
+    if (updates.warrantyPeriodMonths !== undefined) product.warrantyPeriodMonths = safeNum(updates.warrantyPeriodMonths, null);
     if (updates.warrantyExpiryDate !== undefined) {
-      product.warrantyExpiryDate = updates.warrantyExpiryDate ? new Date(updates.warrantyExpiryDate) : null;
+      if (updates.warrantyExpiryDate) {
+        const parsed = new Date(updates.warrantyExpiryDate);
+        product.warrantyExpiryDate = !isNaN(parsed.getTime()) ? parsed : null;
+      } else {
+        product.warrantyExpiryDate = null;
+      }
     }
     if (updates.warrantyStatus !== undefined) product.warrantyStatus = updates.warrantyStatus;
 

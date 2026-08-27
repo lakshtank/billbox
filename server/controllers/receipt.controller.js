@@ -340,13 +340,18 @@ const updateReceipt = async (req, res) => {
     const dueDate = req.body.dueDate !== undefined ? parseFlexibleDate(req.body.dueDate) : existing.dueDate;
 
     const finalGrandTotal = req.body.grandTotal !== undefined
-      ? (req.body.grandTotal != null ? Number(req.body.grandTotal) : null)
-      : (req.body.totalAmount !== undefined ? (req.body.totalAmount != null ? Number(req.body.totalAmount) : null) : existing.grandTotal);
+      ? safeNum(req.body.grandTotal, null)
+      : (req.body.totalAmount !== undefined ? safeNum(req.body.totalAmount, null) : existing.grandTotal);
 
     const updateFields = {
       ...req.body,
       purchaseDate,
       dueDate,
+      subtotal: req.body.subtotal !== undefined ? safeNum(req.body.subtotal, null) : existing.subtotal,
+      shippingAmount: req.body.shippingAmount !== undefined ? safeNum(req.body.shippingAmount, 0) : existing.shippingAmount,
+      taxAmount: req.body.taxAmount !== undefined ? safeNum(req.body.taxAmount, 0) : existing.taxAmount,
+      discountAmount: req.body.discountAmount !== undefined ? safeNum(req.body.discountAmount, 0) : existing.discountAmount,
+      discountPercent: req.body.discountPercent !== undefined ? safeNum(req.body.discountPercent, 0) : existing.discountPercent,
       grandTotal: finalGrandTotal,
       totalAmount: finalGrandTotal,
       updatedAt: new Date(),
