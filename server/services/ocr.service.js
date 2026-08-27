@@ -1,20 +1,20 @@
 const { createWorker } = require('tesseract.js');
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
+let sharp;
+try {
+  sharp = require('sharp');
+} catch (e) {
+  sharp = null;
+}
 const { PDFParse } = require('pdf-parse');
 const { PDFDocument, PDFName, PDFRawStream, PDFStream } = require('pdf-lib');
 
 /**
  * Preprocesses an image buffer or filepath using sharp before handing off to Tesseract.js.
- * Applies:
- * 1. Grayscale (removes color noise)
- * 2. Contrast enhancement (normalize + linear boost)
- * 3. Binarization / Thresholding (pure black/white)
- * 4. Deskew / Auto-rotation
- * 5. Resolution upscaling (if shorter dimension < 1500px)
  */
 const preprocessImage = async (inputPathOrBuffer) => {
+  if (!sharp) return inputPathOrBuffer;
   try {
     let pipeline = sharp(inputPathOrBuffer);
     const metadata = await pipeline.metadata();
