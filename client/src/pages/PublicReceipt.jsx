@@ -6,6 +6,20 @@ import ReceiptViewer from '../components/receipts/ReceiptViewer';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { formatDate, formatCurrency } from '../utils/formatters';
 
+const getBaseApiUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname !== 'localhost' &&
+    window.location.hostname !== '127.0.0.1'
+  ) {
+    return '/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
 const PublicReceipt = () => {
   const { publicToken } = useParams();
   const [receipt, setReceipt] = useState(null);
@@ -115,7 +129,7 @@ const PublicReceipt = () => {
 
   const vendorName = receipt.storeName?.trim() || 'Merchant Receipt';
   const products = receipt.products || [];
-  const publicFileUrl = `${API_BASE_URL}/public/receipts/${publicToken}/file`;
+  const publicFileUrl = `${getBaseApiUrl()}/public/receipts/${publicToken}/file`;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
