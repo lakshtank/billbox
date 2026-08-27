@@ -39,7 +39,7 @@ const uploadSingle = async (req, res) => {
     const userCategories = await getUserCategoryNames(req.userId);
 
     // Stage 2: Extract structured fields & confidence scores
-    const { extracted, handwritingDetected } = extractFields(rawText, wordData, userCategories);
+    const { extracted, handwritingDetected } = await extractFields(rawText, wordData, userCategories);
 
     return sendSuccess(res, 200, 'File uploaded and OCR processed', {
       fileUrl,
@@ -76,7 +76,7 @@ const processBatchFilesSequentially = async (batchId, files) => {
 
       // Run OCR & Field extraction
       const { rawText, wordData } = await runOCR(file.path, file.mimetype);
-      const { extracted, handwritingDetected, isNonReceipt, lowConfidenceWarning } = extractFields(rawText, wordData, userCategories);
+      const { extracted, handwritingDetected, isNonReceipt, lowConfidenceWarning } = await extractFields(rawText, wordData, userCategories);
 
       // If zero text or no readable words extracted at all, fail the file gracefully
       const isZeroText = !rawText || rawText.trim().length < 3;

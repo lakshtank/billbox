@@ -95,16 +95,16 @@ const sanitizeTextString = (str) => {
   return str.replace(/[\x00-\x1F\x7F-\x9F\uFFFD≡©®™|~^]/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
-const { execFileSync } = require('child_process');
+const { GoogleGenAI } = require('@google/genai');
 
 /**
- * Part B: Synchronous helper to call Google Gemini API with model 'gemini-3.5-flash-lite'
- * If API key missing, rate-limited, model unavailable, or error occurs, returns null and logs failure.
+ * Part B: Asynchronous helper to call Google Gemini API directly with model 'gemini-3.6-flash'
+ * If API key missing, rate-limited, or error occurs, returns null and falls back to regex.
  */
-const runGeminiLLMExtraction = (rawText, userCategories = []) => {
+const runGeminiLLMExtraction = async (rawText, userCategories = []) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error('[OCR Pipeline] Gemini LLM extraction FAILED — falling back to regex. Reason: GEMINI_API_KEY environment variable is missing');
+    console.log('[OCR Pipeline] GEMINI_API_KEY not provided — falling back to regex parser.');
     return null;
   }
 
@@ -113,18 +113,9 @@ const runGeminiLLMExtraction = (rawText, userCategories = []) => {
     ? userCategories
     : defaultCategories;
 
-  const categoriesJsonString = JSON.stringify(categoriesToPass);
+  const prompt = `You are an expert receipt & invoice data parser. Analyze the following raw OCR text extracted from a purchase document:
 
-  const inlineScript = `
-const { GoogleGenAI } = require('@google/genai');
-async function run() {
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const existingCats = ${categoriesJsonString};
-
-    const prompt = \`You are an expert receipt & invoice data parser. Analyze the following raw OCR text extracted from a purchase document:
-
-"\${process.env.RAW_OCR_TEXT}"
+"${(rawText || '').substring(0, 4000)}"
 
 UNIVERSAL EXTRACTION PHILOSOPHY:
 For EVERY field (receipt-level and each item line), follow this exact order:
@@ -155,7 +146,7 @@ Extract the structured details and return ONLY a valid JSON object matching this
     {
       "productName": "Description of item purchased. Must not contain vendor boilerplate.",
       "brand": "Brand or manufacturer. Explicit 'Brand:' label if present, or inferred from product description. If unknown, 'Not mentioned'.",
-      "category": "Classify product into a category. Check user categories first: \${JSON.stringify(existingCats)}. Reuse exact existing name if matching, or invent concise category. If unknown, 'Not mentioned'.",
+      "category": "Classify product into a category. Check user categories first: ${JSON.stringify(categoriesToPass)}. Reuse exact existing name if matching, or invent concise category. If unknown, 'Not mentioned'.",
       "quantity": 1,
       "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 425.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
       "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 253.00) or 'Not mentioned'",
@@ -166,60 +157,34 @@ Extract the structured details and return ONLY a valid JSON object matching this
       "warrantyPeriodUnit": "days | weeks | months | years. If warranty is 'Not mentioned', return 'months'."
     }
   ]
-}\`;
+}`;
 
+  try {
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
-        responseMimeType: 'application/json'
-      }
+        responseMimeType: 'application/json',
+      },
     });
 
     if (response && response.text) {
-      console.log(response.text.trim());
-    } else {
-      process.exit(1);
+      const parsedData = JSON.parse(response.text.trim());
+      console.log('[OCR Pipeline] Gemini LLM extraction succeeded (model: gemini-3.6-flash)');
+      return parsedData;
     }
   } catch (err) {
-    console.error('LLM_EXEC_ERROR:' + (err.message || 'Unknown error'));
-    process.exit(1);
+    console.error('[OCR Pipeline] Gemini LLM extraction failed — falling back to regex:', err.message);
   }
-}
-run();
-`;
-
-  try {
-    const output = execFileSync(process.execPath, ['-e', inlineScript], {
-      env: {
-        ...process.env,
-        RAW_OCR_TEXT: (rawText || '').substring(0, 4000),
-      },
-      timeout: 12000,
-      encoding: 'utf8',
-    });
-
-    const jsonText = output.trim();
-    if (!jsonText || !jsonText.startsWith('{')) {
-      console.error('[OCR Pipeline] Gemini LLM extraction FAILED — falling back to regex. Reason: Output did not contain valid JSON structure');
-      return null;
-    }
-
-    const parsedData = JSON.parse(jsonText);
-    console.log('[OCR Pipeline] Gemini LLM extraction succeeded (model: gemini-3.5-flash-lite)');
-    return parsedData;
-  } catch (err) {
-    const reason = err.stderr ? err.stderr.trim().replace(/^LLM_EXEC_ERROR:/, '') : err.message;
-    console.error(`[OCR Pipeline] Gemini LLM extraction FAILED — falling back to regex. Reason: ${reason}`);
-    return null;
-  }
+  return null;
 };
 
 // ─── Main Stage 2 Field Extractor ────────────────────────────────────────────
 
-const extractFields = (rawText, wordData = [], userCategories = []) => {
+const extractFields = async (rawText, wordData = [], userCategories = []) => {
   // Try Part B LLM structured extraction first
-  const llmResult = runGeminiLLMExtraction(rawText, userCategories);
+  const llmResult = await runGeminiLLMExtraction(rawText, userCategories);
 
   if (llmResult) {
     try {
