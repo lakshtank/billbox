@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const Receipt = require('../models/receipt.model');
+const Receipt = require('../models/Receipt.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // GET /api/public/receipts/:publicToken
