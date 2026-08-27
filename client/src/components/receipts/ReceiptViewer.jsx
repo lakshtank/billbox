@@ -261,16 +261,27 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
             </div>
           ) : isPdf ? (
             <div className="w-full h-full rounded-xl overflow-hidden border border-slate-200 bg-white shadow-xs">
-              <iframe
-                src={`${fullFileUrl}#toolbar=0&navpanes=0&view=FitH`}
-                title={fileName}
+              <object
+                data={`${fullFileUrl}#toolbar=0&navpanes=0&view=FitH`}
+                type="application/pdf"
+                className="w-full h-full border-none bg-white"
                 onLoad={() => setIsLoading(false)}
                 onError={() => {
                   setIsLoading(false);
                   setHasError(true);
                 }}
-                className="w-full h-full border-none bg-white"
-              />
+              >
+                <iframe
+                  src={`${fullFileUrl}#toolbar=0&navpanes=0&view=FitH`}
+                  title={fileName}
+                  onLoad={() => setIsLoading(false)}
+                  onError={() => {
+                    setIsLoading(false);
+                    setHasError(true);
+                  }}
+                  className="w-full h-full border-none bg-white"
+                />
+              </object>
             </div>
           ) : (
             <div

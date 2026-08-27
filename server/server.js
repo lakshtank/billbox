@@ -75,6 +75,17 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Ensure DB connection for all requests (serverless & standalone)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection error:', err.message);
+    return res.status(500).json({ success: false, message: 'Database connection failed' });
+  }
+});
+
 const categoryRoutes = require('./routes/category.routes');
 const publicReceiptRoutes = require('./routes/publicReceipt.routes');
 const productRoutes = require('./routes/product.routes');
@@ -83,7 +94,7 @@ const reminderRoutes = require('./routes/reminder.routes');
 
 const fs = require('fs');
 
-// Serve uploaded files statically or dynamically generate PDF if missing on cloud ephemeral disk
+// Serve uploaded files statically or from MongoDB Atlas Base64 on cloud serverless
 app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
   try {
     const filename = req.params.filename;
@@ -96,13 +107,29 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
 
     const Receipt = require('./models/Receipt.model');
     const receipt = await Receipt.findOne({
-      fileUrl: { $regex: safeFilename }
+      $or: [
+        { fileUrl: { $regex: safeFilename, $options: 'i' } },
+        { fileUrl: `/uploads/${safeFilename}` }
+      ]
     }).populate('products');
 
-    if (receipt && receipt.publicToken) {
-      const { getPublicReceiptFile } = require('./controllers/publicReceipt.controller');
-      req.params.publicToken = receipt.publicToken;
-      return getPublicReceiptFile(req, res);
+    if (receipt) {
+      if (receipt.fileData) {
+        const buffer = Buffer.from(receipt.fileData, 'base64');
+        const isPdf = receipt.mimeType === 'application/pdf' || receipt.fileType === 'pdf' || safeFilename.toLowerCase().endsWith('.pdf');
+        const contentType = receipt.mimeType || (isPdf ? 'application/pdf' : 'image/jpeg');
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+        res.setHeader('Content-Length', buffer.length);
+        return res.send(buffer);
+      }
+
+      if (receipt.publicToken) {
+        const { getPublicReceiptFile } = require('./controllers/publicReceipt.controller');
+        req.params.publicToken = receipt.publicToken;
+        return getPublicReceiptFile(req, res);
+      }
     }
 
     return res.status(404).json({ success: false, message: 'File not found' });
@@ -113,17 +140,6 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
 });
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Ensure DB connection for all requests (serverless & standalone)
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error('Database connection error:', err.message);
-    return res.status(500).json({ success: false, message: 'Database connection failed' });
-  }
-});
 
 // Routes
 app.use('/api/auth', authRoutes);
