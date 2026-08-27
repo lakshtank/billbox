@@ -5,7 +5,22 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="BillBox — Track invoices, receipts, and warranty expiries with ease." />
-    <title>BillBox - Smart Invoice &amp; Warranty Manager</title>
+    <script>
+      window.addEventListener('error', function (e) {
+        var el = document.getElementById('root-error') || document.createElement('div');
+        el.id = 'root-error';
+        el.style = 'padding: 24px; color: #991b1b; background: #fef2f2; font-family: monospace; z-index: 999999; position: fixed; inset: 0; overflow: auto;';
+        el.innerHTML = '<h2 style="font-weight:bold;margin-bottom:8px;">🚨 JavaScript Error:</h2><pre style="white-space:pre-wrap;">' + (e.error ? e.error.stack || e.error.message : e.message) + '</pre>';
+        document.body.appendChild(el);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var el = document.getElementById('root-error') || document.createElement('div');
+        el.id = 'root-error';
+        el.style = 'padding: 24px; color: #991b1b; background: #fef2f2; font-family: monospace; z-index: 999999; position: fixed; inset: 0; overflow: auto;';
+        el.innerHTML = '<h2 style="font-weight:bold;margin-bottom:8px;">🚨 Unhandled Rejection:</h2><pre style="white-space:pre-wrap;">' + (e.reason ? e.reason.stack || e.reason : 'Unknown rejection') + '</pre>';
+        document.body.appendChild(el);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
