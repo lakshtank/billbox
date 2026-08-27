@@ -69,37 +69,53 @@ const BatchReview = () => {
     setIsSavingAll(true);
     toast.loading(`Saving ${pendingFiles.length} receipts in batch...`, { id: 'save-all' });
 
+    const safeNum = (val, defaultVal = null) => {
+      if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+      const n = Number(val);
+      return isNaN(n) ? defaultVal : n;
+    };
+
     let count = 0;
     for (const item of pendingFiles) {
       const extracted = item.ocrResult?.extracted || {};
-      const storeName = extracted.storeName?.value || '';
-      const invoiceNumber = extracted.invoiceNumber?.value || '';
-      const purchaseDate = extracted.purchaseDate?.value
-        ? new Date(extracted.purchaseDate.value).toISOString()
-        : new Date().toISOString();
-      const grandTotal = extracted.grandTotal?.value != null ? Number(extracted.grandTotal.value) : (extracted.totalAmount?.value != null ? Number(extracted.totalAmount.value) : null);
-      const subtotal = extracted.subtotal?.value != null ? Number(extracted.subtotal.value) : null;
-      const shippingAmount = extracted.shippingAmount?.value != null ? Number(extracted.shippingAmount.value) : 0;
-      const taxAmount = extracted.taxAmount?.value != null ? Number(extracted.taxAmount.value) : 0;
+      const storeName = (extracted.storeName?.value || '').trim();
+      const invoiceNumber = (extracted.invoiceNumber?.value || '').trim();
+      
+      let purchaseDate = new Date().toISOString();
+      if (extracted.purchaseDate?.value) {
+        const parsed = new Date(extracted.purchaseDate.value);
+        if (!isNaN(parsed.getTime())) {
+          purchaseDate = parsed.toISOString();
+        }
+      }
+
+      const grandTotal = safeNum(extracted.grandTotal?.value != null ? extracted.grandTotal.value : extracted.totalAmount?.value, null);
+      const subtotal = safeNum(extracted.subtotal?.value, null);
+      const shippingAmount = safeNum(extracted.shippingAmount?.value, 0);
+      const taxAmount = safeNum(extracted.taxAmount?.value, 0);
+      const discountAmount = safeNum(extracted.discountAmount?.value, 0);
 
       const itemsList = Array.isArray(extracted.items) && extracted.items.length > 0
-        ? extracted.items.map((i) => ({
-            productName: i.productName || item.originalName?.replace(/\.[^/.]+$/, '') || 'Untitled Item',
-            brand: i.brand || '',
-            category: i.category || 'Others',
-            quantity: Number(i.quantity) || 1,
-            originalUnitPrice: i.originalUnitPrice != null ? Number(i.originalUnitPrice) : (i.unitPrice != null ? Number(i.unitPrice) : null),
-            unitPrice: i.unitPrice != null ? Number(i.unitPrice) : null,
-            discountAmount: i.discountAmount != null ? Number(i.discountAmount) : 0,
-            discountPercent: i.discountPercent != null ? Number(i.discountPercent) : 0,
-            lineTotal: i.lineTotal != null ? Number(i.lineTotal) : null,
-            warrantyPeriodValue: i.warrantyPeriodValue != null ? Number(i.warrantyPeriodValue) : null,
-            warrantyPeriodUnit: i.warrantyPeriodUnit || 'months',
-          }))
+        ? extracted.items.map((i) => {
+            const uPrice = safeNum(i.unitPrice, null);
+            return {
+              productName: (i.productName || item.originalName?.replace(/\.[^/.]+$/, '') || 'Untitled Item').trim(),
+              brand: (i.brand || '').trim(),
+              category: i.category || 'Others',
+              quantity: safeNum(i.quantity, 1) > 0 ? safeNum(i.quantity, 1) : 1,
+              originalUnitPrice: safeNum(i.originalUnitPrice, uPrice),
+              unitPrice: uPrice,
+              discountAmount: safeNum(i.discountAmount, 0),
+              discountPercent: safeNum(i.discountPercent, 0),
+              lineTotal: safeNum(i.lineTotal, null),
+              warrantyPeriodValue: safeNum(i.warrantyPeriodValue, null),
+              warrantyPeriodUnit: i.warrantyPeriodUnit || 'months',
+            };
+          })
         : [
             {
-              productName: extracted.productName?.value || item.originalName?.replace(/\.[^/.]+$/, '') || 'Untitled Item',
-              brand: extracted.brand?.value || '',
+              productName: (extracted.productName?.value || item.originalName?.replace(/\.[^/.]+$/, '') || 'Untitled Item').trim(),
+              brand: (extracted.brand?.value || '').trim(),
               category: extracted.category?.value || 'Others',
               quantity: 1,
               originalUnitPrice: grandTotal,
@@ -107,7 +123,7 @@ const BatchReview = () => {
               discountAmount: 0,
               discountPercent: 0,
               lineTotal: grandTotal,
-              warrantyPeriodValue: extracted.warrantyPeriodValue?.value != null ? Number(extracted.warrantyPeriodValue.value) : null,
+              warrantyPeriodValue: safeNum(extracted.warrantyPeriodValue?.value, null),
               warrantyPeriodUnit: extracted.warrantyPeriodValue?.unit || 'months',
             },
           ];
@@ -117,7 +133,7 @@ const BatchReview = () => {
         invoiceNumber,
         purchaseDate,
         subtotal,
-        discountAmount: extracted.discountAmount?.value != null ? Number(extracted.discountAmount.value) : 0,
+        discountAmount,
         shippingAmount,
         taxAmount,
         grandTotal,
@@ -342,31 +358,50 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
     e.preventDefault();
     if (!validate()) return;
 
+    const safeNum = (val, defaultVal = null) => {
+      if (val == null || val === '' || val === '-' || val === 'Not mentioned') return defaultVal;
+      const n = Number(val);
+      return isNaN(n) ? defaultVal : n;
+    };
+
+    let validPurchaseDate = new Date().toISOString();
+    if (purchaseDate) {
+      const parsed = new Date(purchaseDate);
+      if (!isNaN(parsed.getTime())) {
+        validPurchaseDate = parsed.toISOString();
+      }
+    }
+
+    const finalGrandTotal = safeNum(grandTotal, null);
+
     const receiptData = {
       storeName: storeName.trim(),
       invoiceNumber: invoiceNumber.trim(),
-      purchaseDate: new Date(purchaseDate).toISOString(),
-      subtotal: subtotal ? Number(subtotal) : null,
-      discountAmount: extracted.discountAmount?.value != null ? Number(extracted.discountAmount.value) : 0,
-      grandTotal: grandTotal ? Number(grandTotal) : null,
-      totalAmount: grandTotal ? Number(grandTotal) : null,
+      purchaseDate: validPurchaseDate,
+      subtotal: safeNum(subtotal, null),
+      discountAmount: safeNum(extracted.discountAmount?.value, 0),
+      grandTotal: finalGrandTotal,
+      totalAmount: finalGrandTotal,
       currency: extracted.currency?.value || 'INR',
       fileUrl: fileItem.fileUrl,
       fileType: fileItem.fileType,
       ocrRaw: ocrResult.ocrRaw || '',
-      products: items.map((i) => ({
-        productName: i.productName.trim(),
-        brand: i.brand.trim(),
-        category: i.category,
-        quantity: Number(i.quantity) || 1,
-        originalUnitPrice: i.originalUnitPrice ? Number(i.originalUnitPrice) : (i.unitPrice ? Number(i.unitPrice) : null),
-        unitPrice: i.unitPrice ? Number(i.unitPrice) : null,
-        discountAmount: i.discountAmount ? Number(i.discountAmount) : 0,
-        discountPercent: i.discountPercent ? Number(i.discountPercent) : 0,
-        lineTotal: i.lineTotal ? Number(i.lineTotal) : null,
-        warrantyPeriodValue: i.warrantyPeriodValue ? Number(i.warrantyPeriodValue) : null,
-        warrantyPeriodUnit: i.warrantyPeriodUnit || 'months',
-      })),
+      products: items.map((i) => {
+        const uPrice = safeNum(i.unitPrice, null);
+        return {
+          productName: i.productName.trim(),
+          brand: i.brand ? i.brand.trim() : '',
+          category: i.category || 'Others',
+          quantity: safeNum(i.quantity, 1) > 0 ? safeNum(i.quantity, 1) : 1,
+          originalUnitPrice: safeNum(i.originalUnitPrice, uPrice),
+          unitPrice: uPrice,
+          discountAmount: safeNum(i.discountAmount, 0),
+          discountPercent: safeNum(i.discountPercent, 0),
+          lineTotal: safeNum(i.lineTotal, null),
+          warrantyPeriodValue: safeNum(i.warrantyPeriodValue, null),
+          warrantyPeriodUnit: i.warrantyPeriodUnit || 'months',
+        };
+      }),
     };
 
     saveMutation.mutate(
