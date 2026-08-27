@@ -172,11 +172,36 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
     e.preventDefault();
     if (!validate()) return;
 
+    let validPurchaseDate = new Date().toISOString();
+    if (purchaseDate) {
+      const parsed = new Date(purchaseDate);
+      if (!isNaN(parsed.getTime())) {
+        validPurchaseDate = parsed.toISOString();
+      }
+    }
+
+    let validDueDate = null;
+    if (dueDate) {
+      const parsed = new Date(dueDate);
+      if (!isNaN(parsed.getTime())) {
+        validDueDate = parsed.toISOString();
+      }
+    }
+
+    const normalizedFileType =
+      fileType === 'pdf' ||
+      mimeType === 'application/pdf' ||
+      fileUrl?.toLowerCase().endsWith('.pdf')
+        ? 'pdf'
+        : fileType === 'manual'
+        ? 'manual'
+        : 'image';
+
     const payload = {
       storeName: storeName.trim(),
       invoiceNumber: invoiceNumber.trim(),
-      purchaseDate: new Date(purchaseDate).toISOString(),
-      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      purchaseDate: validPurchaseDate,
+      dueDate: validDueDate,
       subtotal: subtotal ? Number(subtotal) : null,
       shippingAmount: Number(shippingAmount || 0),
       taxAmount: Number(taxAmount || 0),
@@ -187,12 +212,12 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
       fileUrl,
       fileData,
       mimeType,
-      fileType,
+      fileType: normalizedFileType,
       ocrRaw,
       products: items.map((item) => ({
         productName: item.productName.trim(),
-        brand: item.brand.trim(),
-        category: item.category,
+        brand: item.brand ? item.brand.trim() : '',
+        category: item.category || 'Others',
         quantity: Number(item.quantity) || 1,
         originalUnitPrice: item.originalUnitPrice ? Number(item.originalUnitPrice) : (item.unitPrice ? Number(item.unitPrice) : null),
         unitPrice: item.unitPrice ? Number(item.unitPrice) : null,

@@ -252,12 +252,21 @@ const createReceipt = async (req, res) => {
       }
     }
 
+    const normalizedFileType =
+      fileType === 'pdf' ||
+      mimeType === 'application/pdf' ||
+      fileUrl?.toLowerCase().endsWith('.pdf')
+        ? 'pdf'
+        : fileType === 'manual'
+        ? 'manual'
+        : 'image';
+
     const receipt = await Receipt.create({
       userId: req.userId,
       fileUrl: fileUrl || null,
       fileData,
       mimeType,
-      fileType: fileType || 'manual',
+      fileType: normalizedFileType,
       storeName: storeName || '',
       invoiceNumber: invoiceNumber || '',
       purchaseDate: parsedPurchaseDate,
