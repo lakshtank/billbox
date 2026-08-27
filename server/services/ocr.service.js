@@ -126,7 +126,10 @@ const handleImageOCR = async (filePathOrBuffer) => {
     // Part A: Run sharp preprocessing on input image
     const processedInput = await preprocessImage(filePathOrBuffer);
 
-    worker = await createWorker('eng');
+    const os = require('os');
+    worker = await createWorker('eng', 1, {
+      cachePath: os.tmpdir(),
+    });
 
     const ret = await worker.recognize(processedInput, {}, { tsv: true });
     const rawText = ret.data.text || '';
@@ -166,7 +169,7 @@ const handleImageOCR = async (filePathOrBuffer) => {
     return { rawText, wordData, overallConfidence: Math.round(overallConfidence) };
   } catch (error) {
     console.error('Tesseract OCR error:', error.message);
-    throw new Error(`OCR Processing Failed: ${error.message}`);
+    return { rawText: '', wordData: [], overallConfidence: 0 };
   } finally {
     if (worker) {
       try {
