@@ -117,16 +117,16 @@ const generateGeminiContentWithFallback = async (ai, contentPayload, config, ope
   const isServerless = Boolean(
     process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
   );
-  const timeoutMs = isServerless ? 15000 : 9000;
+  const timeoutMs = 25000;
 
   const customModel = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
   const models = Array.from(
     new Set([
       ...customModel,
+      'gemini-flash-latest',
+      'gemini-3.5-flash-lite',
       'gemini-3.8-flash',
       'gemini-3.5-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-2.5-flash',
     ])
   );
 
@@ -236,6 +236,18 @@ Extract the structured details and return ONLY a valid JSON object matching this
   return null;
 };
 
+const parseNumericValue = (val, fallback = null) => {
+  if (typeof val === 'number' && !isNaN(val)) return val;
+  if (!val) return fallback;
+  if (typeof val === 'string') {
+    // Strip currency codes, symbols, commas, e.g. "INR 877,813.20" -> 877813.20
+    const cleaned = val.replace(/[^0-9.-]/g, '');
+    const num = parseFloat(cleaned);
+    return !isNaN(num) ? num : fallback;
+  }
+  return fallback;
+};
+
 const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
   const storeVal = sanitizeTextString(llmResult.storeName);
   const invVal = sanitizeTextString(llmResult.invoiceNumber);
@@ -276,12 +288,12 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
     return 'INR';
   })();
 
-  const subtotalVal = typeof llmResult.subtotal === 'number' && !isNaN(llmResult.subtotal) ? Number(llmResult.subtotal) : null;
-  const discountVal = typeof llmResult.discountAmount === 'number' && !isNaN(llmResult.discountAmount) ? Number(llmResult.discountAmount) : 0;
-  const discountPercentVal = typeof llmResult.discountPercent === 'number' && !isNaN(llmResult.discountPercent) ? Number(llmResult.discountPercent) : 0;
-  let shippingVal = typeof llmResult.shippingAmount === 'number' && !isNaN(llmResult.shippingAmount) ? Number(llmResult.shippingAmount) : 0;
-  const taxVal = typeof llmResult.taxAmount === 'number' && !isNaN(llmResult.taxAmount) ? Number(llmResult.taxAmount) : 0;
-  const grandTotalVal = typeof llmResult.grandTotal === 'number' && !isNaN(llmResult.grandTotal) ? Number(llmResult.grandTotal) : null;
+  const subtotalVal = parseNumericValue(llmResult.subtotal, null);
+  const discountVal = parseNumericValue(llmResult.discountAmount, 0);
+  const discountPercentVal = parseNumericValue(llmResult.discountPercent, 0);
+  let shippingVal = parseNumericValue(llmResult.shippingAmount, 0);
+  const taxVal = parseNumericValue(llmResult.taxAmount, 0);
+  const grandTotalVal = parseNumericValue(llmResult.grandTotal, null);
   const grandTotalConf = grandTotalVal != null ? 90 : 0;
 
   // Filter out non-merchandise fee line items
@@ -302,39 +314,31 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
     const prodName = sanitizeTextString(item.productName);
 
     if (isFeeItem(prodName)) {
-      const feeAmt = typeof item.lineTotal === 'number' ? item.lineTotal : (typeof item.unitPrice === 'number' ? item.unitPrice : 0);
+      const feeAmt = parseNumericValue(item.lineTotal, parseNumericValue(item.unitPrice, 0));
       shippingVal += feeAmt;
       continue;
     }
 
     const brandVal = sanitizeTextString(item.brand);
     const categoryVal = sanitizeTextString(item.category) || 'Others';
-    const quantity = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
-    const qtyNeedsReview = item.quantity === 'Not mentioned' || item.quantity == null || isNaN(Number(item.quantity));
+    const rawQty = parseNumericValue(item.quantity, 1);
+    const quantity = Number(rawQty) > 0 ? Number(rawQty) : 1;
+    const qtyNeedsReview = item.quantity === 'Not mentioned' || item.quantity == null || isNaN(Number(quantity));
 
-    const unitPrice = typeof item.unitPrice === 'number' && !isNaN(item.unitPrice)
-      ? Number(item.unitPrice)
-      : (typeof item.lineTotal === 'number' && !isNaN(item.lineTotal) ? Number(item.lineTotal) / quantity : null);
+    const parsedUnitPrice = parseNumericValue(item.unitPrice, null);
+    const parsedLineTotal = parseNumericValue(item.lineTotal, null);
+    const unitPrice = parsedUnitPrice != null
+      ? parsedUnitPrice
+      : (parsedLineTotal != null ? parsedLineTotal / quantity : null);
 
-    const originalUnitPrice = typeof item.originalUnitPrice === 'number' && !isNaN(item.originalUnitPrice)
-      ? Number(item.originalUnitPrice)
-      : unitPrice;
-
-    const discountAmount = typeof item.discountAmount === 'number' && !isNaN(item.discountAmount)
-      ? Number(item.discountAmount)
-      : 0;
-
-    const discountPercent = typeof item.discountPercent === 'number' && !isNaN(item.discountPercent)
-      ? Number(item.discountPercent)
-      : 0;
-
-    const lineTotal = typeof item.lineTotal === 'number' && !isNaN(item.lineTotal)
-      ? Number(item.lineTotal)
+    const originalUnitPrice = parseNumericValue(item.originalUnitPrice, unitPrice);
+    const discountAmount = parseNumericValue(item.discountAmount, 0);
+    const discountPercent = parseNumericValue(item.discountPercent, 0);
+    const lineTotal = parsedLineTotal != null
+      ? parsedLineTotal
       : (unitPrice != null ? unitPrice * quantity : null);
 
-    const warrantyValue = typeof item.warrantyPeriodValue === 'number' && !isNaN(item.warrantyPeriodValue)
-      ? Number(item.warrantyPeriodValue)
-      : null;
+    const warrantyValue = parseNumericValue(item.warrantyPeriodValue, null);
 
     const warrantyUnit = ['days', 'weeks', 'months', 'years'].includes(item.warrantyPeriodUnit)
       ? item.warrantyPeriodUnit
@@ -595,6 +599,95 @@ const extractFields = async (rawText, wordData = [], userCategories = [], option
   return extractFieldsRegex(rawText, wordData);
 };
 
+const extractAllProductsRegex = (lines, rawText, storeNameVal, wordData, totalAmountVal, warrantyPeriod) => {
+  const extracted = [];
+  const SKIP_PRODUCT_ROW = /^(?:no\.?|sl\.?|item|description|particulars|qty|quantity|rate|price|amount|tax|gst|sgst|cgst|igst|vat|total|subtotal|discount|round|balance|paid|change|cash|card|upi|invoice|date|time|store|thank|welcome|visit|terms|conditions|authorized|signature|seller|client|buyer|summary|gross|worth|um|pcs|nos)\b/i;
+
+  // Strategy 1: Look for numbered product rows (e.g. "1. Realme GT 5...", "2. JBL Flip 6...", "01. ...")
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const numberedMatch = l.match(/^\s*(\d{1,2})[\.\)]\s+(.+)/);
+    if (numberedMatch) {
+      const rest = numberedMatch[2].trim();
+      const amounts = rest.match(/[\d,]+(?:\.\d{2})/g) || [];
+      const lineTotal = amounts.length > 0 ? parseFloat(amounts[amounts.length - 1].replace(/,/g, '')) : null;
+      const qtyMatch = rest.match(/\b(\d+(?:\.\d+)?)\s*(?:pcs|nos|units|kg|g|pack|pkts?)\b/i);
+      const quantity = qtyMatch ? parseFloat(qtyMatch[1]) : 1;
+      
+      let prodName = rest;
+      if (qtyMatch) {
+        prodName = rest.substring(0, qtyMatch.index).trim();
+      } else if (amounts.length > 0) {
+        const firstAmtIdx = rest.indexOf(amounts[0]);
+        if (firstAmtIdx > 3) prodName = rest.substring(0, firstAmtIdx).trim();
+      }
+      prodName = sanitizeTextString(prodName.replace(/^[0-9.\s]+/, '')).trim();
+
+      if (prodName.length > 2 && !SKIP_PRODUCT_ROW.test(prodName)) {
+        const conf = computeWordConfidence(prodName, wordData) || 85;
+        extracted.push({
+          id: `item-${extracted.length + 1}-${Date.now()}`,
+          productName: prodName,
+          brand: '',
+          category: 'Others',
+          quantity: quantity > 0 ? quantity : 1,
+          unitPrice: lineTotal && quantity > 0 ? Number((lineTotal / quantity).toFixed(2)) : (totalAmountVal || null),
+          lineTotal: lineTotal || (totalAmountVal || null),
+          warrantyPeriodValue: warrantyPeriod?.value || null,
+          warrantyPeriodUnit: warrantyPeriod?.unit || 'months',
+          confidence: conf,
+          needsReview: conf < 60,
+        });
+      }
+    }
+  }
+
+  // Strategy 2: If no numbered rows found, scan rows under table headers (ITEMS, DESCRIPTION, PARTICULARS)
+  if (extracted.length === 0) {
+    let inTable = false;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (KEYWORDS.TABLE_HEADER.some((r) => r.test(l))) {
+        inTable = true;
+        continue;
+      }
+      if (inTable) {
+        if (/^(?:total|subtotal|grand\s*total|summary|vat|gst|tax|authorized|thank)/i.test(l)) {
+          break;
+        }
+        if (l.length > 3 && !SKIP_PRODUCT_ROW.test(l) && !NON_PRODUCT_LINE.test(l)) {
+          const amounts = l.match(/[\d,]+(?:\.\d{2})/g) || [];
+          const lineTotal = amounts.length > 0 ? parseFloat(amounts[amounts.length - 1].replace(/,/g, '')) : null;
+          let prodName = l;
+          if (amounts.length > 0) {
+            const firstAmtIdx = l.indexOf(amounts[0]);
+            if (firstAmtIdx > 3) prodName = l.substring(0, firstAmtIdx).trim();
+          }
+          prodName = sanitizeTextString(prodName.replace(/^[0-9.\s]+/, '')).trim();
+          if (prodName.length > 2 && !SKIP_PRODUCT_ROW.test(prodName)) {
+            const conf = computeWordConfidence(prodName, wordData) || 80;
+            extracted.push({
+              id: `item-${extracted.length + 1}-${Date.now()}`,
+              productName: prodName,
+              brand: '',
+              category: 'Others',
+              quantity: 1,
+              unitPrice: lineTotal || null,
+              lineTotal: lineTotal || null,
+              warrantyPeriodValue: warrantyPeriod?.value || null,
+              warrantyPeriodUnit: warrantyPeriod?.unit || 'months',
+              confidence: conf,
+              needsReview: conf < 60,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return extracted;
+};
+
 const extractFieldsRegex = (rawText, wordData = []) => {
   // Sanitize non-printable control characters & stray OCR noise symbols into spaces
   const cleanRawText = (rawText || '').replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F\uFFFD≡©®™|~^]/g, ' ');
@@ -633,22 +726,27 @@ const extractFieldsRegex = (rawText, wordData = []) => {
   const invStatus = getFieldStatus(invVal, invoiceNumber.confidence);
   const prodStatus = getFieldStatus(prodVal, productName.confidence);
 
-  const items = [];
-  if (prodVal) {
-    items.push({
-      id: `item-1-${Date.now()}`,
-      productName: prodVal,
-      brand: '',
-      category: 'Others',
-      quantity: 1,
-      unitPrice: totalAmount.value,
-      lineTotal: totalAmount.value,
-      warrantyPeriodValue: warrantyPeriod.value,
-      warrantyPeriodUnit: warrantyPeriod.unit || 'months',
-      confidence: productName.confidence,
-      needsReview: prodStatus !== 'confident',
-    });
-  }
+  // Extract multiple products if available; fallback to primary single product
+  const multiProducts = extractAllProductsRegex(lines, cleanRawText, storeVal, wordData, totalAmount.value, warrantyPeriod);
+  const items = multiProducts.length > 0
+    ? multiProducts
+    : (prodVal
+        ? [
+            {
+              id: `item-1-${Date.now()}`,
+              productName: prodVal,
+              brand: '',
+              category: 'Others',
+              quantity: 1,
+              unitPrice: totalAmount.value,
+              lineTotal: totalAmount.value,
+              warrantyPeriodValue: warrantyPeriod.value,
+              warrantyPeriodUnit: warrantyPeriod.unit || 'months',
+              confidence: productName.confidence,
+              needsReview: prodStatus !== 'confident',
+            },
+          ]
+        : []);
 
   const extracted = {
     storeName: {

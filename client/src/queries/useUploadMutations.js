@@ -3,8 +3,8 @@ import api from '../api/axios';
 
 export const isOfflineModeActive = () => {
   if (typeof window === 'undefined') return false;
-  // Strict rule: Gemini only shuts down and local OCR only runs when user explicitly clicked the button
-  return localStorage.getItem('billbox_offline_mode') === 'true';
+  // Strict rule: Gemini is active by default. Shuts down only if explicitly toggled in current session.
+  return sessionStorage.getItem('billbox_offline_mode') === 'true';
 };
 
 export const useUploadSingle = () => {

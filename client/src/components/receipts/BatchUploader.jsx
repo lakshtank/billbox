@@ -27,12 +27,17 @@ const BatchUploader = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
 
+  useEffect(() => {
+    localStorage.removeItem('billbox_offline_mode');
+  }, []);
+
   // Strictly respect user button click only (no automatic flipping on network events)
   const toggleOfflineMode = (e) => {
     e.stopPropagation();
     const nextVal = !forceOfflineMode;
     setForceOfflineMode(nextVal);
-    localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    sessionStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    localStorage.removeItem('billbox_offline_mode');
     if (nextVal) {
       toast.success('⚡ Gemini shut down: Processing batch strictly via local Offline OCR');
     } else {

@@ -20,12 +20,18 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
   const [dragError, setDragError] = useState('');
   const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
 
+  useEffect(() => {
+    // Clear legacy lock from previous tests so Gemini is always active by default
+    localStorage.removeItem('billbox_offline_mode');
+  }, []);
+
   // Strictly respect user button click only (no automatic flipping on network events)
   const toggleOfflineMode = (e) => {
     e.stopPropagation();
     const nextVal = !forceOfflineMode;
     setForceOfflineMode(nextVal);
-    localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    sessionStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    localStorage.removeItem('billbox_offline_mode');
     if (nextVal) {
       toast.success('⚡ Gemini shut down: Processing strictly via local Offline OCR');
     } else {
