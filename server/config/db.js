@@ -41,5 +41,4 @@ const connectDB = async () => {
   return cached.conn;
 };
 
-module.exports = connectDB;
-7777777
+module.exports = connectDB;

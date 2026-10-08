@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import toast from 'react-hot-toast';
-import { useUploadSingle } from '../../queries/useUploadMutations';
+import { Zap, Wifi, WifiOff } from 'lucide-react';
+import { useUploadSingle, isOfflineModeActive } from '../../queries/useUploadMutations';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const MAX_FILE_SIZE_MB = 10;
@@ -17,6 +18,32 @@ const ALLOWED_TYPES = {
 const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
   const uploadMutation = useUploadSingle();
   const [dragError, setDragError] = useState('');
+  const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
+
+  // Listen to network online/offline events
+  useEffect(() => {
+    const handleStatus = () => {
+      setForceOfflineMode(isOfflineModeActive());
+    };
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
+    return () => {
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
+    };
+  }, []);
+
+  const toggleOfflineMode = (e) => {
+    e.stopPropagation();
+    const nextVal = !forceOfflineMode;
+    setForceOfflineMode(nextVal);
+    localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    if (nextVal) {
+      toast.success('⚡ Instant Offline Engine activated (Zero cloud latency)');
+    } else {
+      toast('🌐 Cloud AI Mode enabled (Auto-switches to local if internet lags)', { icon: 'ℹ️' });
+    }
+  };
 
   const handleDrop = useCallback(
     (acceptedFiles, rejectedFiles) => {
@@ -45,7 +72,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
 
       const file = acceptedFiles[0];
 
-      uploadMutation.mutate(file, {
+      uploadMutation.mutate({ file, forceOffline: forceOfflineMode }, {
         onSuccess: (data) => {
           if (data.handwritingDetected) {
             toast.error('Handwriting or low-confidence receipt detected. Redirecting to manual entry.');
@@ -53,7 +80,12 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
               onHandwritingDetected(data);
             }
           } else {
-            toast.success('Receipt scanned successfully!');
+            const isLocal = data.engine === 'local-offline' || forceOfflineMode;
+            toast.success(
+              isLocal
+                ? '⚡ Receipt scanned instantly via Local Offline OCR!'
+                : 'Receipt scanned successfully!'
+            );
             if (onSuccess) {
               onSuccess(data);
             }
@@ -66,7 +98,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
         },
       });
     },
-    [uploadMutation, onSuccess, onHandwritingDetected]
+    [uploadMutation, onSuccess, onHandwritingDetected, forceOfflineMode]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -79,7 +111,52 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
 
   return (
     <div className="space-y-4 text-[#0F172A]">
-      {/* Quiet, Minimal Single Scan Dropzone with 1px Dashed #E2E8F0 Hairline Border */}
+      {/* Network & Demo Mode Control Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs">
+        <div className="flex items-center gap-2.5">
+          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${forceOfflineMode ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            <Zap className="w-4 h-4" />
+          </span>
+          <div>
+            <div className="font-semibold text-slate-800 flex items-center gap-2">
+              <span>{forceOfflineMode ? '⚡ Fast Offline Engine' : '🌐 Hybrid Cloud AI Mode'}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                {forceOfflineMode ? 'Offline Demo Active' : 'Online'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-normal">
+              {forceOfflineMode
+                ? 'Processes directly on your PC using local Tesseract — Zero cloud latency (<2s)'
+                : 'Uses Gemini Vision with 3s auto-fallback to local engine on slow internet'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleOfflineMode}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+            forceOfflineMode
+              ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
+          }`}
+          title="Toggle between instant offline engine and cloud AI"
+        >
+          {forceOfflineMode ? (
+            <>
+              <WifiOff className="w-3.5 h-3.5" />
+              <span>Offline Mode: ON</span>
+            </>
+          ) : (
+            <>
+              <Zap className="w-3.5 h-3.5" />
+              <span>Force Fast Offline</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Single Scan Dropzone */}
       <div
         {...getRootProps()}
         className={`rounded-xl border border-dashed text-center cursor-pointer transition-colors p-8 md:p-12 ${
@@ -94,9 +171,13 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
           <div className="py-6 flex flex-col items-center justify-center space-y-3">
             <LoadingSpinner size="lg" />
             <div className="space-y-1">
-              <p className="text-sm font-bold text-[#0F172A]">Scanning receipt with OCR...</p>
+              <p className="text-sm font-bold text-[#0F172A]">
+                {forceOfflineMode ? '⚡ Processing with Local Offline OCR...' : 'Scanning receipt with OCR...'}
+              </p>
               <p className="text-xs text-[#64748B] font-normal">
-                Extracting store, items, dates, and prices. Please wait a moment.
+                {forceOfflineMode
+                  ? 'Extracting merchant, line items, and warranty on-device with zero network wait.'
+                  : 'Extracting store, items, dates, and prices. Auto-switching to local if network slows.'}
               </p>
             </div>
           </div>

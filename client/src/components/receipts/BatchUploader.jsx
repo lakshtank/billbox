@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useUploadBatch, useBatchStatusQuery } from '../../queries/useUploadMutations';
+import { Zap, WifiOff } from 'lucide-react';
+import { useUploadBatch, useBatchStatusQuery, isOfflineModeActive } from '../../queries/useUploadMutations';
 import useUiStore from '../../store/uiStore';
 import LoadingSpinner from '../common/LoadingSpinner';
 
@@ -24,6 +25,29 @@ const BatchUploader = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [errorMsg, setErrorMsg] = useState('');
+  const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
+
+  useEffect(() => {
+    const handleStatus = () => setForceOfflineMode(isOfflineModeActive());
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
+    return () => {
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
+    };
+  }, []);
+
+  const toggleOfflineMode = (e) => {
+    e.stopPropagation();
+    const nextVal = !forceOfflineMode;
+    setForceOfflineMode(nextVal);
+    localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
+    if (nextVal) {
+      toast.success('⚡ Fast Offline Engine active for batch processing');
+    } else {
+      toast('🌐 Cloud AI Mode enabled for batch processing', { icon: 'ℹ️' });
+    }
+  };
 
   const { data: batchData } = useBatchStatusQuery(activeBatchId);
 
@@ -88,9 +112,9 @@ const BatchUploader = () => {
       return;
     }
 
-    uploadBatchMutation.mutate(selectedFiles, {
+    uploadBatchMutation.mutate({ files: selectedFiles, forceOffline: forceOfflineMode }, {
       onSuccess: (data) => {
-        toast.success(`Batch upload started for ${selectedFiles.length} files!`);
+        toast.success(`Batch upload started for ${selectedFiles.length} files (${forceOfflineMode ? 'Local Engine' : 'Cloud AI'})!`);
         setActiveBatchId(data.batchId);
       },
       onError: (err) => {
@@ -124,7 +148,52 @@ const BatchUploader = () => {
     <div className="space-y-6 font-sans text-[#0F172A]">
       {/* File Selection Mode */}
       {!isProcessingBatch && (
-        <div className="space-y-6">
+        <div className="space-y-4">
+          {/* Network & Demo Mode Control Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs">
+            <div className="flex items-center gap-2.5">
+              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${forceOfflineMode ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                <Zap className="w-4 h-4" />
+              </span>
+              <div>
+                <div className="font-semibold text-slate-800 flex items-center gap-2">
+                  <span>{forceOfflineMode ? '⚡ Fast Offline Engine' : '🌐 Hybrid Cloud AI Mode'}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                    {forceOfflineMode ? 'Offline Demo Active' : 'Online'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-normal">
+                  {forceOfflineMode
+                    ? 'Processes files locally in parallel on your PC — Zero cloud latency'
+                    : 'Uses Gemini Vision with 3s auto-fallback to local engine on slow internet'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleOfflineMode}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                forceOfflineMode
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
+              }`}
+              title="Toggle between instant offline engine and cloud AI"
+            >
+              {forceOfflineMode ? (
+                <>
+                  <WifiOff className="w-3.5 h-3.5" />
+                  <span>Offline Mode: ON</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Force Fast Offline</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {selectedFiles.length === 0 && (
             <div
               {...getRootProps()}

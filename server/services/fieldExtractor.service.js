@@ -97,11 +97,26 @@ const sanitizeTextString = (str) => {
 
 const { GoogleGenAI } = require('@google/genai');
 
+const withTimeout = (promise, ms = 3000, tag = 'Cloud AI') => {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`${tag} timed out after ${ms}ms (slow/intermittent network detected)`));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+};
+
 /**
  * Part B: Asynchronous helper to call Google Gemini API directly with model 'gemini-3.6-flash'
- * If API key missing, rate-limited, or error occurs, returns null and falls back to regex.
+ * If API key missing, rate-limited, timeout occurs (>3s), or forceOffline is set, returns null and falls back to regex.
  */
-const runGeminiLLMExtraction = async (rawText, userCategories = []) => {
+const runGeminiLLMExtraction = async (rawText, userCategories = [], options = {}) => {
+  if (options.forceOffline || options.skipLlm || process.env.OFFLINE_MODE === 'true') {
+    return null;
+  }
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.log('[OCR Pipeline] GEMINI_API_KEY not provided — falling back to regex parser.');
@@ -161,13 +176,17 @@ Extract the structured details and return ONLY a valid JSON object matching this
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
-    });
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      }),
+      3000,
+      'Gemini LLM'
+    );
 
     if (response && response.text) {
       const parsedData = JSON.parse(response.text.trim());
@@ -175,7 +194,7 @@ Extract the structured details and return ONLY a valid JSON object matching this
       return parsedData;
     }
   } catch (err) {
-    console.error('[OCR Pipeline] Gemini LLM extraction failed — falling back to regex:', err.message);
+    console.warn('[OCR Pipeline] Fast fallback triggered: ' + err.message + ' — running local regex parser.');
   }
   return null;
 };
@@ -390,7 +409,10 @@ try {
 /**
  * Direct multimodal extraction using Gemini Vision on the raw document buffer (Fast & 100% reliable on Vercel)
  */
-const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategories = []) => {
+const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategories = [], options = {}) => {
+  if (options.forceOffline || process.env.OFFLINE_MODE === 'true') {
+    return null;
+  }
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || !fileBuffer) return null;
 
@@ -472,29 +494,33 @@ Extract the structured details and return ONLY a valid JSON object matching this
   ]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              inlineData: {
-                mimeType: effectiveMimeType,
-                data: base64Data,
+    const response = await withTimeout(
+      ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType: effectiveMimeType,
+                  data: base64Data,
+                },
               },
-            },
-            {
-              text: prompt,
-            },
-          ],
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.1,
         },
-      ],
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.1,
-      },
-    });
+      }),
+      3000,
+      'Gemini Vision'
+    );
 
     if (response && response.text) {
       const parsedData = JSON.parse(response.text.trim());
@@ -507,16 +533,19 @@ Extract the structured details and return ONLY a valid JSON object matching this
       };
     }
   } catch (err) {
-    console.error('[OCR Pipeline] Direct Gemini Vision extraction error:', err.message);
+    console.warn('[OCR Pipeline] Direct Gemini Vision fallback triggered: ' + err.message);
   }
   return null;
 };
 
 // ─── Main Stage 2 Field Extractor ────────────────────────────────────────────
 
-const extractFields = async (rawText, wordData = [], userCategories = []) => {
-  // Try Part B LLM structured extraction first
-  const llmResult = await runGeminiLLMExtraction(rawText, userCategories);
+const extractFields = async (rawText, wordData = [], userCategories = [], options = {}) => {
+  // If forced offline or told to skip LLM due to slow connection, skip LLM immediately!
+  let llmResult = null;
+  if (!options.forceOffline && !options.skipLlm && process.env.OFFLINE_MODE !== 'true') {
+    llmResult = await runGeminiLLMExtraction(rawText, userCategories, options);
+  }
 
   if (llmResult) {
     try {

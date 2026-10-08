@@ -127,8 +127,12 @@ const handleImageOCR = async (filePathOrBuffer) => {
     const processedInput = await preprocessImage(filePathOrBuffer);
 
     const os = require('os');
+    const localDir = path.resolve(__dirname, '..');
+    const hasLocalModel = fs.existsSync(path.join(localDir, 'eng.traineddata'));
+
     worker = await createWorker('eng', 1, {
-      cachePath: os.tmpdir(),
+      langPath: hasLocalModel ? localDir : undefined,
+      cachePath: hasLocalModel ? localDir : os.tmpdir(),
     });
 
     const ret = await worker.recognize(processedInput, {}, { tsv: true });

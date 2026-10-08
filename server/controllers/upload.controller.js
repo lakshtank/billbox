@@ -33,15 +33,25 @@ const uploadSingle = async (req, res) => {
       fileData = fileBuffer.toString('base64');
     }
 
+    // Check if offline/fast mode is requested by client or server environment
+    const isClientForceOffline = 
+      req.headers['x-force-offline'] === 'true' || 
+      req.query.offline === 'true' || 
+      req.body.offline === 'true' ||
+      process.env.OFFLINE_MODE === 'true';
+
     // Fetch user categories to guide Gemini classification
     const userCategories = await getUserCategoryNames(req.userId);
 
-    // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision (bypasses heavy Tesseract WASM on Vercel)
-    if (fileBuffer && process.env.GEMINI_API_KEY) {
+    let directResult = null;
+    let cloudAiFailed = false;
+
+    // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision (if not forced offline)
+    if (!isClientForceOffline && fileBuffer && process.env.GEMINI_API_KEY) {
       try {
-        const directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, userCategories);
+        directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, userCategories, { forceOffline: isClientForceOffline });
         if (directResult && directResult.extracted) {
-          return sendSuccess(res, 200, 'File uploaded and AI processed', {
+          return sendSuccess(res, 200, 'File uploaded and AI processed (Cloud AI)', {
             fileUrl,
             fileType,
             fileData,
@@ -49,14 +59,18 @@ const uploadSingle = async (req, res) => {
             extracted: directResult.extracted,
             ocrRaw: directResult.rawText || '',
             handwritingDetected: false,
+            engine: 'cloud-ai',
           });
+        } else {
+          cloudAiFailed = true;
         }
       } catch (directErr) {
+        cloudAiFailed = true;
         console.warn('Direct Gemini Vision extraction fallback:', directErr.message);
       }
     }
 
-    // Step 2: Fallback traditional OCR runner
+    // Step 2: Fallback traditional OCR runner (Local Tesseract + Fast Rule Engine)
     let rawText = '';
     let wordData = [];
     try {
@@ -67,9 +81,12 @@ const uploadSingle = async (req, res) => {
       console.warn('OCR fallback warning:', ocrErr.message);
     }
 
-    const { extracted, handwritingDetected } = await extractFields(rawText, wordData, userCategories);
+    const { extracted, handwritingDetected } = await extractFields(rawText, wordData, userCategories, {
+      forceOffline: isClientForceOffline,
+      skipLlm: isClientForceOffline || cloudAiFailed,
+    });
 
-    return sendSuccess(res, 200, 'File uploaded and processed', {
+    return sendSuccess(res, 200, isClientForceOffline ? 'Processed via Instant Offline Local Engine' : 'File uploaded and processed', {
       fileUrl,
       fileType,
       fileData,
@@ -77,6 +94,7 @@ const uploadSingle = async (req, res) => {
       extracted,
       ocrRaw: rawText,
       handwritingDetected: handwritingDetected || false,
+      engine: 'local-offline',
     });
   } catch (error) {
     console.error('Upload single error:', error);
@@ -89,7 +107,7 @@ const uploadSingle = async (req, res) => {
 };
 
 // Concurrent background processing function for batch upload (Processes up to 3 files in parallel for 3x speedup)
-const processBatchFilesSequentially = async (batchId, files, concurrency = 3) => {
+const processBatchFilesSequentially = async (batchId, files, concurrency = 3, isForceOffline = false) => {
   const batchDoc = await BatchUpload.findById(batchId).select('userId').lean();
   const userCategories = batchDoc ? await getUserCategoryNames(batchDoc.userId) : [];
 
@@ -107,11 +125,11 @@ const processBatchFilesSequentially = async (batchId, files, concurrency = 3) =>
       let isNonReceipt = false;
       let lowConfidenceWarning = false;
 
-      // Try Direct Fast Multimodal Gemini Vision on file buffer first
-      if (fs.existsSync(file.path) && process.env.GEMINI_API_KEY) {
+      // Try Direct Fast Multimodal Gemini Vision on file buffer first (if not forced offline)
+      if (!isForceOffline && fs.existsSync(file.path) && process.env.GEMINI_API_KEY) {
         try {
           const buf = fs.readFileSync(file.path);
-          const direct = await extractFieldsDirectFromDocument(buf, file.mimetype, userCategories);
+          const direct = await extractFieldsDirectFromDocument(buf, file.mimetype, userCategories, { forceOffline: isForceOffline });
           if (direct && direct.extracted) {
             extracted = direct.extracted;
             rawText = direct.rawText || '';
@@ -126,7 +144,10 @@ const processBatchFilesSequentially = async (batchId, files, concurrency = 3) =>
         const ocrRes = await runOCR(file.path, file.mimetype);
         rawText = ocrRes.rawText || '';
         const wordData = ocrRes.wordData || [];
-        const res = await extractFields(rawText, wordData, userCategories);
+        const res = await extractFields(rawText, wordData, userCategories, {
+          forceOffline: isForceOffline,
+          skipLlm: true, // Run local rules immediately
+        });
         extracted = res.extracted;
         handwritingDetected = res.handwritingDetected;
         isNonReceipt = res.isNonReceipt;
@@ -251,8 +272,14 @@ const uploadBatch = async (req, res) => {
       mimetype: file.mimetype,
     }));
 
+    const isForceOffline = 
+      req.headers['x-force-offline'] === 'true' || 
+      req.query.offline === 'true' || 
+      req.body.offline === 'true' ||
+      process.env.OFFLINE_MODE === 'true';
+
     // Start background sequential processing (non-blocking)
-    processBatchFilesSequentially(batchDoc._id, filesToProcess);
+    processBatchFilesSequentially(batchDoc._id, filesToProcess, 3, isForceOffline);
 
     return sendSuccess(res, 200, 'Batch upload started', {
       batchId: batchDoc._id,
