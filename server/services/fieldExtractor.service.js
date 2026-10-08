@@ -515,7 +515,6 @@ Extract the structured details and return ONLY a valid JSON object matching this
   ]
 }`;
 
-    const ai = new GoogleGenAI({ apiKey });
     const result = await generateGeminiContentWithFallback(
       ai,
       {
