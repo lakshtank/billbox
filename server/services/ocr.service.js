@@ -129,13 +129,36 @@ const handleImageOCR = async (filePathOrBuffer) => {
     const os = require('os');
     const localDir = path.resolve(__dirname, '..');
     const hasLocalModel = fs.existsSync(path.join(localDir, 'eng.traineddata'));
+    const isServerless = Boolean(
+      process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
+    );
 
-    worker = await createWorker('eng', 1, {
+    // In Vercel serverless without local traineddata, avoid hanging on remote downloads/worker spawning
+    if (isServerless && !hasLocalModel) {
+      console.warn('Tesseract worker skipped on serverless: local traineddata not found.');
+      return { rawText: '', wordData: [], overallConfidence: 0 };
+    }
+
+    const initWorkerPromise = createWorker('eng', 1, {
       langPath: hasLocalModel ? localDir : undefined,
       cachePath: hasLocalModel ? localDir : os.tmpdir(),
     });
 
-    const ret = await worker.recognize(processedInput, {}, { tsv: true });
+    // 4.5s timeout watchdog for OCR worker initialization
+    worker = await Promise.race([
+      initWorkerPromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Tesseract worker initialization timed out')), 4500)
+      ),
+    ]);
+
+    const recognizePromise = worker.recognize(processedInput, {}, { tsv: true });
+    const ret = await Promise.race([
+      recognizePromise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Tesseract recognize operation timed out')), 4500)
+      ),
+    ]);
     const rawText = ret.data.text || '';
     const overallConfidence = typeof ret.data.confidence === 'number' ? ret.data.confidence : 80;
 

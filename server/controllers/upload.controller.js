@@ -46,12 +46,20 @@ const uploadSingle = async (req, res) => {
     let directResult = null;
     let cloudAiFailed = false;
 
-    // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision (if not forced offline)
-    if (!isClientForceOffline && fileBuffer && process.env.GEMINI_API_KEY) {
+    const isServerless = Boolean(
+      process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
+    );
+
+    // On Vercel / Cloud Serverless, Gemini Vision is the primary working OCR engine (Tesseract WASM is unsupported in Vercel functions).
+    // On Localhost, when isClientForceOffline is true, we bypass Gemini and run local Tesseract.
+    const shouldAttemptGemini = (isServerless || !isClientForceOffline) && fileBuffer && process.env.GEMINI_API_KEY;
+
+    // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision
+    if (shouldAttemptGemini) {
       try {
-        directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, userCategories, { forceOffline: isClientForceOffline });
+        directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, userCategories, { forceOffline: false });
         if (directResult && directResult.extracted) {
-          return sendSuccess(res, 200, 'File uploaded and AI processed (Cloud AI)', {
+          return sendSuccess(res, 200, 'File uploaded and AI processed', {
             fileUrl,
             fileType,
             fileData,
@@ -59,7 +67,7 @@ const uploadSingle = async (req, res) => {
             extracted: directResult.extracted,
             ocrRaw: directResult.rawText || '',
             handwritingDetected: false,
-            engine: 'cloud-ai',
+            engine: isClientForceOffline ? 'local-offline' : 'cloud-ai',
           });
         } else {
           cloudAiFailed = true;
@@ -125,11 +133,16 @@ const processBatchFilesSequentially = async (batchId, files, concurrency = 3, is
       let isNonReceipt = false;
       let lowConfidenceWarning = false;
 
-      // Try Direct Fast Multimodal Gemini Vision on file buffer first (if not forced offline)
-      if (!isForceOffline && fs.existsSync(file.path) && process.env.GEMINI_API_KEY) {
+      const isServerless = Boolean(
+        process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
+      );
+      const shouldAttemptGemini = (isServerless || !isForceOffline) && fs.existsSync(file.path) && process.env.GEMINI_API_KEY;
+
+      // Try Direct Fast Multimodal Gemini Vision on file buffer first
+      if (shouldAttemptGemini) {
         try {
           const buf = fs.readFileSync(file.path);
-          const direct = await extractFieldsDirectFromDocument(buf, file.mimetype, userCategories, { forceOffline: isForceOffline });
+          const direct = await extractFieldsDirectFromDocument(buf, file.mimetype, userCategories, { forceOffline: false });
           if (direct && direct.extracted) {
             extracted = direct.extracted;
             rawText = direct.rawText || '';

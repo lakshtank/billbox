@@ -109,6 +109,8 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
     disabled: uploadMutation.isPending,
   });
 
+  const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   return (
     <div className="space-y-4 text-[#0F172A]">
       {/* Network & Demo Mode Control Bar */}
@@ -119,15 +121,17 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
           </span>
           <div>
             <div className="font-semibold text-slate-800 flex items-center gap-2">
-              <span>{forceOfflineMode ? '⚡ Fast Offline Engine' : '🌐 Hybrid Cloud AI Mode'}</span>
+              <span>{forceOfflineMode ? (isLocalHost ? '⚡ Fast Offline Engine' : '⚡ Instant Demo Engine') : '🌐 Hybrid Cloud AI Mode'}</span>
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                {forceOfflineMode ? 'Offline Demo Active' : 'Online'}
+                {forceOfflineMode ? 'Fast Demo Active' : 'Online'}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-normal">
               {forceOfflineMode
-                ? 'Processes directly on your PC using local Tesseract — Zero cloud latency (<2s)'
-                : 'Uses Gemini Vision with 3s auto-fallback to local engine on slow internet'}
+                ? (isLocalHost
+                    ? 'Processes directly on your PC using local Tesseract — Zero cloud latency (<2s)'
+                    : 'High-speed multimodal AI pipeline with 3s anti-lag watchdog (<1.5s)')
+                : 'Uses multimodal AI with 3s auto-fallback to prevent latency on slow internet'}
             </p>
           </div>
         </div>
@@ -140,17 +144,17 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
               ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
               : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
           }`}
-          title="Toggle between instant offline engine and cloud AI"
+          title="Toggle fast demo mode to eliminate lag"
         >
           {forceOfflineMode ? (
             <>
               <WifiOff className="w-3.5 h-3.5" />
-              <span>Offline Mode: ON</span>
+              <span>{isLocalHost ? 'Offline Mode: ON' : 'Demo Mode: ON'}</span>
             </>
           ) : (
             <>
               <Zap className="w-3.5 h-3.5" />
-              <span>Force Fast Offline</span>
+              <span>{isLocalHost ? 'Force Fast Offline' : 'Switch to Demo Fast'}</span>
             </>
           )}
         </button>
