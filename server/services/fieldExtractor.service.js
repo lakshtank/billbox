@@ -110,10 +110,26 @@ const withTimeout = (promise, ms = 3000, tag = 'Cloud AI') => {
 };
 
 /**
- * Executes a Gemini request trying standard flash models in order (2.5-flash -> 1.5-flash -> 2.0-flash)
+ * Executes a Gemini request trying latest flash models in order:
+ * gemini-3.8-flash -> gemini-3.5-flash -> gemini-3.5-flash-lite -> gemini-2.5-flash
  */
 const generateGeminiContentWithFallback = async (ai, contentPayload, config, operationTag = 'Gemini') => {
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+  const isServerless = Boolean(
+    process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
+  );
+  const timeoutMs = isServerless ? 15000 : 9000;
+
+  const customModel = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
+  const models = Array.from(
+    new Set([
+      ...customModel,
+      'gemini-3.8-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-2.5-flash',
+    ])
+  );
+
   for (const model of models) {
     try {
       const response = await withTimeout(
@@ -122,7 +138,7 @@ const generateGeminiContentWithFallback = async (ai, contentPayload, config, ope
           ...contentPayload,
           config,
         }),
-        4500,
+        timeoutMs,
         `${operationTag} (${model})`
       );
       if (response && response.text) {
