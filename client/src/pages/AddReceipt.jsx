@@ -21,10 +21,10 @@ const AddReceipt = () => {
     setMode('review');
   };
 
-  const handleHandwritingDetected = () => {
-    setOcrData(null);
+  const handleHandwritingDetected = (data) => {
+    setOcrData(data);
     setHandwritingNote(true);
-    setMode('manual');
+    setMode('review');
   };
 
   const handleManualSubmit = (payload) => {

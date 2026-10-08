@@ -75,9 +75,11 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
       uploadMutation.mutate({ file, forceOffline: forceOfflineMode }, {
         onSuccess: (data) => {
           if (data.handwritingDetected) {
-            toast.error('Handwriting or low-confidence receipt detected. Redirecting to manual entry.');
+            toast('📝 Review and verify details with receipt preview', { icon: 'ℹ️' });
             if (onHandwritingDetected) {
               onHandwritingDetected(data);
+            } else if (onSuccess) {
+              onSuccess(data);
             }
           } else {
             const isLocal = data.engine === 'local-offline' || forceOfflineMode;

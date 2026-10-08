@@ -110,8 +110,34 @@ const withTimeout = (promise, ms = 3000, tag = 'Cloud AI') => {
 };
 
 /**
- * Part B: Asynchronous helper to call Google Gemini API directly with model 'gemini-3.6-flash'
- * If API key missing, rate-limited, timeout occurs (>3s), or forceOffline is set, returns null and falls back to regex.
+ * Executes a Gemini request trying standard flash models in order (2.5-flash -> 1.5-flash -> 2.0-flash)
+ */
+const generateGeminiContentWithFallback = async (ai, contentPayload, config, operationTag = 'Gemini') => {
+  const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+  for (const model of models) {
+    try {
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model,
+          ...contentPayload,
+          config,
+        }),
+        4500,
+        `${operationTag} (${model})`
+      );
+      if (response && response.text) {
+        return { text: response.text, model };
+      }
+    } catch (err) {
+      console.warn(`[OCR Pipeline] ${operationTag} attempt with model '${model}' failed: ${err.message}`);
+    }
+  }
+  return null;
+};
+
+/**
+ * Part B: Asynchronous helper to call Google Gemini API with automatic model fallback
+ * If API key missing, rate-limited, timeout occurs, or forceOffline is set, returns null and falls back to regex.
  */
 const runGeminiLLMExtraction = async (rawText, userCategories = [], options = {}) => {
   if (options.forceOffline || options.skipLlm || process.env.OFFLINE_MODE === 'true') {
@@ -176,21 +202,16 @@ Extract the structured details and return ONLY a valid JSON object matching this
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const response = await withTimeout(
-      ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        },
-      }),
-      3000,
+    const result = await generateGeminiContentWithFallback(
+      ai,
+      { contents: prompt },
+      { responseMimeType: 'application/json' },
       'Gemini LLM'
     );
 
-    if (response && response.text) {
-      const parsedData = JSON.parse(response.text.trim());
-      console.log('[OCR Pipeline] Gemini LLM extraction succeeded (model: gemini-3.6-flash)');
+    if (result && result.text) {
+      const parsedData = JSON.parse(result.text.trim());
+      console.log(`[OCR Pipeline] Gemini LLM extraction succeeded (model: ${result.model})`);
       return parsedData;
     }
   } catch (err) {
@@ -494,9 +515,10 @@ Extract the structured details and return ONLY a valid JSON object matching this
   ]
 }`;
 
-    const response = await withTimeout(
-      ai.models.generateContent({
-        model: 'gemini-3.6-flash',
+    const ai = new GoogleGenAI({ apiKey });
+    const result = await generateGeminiContentWithFallback(
+      ai,
+      {
         contents: [
           {
             role: 'user',
@@ -513,18 +535,17 @@ Extract the structured details and return ONLY a valid JSON object matching this
             ],
           },
         ],
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.1,
-        },
-      }),
-      3000,
+      },
+      {
+        responseMimeType: 'application/json',
+        temperature: 0.1,
+      },
       'Gemini Vision'
     );
 
-    if (response && response.text) {
-      const parsedData = JSON.parse(response.text.trim());
-      console.log('[OCR Pipeline] Direct Gemini Vision extraction succeeded (model: gemini-3.6-flash)');
+    if (result && result.text) {
+      const parsedData = JSON.parse(result.text.trim());
+      console.log(`[OCR Pipeline] Direct Gemini Vision extraction succeeded (model: ${result.model})`);
       const mapped = mapLlmResultToExtracted(parsedData, parsedData.rawText || '', []);
       return {
         extracted: mapped.extracted,

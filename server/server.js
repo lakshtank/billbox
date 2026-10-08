@@ -154,7 +154,13 @@ app.use('/api/public/receipts', publicReceiptRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'BillBox API is running' });
+  res.json({
+    success: true,
+    message: 'BillBox API is running',
+    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+    geminiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0,
+    isServerless: Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION),
+  });
 });
 
 // 404 handler
