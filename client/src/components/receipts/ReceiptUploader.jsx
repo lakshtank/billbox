@@ -20,28 +20,16 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
   const [dragError, setDragError] = useState('');
   const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
 
-  // Listen to network online/offline events
-  useEffect(() => {
-    const handleStatus = () => {
-      setForceOfflineMode(isOfflineModeActive());
-    };
-    window.addEventListener('online', handleStatus);
-    window.addEventListener('offline', handleStatus);
-    return () => {
-      window.removeEventListener('online', handleStatus);
-      window.removeEventListener('offline', handleStatus);
-    };
-  }, []);
-
+  // Strictly respect user button click only (no automatic flipping on network events)
   const toggleOfflineMode = (e) => {
     e.stopPropagation();
     const nextVal = !forceOfflineMode;
     setForceOfflineMode(nextVal);
     localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
     if (nextVal) {
-      toast.success('⚡ Instant Offline Engine activated (Zero cloud latency)');
+      toast.success('⚡ Gemini shut down: Processing strictly via local Offline OCR');
     } else {
-      toast('🌐 Cloud AI Mode enabled (Auto-switches to local if internet lags)', { icon: 'ℹ️' });
+      toast.success('✨ Gemini AI activated: Processing via latest Google Gemini models');
     }
   };
 
@@ -123,17 +111,15 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
           </span>
           <div>
             <div className="font-semibold text-slate-800 flex items-center gap-2">
-              <span>{forceOfflineMode ? (isLocalHost ? '⚡ Fast Offline Engine' : '⚡ Instant Demo Engine') : '🌐 Hybrid Cloud AI Mode'}</span>
+              <span>{forceOfflineMode ? '⚡ Offline Engine Active (Gemini Shut Down)' : '🤖 Google Gemini AI Engine Active'}</span>
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                {forceOfflineMode ? 'Fast Demo Active' : 'Online'}
+                {forceOfflineMode ? 'Gemini OFF' : 'Gemini AI'}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-normal">
               {forceOfflineMode
-                ? (isLocalHost
-                    ? 'Processes directly on your PC using local Tesseract — Zero cloud latency (<2s)'
-                    : 'High-speed multimodal AI pipeline with 3s anti-lag watchdog (<1.5s)')
-                : 'Uses multimodal AI with 3s auto-fallback to prevent latency on slow internet'}
+                ? 'Gemini is shut down. Processing strictly via local OCR & rule extractor.'
+                : 'Processing via latest Gemini Flash models. Click button to shut down Gemini and use offline OCR.'}
             </p>
           </div>
         </div>
@@ -146,17 +132,17 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
               ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
               : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
           }`}
-          title="Toggle fast demo mode to eliminate lag"
+          title="Toggle Gemini shutdown and offline OCR"
         >
           {forceOfflineMode ? (
             <>
               <WifiOff className="w-3.5 h-3.5" />
-              <span>{isLocalHost ? 'Offline Mode: ON' : 'Demo Mode: ON'}</span>
+              <span>Offline Mode: ON (Gemini OFF)</span>
             </>
           ) : (
             <>
               <Zap className="w-3.5 h-3.5" />
-              <span>{isLocalHost ? 'Force Fast Offline' : 'Switch to Demo Fast'}</span>
+              <span>Shut Down Gemini (Offline OCR)</span>
             </>
           )}
         </button>

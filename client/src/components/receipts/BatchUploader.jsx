@@ -27,25 +27,16 @@ const BatchUploader = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [forceOfflineMode, setForceOfflineMode] = useState(() => isOfflineModeActive());
 
-  useEffect(() => {
-    const handleStatus = () => setForceOfflineMode(isOfflineModeActive());
-    window.addEventListener('online', handleStatus);
-    window.addEventListener('offline', handleStatus);
-    return () => {
-      window.removeEventListener('online', handleStatus);
-      window.removeEventListener('offline', handleStatus);
-    };
-  }, []);
-
+  // Strictly respect user button click only (no automatic flipping on network events)
   const toggleOfflineMode = (e) => {
     e.stopPropagation();
     const nextVal = !forceOfflineMode;
     setForceOfflineMode(nextVal);
     localStorage.setItem('billbox_offline_mode', nextVal ? 'true' : 'false');
     if (nextVal) {
-      toast.success('⚡ Fast Offline Engine active for batch processing');
+      toast.success('⚡ Gemini shut down: Processing batch strictly via local Offline OCR');
     } else {
-      toast('🌐 Cloud AI Mode enabled for batch processing', { icon: 'ℹ️' });
+      toast.success('✨ Gemini AI activated: Processing batch via latest Google Gemini models');
     }
   };
 
@@ -159,17 +150,15 @@ const BatchUploader = () => {
               </span>
               <div>
                 <div className="font-semibold text-slate-800 flex items-center gap-2">
-                  <span>{forceOfflineMode ? (isLocalHost ? '⚡ Fast Offline Engine' : '⚡ Instant Demo Engine') : '🌐 Hybrid Cloud AI Mode'}</span>
+                  <span>{forceOfflineMode ? '⚡ Offline Batch Engine (Gemini Shut Down)' : '🤖 Google Gemini AI Batch Active'}</span>
                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                    {forceOfflineMode ? 'Fast Demo Active' : 'Online'}
+                    {forceOfflineMode ? 'Gemini OFF' : 'Gemini AI'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 font-normal">
                   {forceOfflineMode
-                    ? (isLocalHost
-                        ? 'Processes files locally in parallel on your PC — Zero cloud latency'
-                        : 'High-speed multimodal AI pipeline with 3s anti-lag watchdog (<1.5s)')
-                    : 'Uses Gemini Vision with 3s auto-fallback to local engine on slow internet'}
+                    ? 'Gemini is shut down. Processing batch files strictly via local OCR & rule extractor.'
+                    : 'Processing batch receipts via latest Gemini Flash models. Click button to shut down Gemini and use offline OCR.'}
                 </p>
               </div>
             </div>
@@ -182,17 +171,17 @@ const BatchUploader = () => {
                   ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
                   : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
               }`}
-              title="Toggle fast demo mode to eliminate lag"
+              title="Toggle Gemini shutdown and offline OCR"
             >
               {forceOfflineMode ? (
                 <>
                   <WifiOff className="w-3.5 h-3.5" />
-                  <span>{isLocalHost ? 'Offline Mode: ON' : 'Demo Mode: ON'}</span>
+                  <span>Offline Mode: ON (Gemini OFF)</span>
                 </>
               ) : (
                 <>
                   <Zap className="w-3.5 h-3.5" />
-                  <span>{isLocalHost ? 'Force Fast Offline' : 'Switch to Demo Fast'}</span>
+                  <span>Shut Down Gemini (Offline OCR)</span>
                 </>
               )}
             </button>

@@ -50,9 +50,10 @@ const uploadSingle = async (req, res) => {
       process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
     );
 
-    // On Vercel / Cloud Serverless, Gemini Vision is the primary working OCR engine (Tesseract WASM is unsupported in Vercel functions).
-    // On Localhost, when isClientForceOffline is true, we bypass Gemini and run local Tesseract.
-    const shouldAttemptGemini = (isServerless || !isClientForceOffline) && fileBuffer && process.env.GEMINI_API_KEY;
+    // Strict Rule: When the user clicks the offline button (isClientForceOffline === true),
+    // Gemini MUST shut down completely, and only local OCR / rule extraction runs.
+    // Otherwise (isClientForceOffline === false), Gemini is STRICTLY used if GEMINI_API_KEY is available.
+    const shouldAttemptGemini = !isClientForceOffline && Boolean(fileBuffer && process.env.GEMINI_API_KEY);
 
     // Step 1: Direct Fast Multimodal AI extraction via Gemini Vision
     if (shouldAttemptGemini) {
@@ -133,10 +134,10 @@ const processBatchFilesSequentially = async (batchId, files, concurrency = 3, is
       let isNonReceipt = false;
       let lowConfidenceWarning = false;
 
-      const isServerless = Boolean(
-        process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
-      );
-      const shouldAttemptGemini = (isServerless || !isForceOffline) && fs.existsSync(file.path) && process.env.GEMINI_API_KEY;
+      // Strict Rule: When the user clicks the offline button (isForceOffline === true),
+      // Gemini MUST shut down completely, and only local OCR / rule extraction runs.
+      // Otherwise (isForceOffline === false), Gemini is STRICTLY used if GEMINI_API_KEY is available.
+      const shouldAttemptGemini = !isForceOffline && fs.existsSync(file.path) && Boolean(process.env.GEMINI_API_KEY);
 
       // Try Direct Fast Multimodal Gemini Vision on file buffer first
       if (shouldAttemptGemini) {

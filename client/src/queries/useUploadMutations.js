@@ -3,20 +3,8 @@ import api from '../api/axios';
 
 export const isOfflineModeActive = () => {
   if (typeof window === 'undefined') return false;
-  // 1. Explicit user preference
-  const savedPref = localStorage.getItem('billbox_offline_mode');
-  if (savedPref === 'true') return true;
-  if (savedPref === 'false') return false;
-  // 2. Hardware offline state
-  if (navigator.onLine === false) return true;
-  // 3. Network Information API (detects slow 2G or severe packet latency)
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (conn) {
-    if (conn.saveData) return true;
-    if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') return true;
-    if (typeof conn.rtt === 'number' && conn.rtt > 1200) return true;
-  }
-  return false;
+  // Strict rule: Gemini only shuts down and local OCR only runs when user explicitly clicked the button
+  return localStorage.getItem('billbox_offline_mode') === 'true';
 };
 
 export const useUploadSingle = () => {
