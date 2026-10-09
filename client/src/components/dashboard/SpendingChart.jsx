@@ -63,7 +63,7 @@ const SpendingChart = ({ data = [], currency = 'INR' }) => {
         <h2 className="text-base font-semibold text-brand-navy tracking-tight">
           Spending over time
         </h2>
-        <div className="flex items-center gap-2 text-xs text-[#64748B] font-medium">
+        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
           <span className="w-3 h-0.5 bg-brand-primary inline-block rounded-full"></span>
           <span>Amount spent (₹)</span>
         </div>
@@ -76,7 +76,7 @@ const SpendingChart = ({ data = [], currency = 'INR' }) => {
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             {yTicks.map((tick, idx) => (
               <div key={idx} className="flex items-center w-full gap-3">
-                <span className="text-[11px] font-medium text-[#64748B] font-tabular w-12 text-right shrink-0">
+                <span className="text-[11px] font-medium text-slate-500 font-tabular w-12 text-right shrink-0">
                   {formatYTick(tick)}
                 </span>
                 <div className="flex-1 border-b border-dashed border-brand-border h-0" />
@@ -109,7 +109,7 @@ const SpendingChart = ({ data = [], currency = 'INR' }) => {
         </div>
 
         {/* Dynamic X-axis Dates Row */}
-        <div className="flex items-center justify-around pl-14 pr-2 pt-3 text-[11px] font-medium text-[#64748B] font-tabular">
+        <div className="flex items-center justify-around pl-14 pr-2 pt-3 text-[11px] font-medium text-slate-500 font-tabular">
           {chartPoints.map((pt, idx) => (
             <span key={idx} className="truncate max-w-[60px] text-center">
               {pt.date}

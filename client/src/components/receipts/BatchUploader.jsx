@@ -204,7 +204,7 @@ const BatchUploader = () => {
               <input {...getInputProps()} />
 
               <div className="space-y-3">
-                <div className="w-10 h-10 text-[#64748B] mx-auto flex items-center justify-center">
+                <div className="w-10 h-10 text-slate-500 mx-auto flex items-center justify-center">
                   <svg
                     width="24"
                     height="24"
@@ -225,7 +225,7 @@ const BatchUploader = () => {
                   <p className="text-sm font-semibold text-brand-navy">
                     {isDragActive ? 'Drop receipt files here...' : 'Click or drag & drop multiple receipts'}
                   </p>
-                  <p className="text-xs text-[#64748B] font-normal">
+                  <p className="text-xs text-slate-500 font-normal">
                     Upload up to {MAX_FILES} receipts at once (JPG, PNG, WEBP, PDF up to 10MB each)
                   </p>
                 </div>
@@ -266,7 +266,7 @@ const BatchUploader = () => {
                       + Add file
                     </button>
                   ) : (
-                    <span className="text-xs text-[#64748B] font-medium">
+                    <span className="text-xs text-slate-500 font-medium">
                       Maximum {MAX_FILES} files selected
                     </span>
                   )}
@@ -289,14 +289,14 @@ const BatchUploader = () => {
                     className="py-3 px-1 flex items-center justify-between gap-4"
                   >
                     <div className="min-w-0 flex-1 flex items-center gap-2.5">
-                      <span className="text-xs font-semibold text-[#64748B] font-mono">
+                      <span className="text-xs font-semibold text-slate-500 font-mono">
                         #{idx + 1}
                       </span>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-brand-navy truncate">
                           {file.name}
                         </p>
-                        <p className="text-[11px] text-[#64748B] font-mono mt-0.5">
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
                           {formatFileSize(file.size)}
                         </p>
                       </div>
@@ -315,7 +315,7 @@ const BatchUploader = () => {
               </div>
 
               <div className="pt-2 flex items-center justify-between gap-4">
-                <span className="text-xs text-[#64748B] font-normal">
+                <span className="text-xs text-slate-500 font-normal">
                   Ready to process {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'}
                 </span>
                 <button
@@ -340,7 +340,7 @@ const BatchUploader = () => {
               <h2 className="text-base font-semibold text-brand-navy tracking-tight">
                 Batch processing progress
               </h2>
-              <p className="text-xs text-[#64748B] font-normal mt-0.5">
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
                 {isFinished
                   ? 'All receipts in batch have completed OCR processing'
                   : 'Processing receipts sequentially to ensure OCR accuracy'}
@@ -358,7 +358,7 @@ const BatchUploader = () => {
 
           {/* Thin Flat Progress Bar */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-medium text-[#64748B] font-tabular">
+            <div className="flex items-center justify-between text-xs font-medium text-slate-500 font-tabular">
               <span>Overall progress</span>
               <span>
                 {completedCount} / {totalCount} files ({progressPercent}%)
@@ -374,7 +374,7 @@ const BatchUploader = () => {
 
           {/* File Status List */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between pb-2 border-b border-brand-border text-xs font-bold text-[#64748B] tracking-wider uppercase">
+            <div className="flex items-center justify-between pb-2 border-b border-brand-border text-xs font-bold text-slate-500 tracking-wider uppercase">
               <span>File name</span>
               <span className="pr-4">Status</span>
             </div>
@@ -399,7 +399,7 @@ const BatchUploader = () => {
                   <div className="shrink-0">
                     {f.status === 'queued' && (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-canvas text-brand-navy/80 border border-brand-border">
-                        <svg className="w-3.5 h-3.5 text-[#64748B] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                        <svg className="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                           <circle cx="12" cy="12" r="9" />
                           <polyline points="12 6 12 12 16 14" />
                         </svg>
@@ -450,7 +450,7 @@ const BatchUploader = () => {
           {/* Action Bar when Complete */}
           {isFinished && (
             <div className="pt-4 border-t border-brand-border flex items-center justify-between flex-wrap gap-3">
-              <p className="text-xs text-[#64748B] font-normal">
+              <p className="text-xs text-slate-500 font-normal">
                 Batch processing complete. Review extracted data and save receipts.
               </p>
               <button

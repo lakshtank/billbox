@@ -62,7 +62,7 @@ const AddReceipt = () => {
           <h1 className="text-[30px] font-semibold text-brand-navy tracking-tight leading-none">
             Add receipt
           </h1>
-          <p className="text-xs text-[#64748B] font-normal mt-1.5">
+          <p className="text-xs text-slate-500 font-normal mt-1.5">
             Upload single or batch receipts for instant OCR extraction, or enter details manually
           </p>
         </div>
@@ -79,7 +79,7 @@ const AddReceipt = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'scan'
                   ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-brand-navy font-medium'
+                  : 'text-slate-500 hover:text-brand-navy font-medium'
               }`}
             >
               Single scan
@@ -94,7 +94,7 @@ const AddReceipt = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'batch'
                   ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-brand-navy font-medium'
+                  : 'text-slate-500 hover:text-brand-navy font-medium'
               }`}
             >
               Batch upload
@@ -106,7 +106,7 @@ const AddReceipt = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'manual'
                   ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-brand-navy font-medium'
+                  : 'text-slate-500 hover:text-brand-navy font-medium'
               }`}
             >
               Enter manually

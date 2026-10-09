@@ -87,8 +87,8 @@ const Dashboard = () => {
   const categoryBarTones = [
     'bg-brand-navy',
     'bg-brand-primary',
-    'bg-[#5482BA]',
-    'bg-[#7CA2CE]',
+    'bg-brand-primary/70',
+    'bg-brand-primary/40',
     'bg-brand-border',
   ];
 

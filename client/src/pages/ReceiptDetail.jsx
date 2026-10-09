@@ -342,7 +342,7 @@ const ReceiptDetail = () => {
 
               <div className="col-span-2 text-right text-sm font-medium font-tabular text-slate-700">
                 {prod.originalUnitPrice != null && Number(prod.originalUnitPrice) > Number(prod.unitPrice || 0) && (
-                  <span className="text-xs text-[#64748B] line-through font-normal mr-1.5">
+                  <span className="text-xs text-slate-500 line-through font-normal mr-1.5">
                     {formatCurrency(prod.originalUnitPrice, receipt.currency)}
                   </span>
                 )}

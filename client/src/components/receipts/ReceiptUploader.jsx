@@ -172,7 +172,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
               <p className="text-sm font-semibold text-brand-navy">
                 {forceOfflineMode ? '⚡ Processing with Local Offline OCR...' : 'Scanning receipt with OCR...'}
               </p>
-              <p className="text-xs text-[#64748B] font-normal">
+              <p className="text-xs text-slate-500 font-normal">
                 {forceOfflineMode
                   ? 'Extracting merchant, line items, and warranty on-device with zero network wait.'
                   : 'Extracting store, items, dates, and prices. Auto-switching to local if network slows.'}
@@ -182,7 +182,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
         ) : (
           <div className="space-y-3">
             {/* Minimal Line Upload Icon in Muted Gray */}
-            <div className="w-10 h-10 text-[#64748B] mx-auto flex items-center justify-center">
+            <div className="w-10 h-10 text-slate-500 mx-auto flex items-center justify-center">
               <svg
                 width="24"
                 height="24"
@@ -203,7 +203,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
               <p className="text-sm font-semibold text-brand-navy">
                 {isDragActive ? 'Drop receipt file here...' : 'Click or drag & drop receipt here'}
               </p>
-              <p className="text-xs text-[#64748B] font-normal">
+              <p className="text-xs text-slate-500 font-normal">
                 Supports JPG, PNG, WEBP, or PDF up to 10MB
               </p>
             </div>

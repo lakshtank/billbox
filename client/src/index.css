@@ -51,7 +51,7 @@
   --color-text-primary: var(--color-brand-navy);
   --color-text-secondary: var(--color-brand-primary);
   --color-text-body: var(--color-brand-navy);
-  --color-text-muted: #6B829E;
+  --color-text-muted: #666C6E;
 
   /* Primary Accent */
   --color-accent: var(--color-brand-primary);
@@ -109,16 +109,16 @@
   --color-emerald-900: var(--color-brand-navy);
   --color-emerald-950: var(--color-brand-navy-hover);
 
-  /* Re-mapping Tailwind slate-* to Theme Palette */
+  /* Re-mapping Tailwind slate-* to Theme Palette (Warm Mineral Stone) */
   --color-slate-50: var(--color-brand-canvas);
   --color-slate-100: var(--color-brand-surface-hover);
   --color-slate-200: var(--color-brand-border);
-  --color-slate-300: #C5D2E2;
-  --color-slate-400: #7C93AE;
-  --color-slate-500: #55708F;
-  --color-slate-600: #3B5777;
-  --color-slate-700: #264567;
-  --color-slate-800: #183B63;
+  --color-slate-300: #D8D6D1;
+  --color-slate-400: #8E9396;
+  --color-slate-500: #62686B;
+  --color-slate-600: #42494C;
+  --color-slate-700: #293033;
+  --color-slate-800: #191F21;
   --color-slate-900: var(--color-brand-navy);
   --color-slate-950: var(--color-brand-navy-hover);
 
@@ -208,8 +208,8 @@ select.appearance-none {
 }
 
 .surface-card-interactive:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 4px 14px -2px rgba(21, 77, 87, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
   transform: translateY(-1px);
 }
 
@@ -241,7 +241,7 @@ select.appearance-none {
   select:focus,
   textarea:focus {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(63, 114, 175, 0.18);
+    box-shadow: 0 0 0 3px rgba(21, 77, 87, 0.18);
     outline: none;
   }
 
@@ -399,18 +399,18 @@ select.appearance-none {
 .btn-primary {
   background-color: var(--color-accent);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px 0 rgba(63, 114, 175, 0.25);
+  box-shadow: 0 1px 3px 0 rgba(21, 77, 87, 0.25);
 }
 
 .btn-primary:hover {
   background-color: var(--color-accent-hover);
-  box-shadow: 0 2px 4px 0 rgba(63, 114, 175, 0.35);
+  box-shadow: 0 2px 6px 0 rgba(21, 77, 87, 0.35);
 }
 
 .btn-navy {
   background-color: var(--color-brand-navy);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px 0 rgba(17, 45, 78, 0.2);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
 }
 
 .btn-navy:hover {

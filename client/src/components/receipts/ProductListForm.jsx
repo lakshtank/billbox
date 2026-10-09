@@ -41,7 +41,7 @@ const ProductListForm = ({
             {/* Index Label & Review Flag & Remove Link */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   PRODUCT {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                 </span>
               </div>
@@ -68,7 +68,7 @@ const ProductListForm = ({
                   value={item.productName || ''}
                   onChange={(e) => onItemChange(item.id, 'productName', e.target.value)}
                   placeholder="e.g. Tesa 51903 Hi-Lo Tack 12mmx66m"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
                 />
                 {errors.items?.[item.id] && (
                   <p className="text-xs text-brand-navy font-medium mt-1">{errors.items[item.id]}</p>
@@ -82,7 +82,7 @@ const ProductListForm = ({
                   value={item.brand || ''}
                   onChange={(e) => onItemChange(item.id, 'brand', e.target.value)}
                   placeholder="e.g. Tesa"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
                 />
               </div>
 
@@ -124,7 +124,7 @@ const ProductListForm = ({
                 <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
                   <span>Unit price</span>
                   {item.originalUnitPrice != null && Number(item.originalUnitPrice) > Number(item.unitPrice || 0) && (
-                    <span className="text-[11px] text-[#64748B] line-through font-normal font-tabular">
+                    <span className="text-[11px] text-slate-500 line-through font-normal font-tabular">
                       ₹{Number(item.originalUnitPrice).toFixed(2)}
                     </span>
                   )}
@@ -135,7 +135,7 @@ const ProductListForm = ({
                   value={item.unitPrice ?? ''}
                   onChange={(e) => onItemChange(item.id, 'unitPrice', e.target.value)}
                   placeholder="0.00"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
                 />
               </div>
 
@@ -154,7 +154,7 @@ const ProductListForm = ({
                   value={item.lineTotal ?? ''}
                   onChange={(e) => onItemChange(item.id, 'lineTotal', e.target.value)}
                   placeholder="0.00"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular font-bold"
+                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular font-bold"
                 />
               </div>
 

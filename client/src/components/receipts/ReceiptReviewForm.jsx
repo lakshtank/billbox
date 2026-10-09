@@ -271,7 +271,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
           <h2 className="text-xl font-bold text-brand-navy tracking-tight">
             Review extracted receipt
           </h2>
-          <p className="text-xs text-[#64748B] font-normal mt-0.5">
+          <p className="text-xs text-slate-500 font-normal mt-0.5">
             Verify extracted totals and products before saving
           </p>
         </div>
@@ -310,7 +310,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="e.g. Reliance Retail"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
 
@@ -325,7 +325,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="e.g. INV-90428"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
               />
             </div>
 
@@ -362,7 +362,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={subtotal}
                 onChange={(e) => setSubtotal(e.target.value)}
                 placeholder="0.00"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 
@@ -377,7 +377,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={shippingAmount}
                 onChange={(e) => setShippingAmount(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 
@@ -392,7 +392,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={taxAmount}
                 onChange={(e) => setTaxAmount(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 

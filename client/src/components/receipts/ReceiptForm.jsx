@@ -232,7 +232,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
               placeholder="e.g. Reliance Retail"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
             />
           </div>
 
@@ -247,7 +247,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
               placeholder="e.g. INV-90428"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
             />
           </div>
 
@@ -284,7 +284,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={subtotal}
               onChange={(e) => setSubtotal(e.target.value)}
               placeholder="0.00"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -299,7 +299,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={shippingAmount}
               onChange={(e) => setShippingAmount(e.target.value)}
               placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -314,7 +314,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={taxAmount}
               onChange={(e) => setTaxAmount(e.target.value)}
               placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -374,7 +374,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Add any notes about this purchase or receipt..."
-          className="w-full text-xs p-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-sans"
+          className="w-full text-xs p-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-sans"
         />
       </div>
 

@@ -292,7 +292,7 @@ const Settings = () => {
           <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
             Settings & Preferences
           </h1>
-          <p className="text-xs text-[#6B829E] font-normal mt-1">
+          <p className="text-xs text-slate-500 font-normal mt-1">
             Configure system defaults, expiration notices, security, and account data exports.
           </p>
         </div>
@@ -329,7 +329,7 @@ const Settings = () => {
             <h3 className="text-base font-semibold text-brand-navy tracking-tight">
               General & Regional Preferences
             </h3>
-            <p className="text-xs text-[#64748B] font-normal mt-0.5">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Set default currencies, date conventions, and timezones for the whole system.
             </p>
           </div>
@@ -411,7 +411,7 @@ const Settings = () => {
               <h3 className="text-base font-semibold text-brand-navy tracking-tight">
                 Notification & Expiration Alert Preferences
               </h3>
-              <p className="text-xs text-[#64748B] font-normal mt-0.5">
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
                 Control email alerts and when you are notified prior to warranty expirations.
               </p>
             </div>
@@ -507,7 +507,7 @@ const Settings = () => {
             <h3 className="text-base font-semibold text-brand-navy tracking-tight">
               Change Account Password
             </h3>
-            <p className="text-xs text-[#64748B] font-normal mt-0.5">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Ensure your account is protected with a secure, strong password.
             </p>
           </div>
@@ -614,7 +614,7 @@ const Settings = () => {
               <h3 className="text-base font-semibold text-brand-navy tracking-tight">
                 Data Portability & Archives
               </h3>
-              <p className="text-xs text-[#64748B] font-normal mt-0.5">
+              <p className="text-xs text-slate-500 font-normal mt-0.5">
                 Export your structured receipts and registered asset records at any time.
               </p>
             </div>

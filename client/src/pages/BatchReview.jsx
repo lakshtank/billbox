@@ -177,8 +177,8 @@ const BatchReview = () => {
       {/* 1. Page Header Row */}
       <div className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-brand-border">
         <div>
-          <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-1">
-            <Link to="/receipts/new" className="hover:text-brand-navy no-underline text-[#64748B]">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
+            <Link to="/receipts/new" className="hover:text-brand-navy no-underline text-slate-500">
               Add receipt
             </Link>
             <span className="text-slate-300">/</span>
@@ -187,7 +187,7 @@ const BatchReview = () => {
           <h1 className="text-[30px] font-bold text-brand-navy tracking-[-0.02em] leading-none">
             Batch receipt review
           </h1>
-          <p className="text-xs text-[#64748B] font-normal mt-1.5">
+          <p className="text-xs text-slate-500 font-normal mt-1.5">
             Review OCR extracted data for each receipt and save them to your account
           </p>
         </div>
@@ -222,7 +222,7 @@ const BatchReview = () => {
               ? 'All receipts in batch saved successfully'
               : `${needsReviewCount} receipts pending review and save`}
           </span>
-          <span className="text-[#64748B] font-tabular font-normal block mt-0.5">
+          <span className="text-slate-500 font-tabular font-normal block mt-0.5">
             {savedCount} saved · {needsReviewCount} pending review · {failedCount} failed
           </span>
         </div>
@@ -435,14 +435,14 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
       {/* Block Header */}
       <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-brand-border">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-xs font-bold text-[#64748B] font-mono">
+          <span className="text-xs font-bold text-slate-500 font-mono">
             #{fileIndex + 1}
           </span>
           <div className="min-w-0 flex items-center gap-2">
             <h3 className="text-base font-semibold text-brand-navy truncate max-w-[280px] sm:max-w-md">
               {fileItem.originalName || `Receipt file #${fileIndex + 1}`}
             </h3>
-            <span className="text-[11px] font-medium text-[#64748B] font-mono">
+            <span className="text-[11px] font-medium text-slate-500 font-mono">
               {isPdf ? 'PDF' : 'Image'}
             </span>
           </div>
@@ -502,7 +502,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="e.g. Reliance Digital"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
 
@@ -516,7 +516,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="INV-9042"
-                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
               />
             </div>
 
@@ -593,7 +593,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
       )}
 
       {isSaved && (
-        <div className="text-xs text-[#64748B] font-normal flex items-center justify-between pt-1">
+        <div className="text-xs text-slate-500 font-normal flex items-center justify-between pt-1">
           <span>Receipt saved to database.</span>
           {fileItem.receiptId && (
             <Link
