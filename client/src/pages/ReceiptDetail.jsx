@@ -180,7 +180,7 @@ const ReceiptDetail = () => {
       <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs flex items-start justify-between gap-6 pb-6 min-w-0 flex-wrap">
         <div className="min-w-0 flex-1">
           {/* Item count badge */}
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border mb-2">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 mb-2">
             {products.length} {products.length === 1 ? 'product' : 'products'}
           </span>
 

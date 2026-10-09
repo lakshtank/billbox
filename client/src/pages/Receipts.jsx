@@ -262,7 +262,7 @@ const Receipts = () => {
             <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
               Receipts Ledger
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
               {total} total records
             </span>
           </div>
@@ -405,8 +405,8 @@ const Receipts = () => {
                 onClick={() => handleSelectCategory(cat)}
                 className={`text-xs px-3 py-1.5 rounded-xl font-medium transition-all shrink-0 cursor-pointer ${
                   isSelected
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'bg-slate-100 hover:bg-slate-200/70 text-slate-600 hover:text-slate-900'
+                    ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
+                    : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
                 }`}
               >
                 {cat}
@@ -527,7 +527,7 @@ const Receipts = () => {
                     )}
 
                     {/* Merchant Monogram Avatar */}
-                    <div className="w-10 h-10 rounded-xl bg-brand-canvas border border-brand-border font-medium text-xs text-brand-navy flex items-center justify-center shrink-0 group-hover:bg-brand-border/50 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/25 font-bold text-xs text-brand-primary flex items-center justify-center shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
                       {storeInitials}
                     </div>
 
@@ -537,14 +537,14 @@ const Receipts = () => {
                         <h3 className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate">
                           {vendorName}
                         </h3>
-                        <span className="md:hidden inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 font-sans">
+                        <span className="md:hidden inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-sans">
                           {itemCount} {itemCount === 1 ? 'item' : 'items'}
                         </span>
                       </div>
 
                       <div className="text-[11px] text-slate-400 font-normal mt-0.5 flex items-center gap-2">
                         {receipt.invoiceNumber && (
-                          <span className="bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded text-[10px] font-medium">
+                          <span className="bg-brand-primary/10 text-brand-primary border border-brand-primary/20 px-1.5 py-0.2 rounded text-[10px] font-medium">
                             #{receipt.invoiceNumber}
                           </span>
                         )}
@@ -559,7 +559,7 @@ const Receipts = () => {
                   <div className="hidden md:flex items-center gap-12 shrink-0">
                     {/* Category Tag */}
                     <div className="w-28 text-left">
-                      <span className="inline-block text-[11px] font-medium text-slate-700 bg-slate-100 border border-slate-200/70 px-2.5 py-0.5 rounded-full truncate max-w-full">
+                      <span className="inline-block text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full truncate max-w-full">
                         {categoryName}
                       </span>
                     </div>
@@ -713,15 +713,15 @@ const Receipts = () => {
                           )}
                         </div>
                       )}
-                      <div className="w-8 h-8 rounded-xl bg-brand-canvas border border-brand-border font-medium text-xs text-brand-navy flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-border/50 transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-brand-primary/10 border border-brand-primary/25 font-bold text-xs text-brand-primary flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
                         {storeInitials}
                       </div>
-                      <span className="text-[11px] font-medium text-brand-navy bg-brand-border/40 border border-brand-border px-2.5 py-0.5 rounded-full truncate max-w-[130px]">
+                      <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full truncate max-w-[130px]">
                         {categoryName}
                       </span>
                     </div>
 
-                    <span className="text-[11px] font-medium text-brand-navy/80 bg-brand-canvas border border-brand-border px-2 py-0.5 rounded-full font-tabular shrink-0">
+                    <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-tabular shrink-0">
                       {itemCount} {itemCount === 1 ? 'item' : 'items'}
                     </span>
                   </div>
@@ -733,7 +733,7 @@ const Receipts = () => {
 
                   <div className="text-[11px] text-slate-400 font-normal mt-1 flex items-center gap-2">
                     {receipt.invoiceNumber && (
-                      <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-medium font-mono">
+                      <span className="bg-brand-primary/10 text-brand-primary border border-brand-primary/20 px-1.5 py-0.5 rounded text-[10px] font-medium font-mono">
                         #{receipt.invoiceNumber}
                       </span>
                     )}

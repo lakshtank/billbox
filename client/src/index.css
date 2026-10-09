@@ -60,54 +60,12 @@
   --color-accent-soft: var(--color-brand-border);
 
   /* Semantic Alerts */
-  --color-danger: var(--color-brand-navy);
-  --color-danger-soft: var(--color-brand-border);
-
-  /* Re-mapping Tailwind rose-* to Theme Palette */
-  --color-rose-50: var(--color-brand-canvas);
-  --color-rose-100: var(--color-brand-border);
-  --color-rose-200: var(--color-brand-border);
-  --color-rose-500: var(--color-brand-navy);
-  --color-rose-600: var(--color-brand-navy);
-  --color-rose-700: var(--color-brand-navy);
-  --color-rose-800: var(--color-brand-navy);
-  --color-rose-900: var(--color-brand-navy-hover);
-
-  /* Re-mapping Tailwind amber-* to Theme Palette */
-  --color-amber-50: var(--color-brand-border);
-  --color-amber-100: var(--color-brand-border);
-  --color-amber-200: var(--color-brand-primary);
-  --color-amber-500: var(--color-brand-primary);
-  --color-amber-600: var(--color-brand-primary);
-  --color-amber-700: var(--color-brand-navy);
-  --color-amber-800: var(--color-brand-navy);
-  --color-amber-900: var(--color-brand-navy);
-
-  /* Re-mapping Tailwind yellow-* to Theme Palette */
-  --color-yellow-50: var(--color-brand-border);
-  --color-yellow-100: var(--color-brand-border);
-  --color-yellow-400: var(--color-brand-primary);
-  --color-yellow-500: var(--color-brand-primary);
-  --color-yellow-600: var(--color-brand-navy);
-
-  /* Re-mapping Tailwind red-* to Theme Palette */
-  --color-red-50: var(--color-brand-canvas);
-  --color-red-100: var(--color-brand-border);
-  --color-red-200: var(--color-brand-border);
-  --color-red-500: var(--color-brand-navy);
-  --color-red-600: var(--color-brand-navy);
-  --color-red-700: var(--color-brand-navy);
-
-  /* Re-mapping Tailwind emerald-* to Theme Palette */
-  --color-emerald-50: var(--color-brand-canvas);
-  --color-emerald-100: var(--color-brand-border);
-  --color-emerald-200: var(--color-brand-border);
-  --color-emerald-500: var(--color-brand-primary);
-  --color-emerald-600: var(--color-brand-primary);
-  --color-emerald-700: var(--color-brand-primary);
-  --color-emerald-800: var(--color-brand-navy);
-  --color-emerald-900: var(--color-brand-navy);
-  --color-emerald-950: var(--color-brand-navy-hover);
+  --color-danger: #E11D48;
+  --color-danger-soft: #FFE4E6;
+  --color-warning: #D97706;
+  --color-warning-soft: #FEF3C7;
+  --color-success: #0D9488;
+  --color-success-soft: #CCFBF1;
 
   /* Re-mapping Tailwind slate-* to Theme Palette (Warm Mineral Stone) */
   --color-slate-50: var(--color-brand-canvas);

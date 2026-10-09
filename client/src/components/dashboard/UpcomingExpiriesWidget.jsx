@@ -64,11 +64,11 @@ const UpcomingExpiriesWidget = () => {
               const isUrgent = days <= 30;
               const isWarning = days > 30 && days <= 90;
 
-              let badgeStyle = 'bg-brand-canvas text-brand-navy/70 border-brand-border';
+              let badgeStyle = 'bg-brand-primary/10 text-brand-primary border-brand-primary/25 font-medium';
               if (isUrgent) {
-                badgeStyle = 'bg-brand-border text-brand-navy border-brand-primary font-bold';
+                badgeStyle = 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
               } else if (isWarning) {
-                badgeStyle = 'bg-brand-border/60 text-brand-navy border-brand-border font-semibold';
+                badgeStyle = 'bg-brand-primary/10 text-brand-primary border-brand-primary/30 font-semibold';
               }
 
               return (
@@ -78,7 +78,7 @@ const UpcomingExpiriesWidget = () => {
                   className="py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/80 transition-colors rounded-xl px-1.5 group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/70 flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary flex items-center justify-center shrink-0">
                       {getCategoryIcon(prod.category)}
                     </div>
 

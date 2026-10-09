@@ -77,7 +77,7 @@ const StoreDetail = () => {
             {stats.categories && stats.categories.map((cat) => (
               <span
                 key={cat}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25"
               >
                 {cat}
               </span>
@@ -283,22 +283,22 @@ const StoreDetail = () => {
 
                 if (prod.warrantyStatus === 'active') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-border/60 text-brand-navy border border-brand-border">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30">
                       <ShieldCheck className="w-3 h-3 text-brand-primary" />
                       <span>Under Warranty</span>
                     </span>
                   );
                 } else if (prod.warrantyStatus === 'expiring_soon') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50">
-                      <Clock className="w-3 h-3 text-brand-primary" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                      <Clock className="w-3 h-3 text-amber-600" />
                       <span>Expiring Soon</span>
                     </span>
                   );
                 } else if (prod.warrantyStatus === 'expired') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-canvas text-brand-navy/70 border border-brand-border">
-                      <AlertTriangle className="w-3 h-3 text-brand-navy/60" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                      <AlertTriangle className="w-3 h-3 text-rose-600" />
                       <span>Expired</span>
                     </span>
                   );

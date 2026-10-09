@@ -32,12 +32,12 @@ const getActivityVisuals = (type) => {
   switch (type) {
     case 'receipt_ocr_scanned':
       return {
-        icon: <Scan className="w-3.5 h-3.5 text-slate-700" />,
+        icon: <Scan className="w-3.5 h-3.5 text-brand-primary" />,
         action: 'Receipt scanned',
       };
     case 'receipt_created':
       return {
-        icon: <FileText className="w-3.5 h-3.5 text-slate-700" />,
+        icon: <FileText className="w-3.5 h-3.5 text-brand-primary" />,
         action: 'Invoice imported',
       };
     case 'product_created':
@@ -47,18 +47,18 @@ const getActivityVisuals = (type) => {
       };
     case 'product_updated':
       return {
-        icon: <Edit3 className="w-3.5 h-3.5 text-slate-700" />,
+        icon: <Edit3 className="w-3.5 h-3.5 text-brand-primary" />,
         action: 'Note added',
       };
     case 'receipt_deleted':
     case 'product_deleted':
       return {
-        icon: <Trash2 className="w-3.5 h-3.5 text-brand-navy/70" />,
+        icon: <Trash2 className="w-3.5 h-3.5 text-rose-600" />,
         action: 'Item removed',
       };
     default:
       return {
-        icon: <Clock className="w-3.5 h-3.5 text-slate-700" />,
+        icon: <Clock className="w-3.5 h-3.5 text-brand-primary" />,
         action: 'Activity recorded',
       };
   }
@@ -107,7 +107,7 @@ const ActivityFeedWidget = () => {
                   className="py-3 px-1.5 flex items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors rounded-xl"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200/70 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-brand-primary/10 border border-brand-primary/20 flex items-center justify-center shrink-0">
                       {visuals.icon}
                     </div>
 

@@ -291,7 +291,7 @@ const WarrantyTracker = () => {
             <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
               Warranty Tracker
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
               {counts.totalActiveProtected} active
             </span>
           </div>
@@ -351,18 +351,18 @@ const WarrantyTracker = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
                     isSelected
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
+                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
+                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
                   }`}
                 >
-                  {tab.id === 'active' && <ShieldCheck className="w-3.5 h-3.5 text-brand-primary" />}
-                  {tab.id === 'expiring_soon' && <Clock className="w-3.5 h-3.5 text-brand-primary" />}
-                  {tab.id === 'expired' && <AlertTriangle className="w-3.5 h-3.5 text-brand-navy/60" />}
+                  {tab.id === 'active' && <ShieldCheck className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-brand-primary'}`} />}
+                  {tab.id === 'expiring_soon' && <Clock className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-amber-600'}`} />}
+                  {tab.id === 'expired' && <AlertTriangle className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-rose-600'}`} />}
                   <span>{tab.label}</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
+                    isSelected ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-brand-primary'
                   }`}>
                     {count}
                   </span>
@@ -435,10 +435,10 @@ const WarrantyTracker = () => {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer shrink-0 ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer shrink-0 ${
                     isSelected
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
+                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
+                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
                   }`}
                 >
                   {cat}
@@ -587,26 +587,26 @@ const WarrantyTracker = () => {
                   {/* Top Bar: Monogram + Category + Status Pill */}
                   <div className="flex items-center justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-brand-canvas border border-brand-border text-brand-navy font-semibold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-border/50 group-hover:text-brand-navy transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
                         {monogram}
                       </div>
-                      <span className="text-[11px] font-medium text-brand-navy bg-brand-border/40 border border-brand-border px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full">
                         {product.category || receipt?.category || 'General'}
                       </span>
                     </div>
 
                     {metrics.isExpired ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy/70 bg-brand-canvas border border-brand-border px-2 py-0.5 rounded-full font-tabular">
-                        <AlertTriangle className="w-3 h-3 text-brand-navy/60" />
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full font-tabular">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
                         <span>{metrics.badgeText}</span>
                       </span>
                     ) : metrics.isExpiringSoon ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-navy bg-brand-border border border-brand-primary/50 px-2 py-0.5 rounded-full font-tabular">
-                        <Clock className="w-3 h-3 text-brand-primary" />
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full font-tabular">
+                        <Clock className="w-3 h-3 text-amber-600" />
                         <span>{metrics.badgeText}</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-navy bg-brand-border/60 border border-brand-border px-2 py-0.5 rounded-full font-tabular">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/30 px-2.5 py-0.5 rounded-full font-tabular">
                         <ShieldCheck className="w-3 h-3 text-brand-primary" />
                         <span>{metrics.badgeText}</span>
                       </span>

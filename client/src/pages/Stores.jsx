@@ -236,7 +236,7 @@ const Stores = () => {
         <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
           <span className="text-slate-400 font-medium text-[11px]">Active Filters:</span>
           {searchParam && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-border/60 text-brand-navy font-semibold border border-brand-border">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-primary font-semibold border border-brand-primary/25">
               <span>"{searchParam}"</span>
               <button
                 onClick={() => {
@@ -251,7 +251,7 @@ const Stores = () => {
             </span>
           )}
           {sortParam !== 'spend_desc' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-border/60 text-brand-navy font-medium border border-brand-border">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-primary font-medium border border-brand-primary/25">
               <span>Sort: {SORT_OPTIONS.find((s) => s.id === sortParam)?.label || sortParam}</span>
               <button
                 onClick={() => {
@@ -259,7 +259,7 @@ const Stores = () => {
                   params.delete('sort');
                   setSearchParams(params);
                 }}
-                className="hover:text-brand-navy cursor-pointer font-medium"
+                className="hover:text-brand-primary cursor-pointer font-medium"
               >
                 ✕
               </button>
@@ -322,14 +322,14 @@ const Stores = () => {
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap text-xs text-slate-400 font-normal">
-                    <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 font-tabular">
-                      <FileText className="w-3 h-3 text-slate-500" />
+                    <span className="inline-flex items-center gap-1 font-medium text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/25 font-tabular">
+                      <FileText className="w-3 h-3 text-brand-primary" />
                       <span>{store.receiptCount} {store.receiptCount === 1 ? 'receipt' : 'receipts'}</span>
                     </span>
 
                     {store.productCount > 0 && (
-                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 font-tabular">
-                        <ShoppingBag className="w-3 h-3 text-slate-500" />
+                      <span className="inline-flex items-center gap-1 font-medium text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/25 font-tabular">
+                        <ShoppingBag className="w-3 h-3 text-brand-primary" />
                         <span>{store.productCount} {store.productCount === 1 ? 'item' : 'items'}</span>
                       </span>
                     )}
@@ -350,7 +350,7 @@ const Stores = () => {
                       {store.categories.map((cat) => (
                         <span
                           key={cat}
-                          className="text-[11px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/60"
+                          className="text-[11px] font-medium text-brand-primary/90 bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/20"
                         >
                           {cat}
                         </span>

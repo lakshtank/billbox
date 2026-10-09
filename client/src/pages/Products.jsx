@@ -282,7 +282,7 @@ const Products = () => {
             <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
               Products Inventory
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
               {total} {total === 1 ? 'total record' : 'total records'}
             </span>
           </div>
@@ -426,10 +426,10 @@ const Products = () => {
                   key={cat}
                   type="button"
                   onClick={() => handleSelectCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer shrink-0 ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer shrink-0 ${
                     isSelected
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
+                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
+                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
                   }`}
                 >
                   {cat}
@@ -492,22 +492,22 @@ const Products = () => {
 
               if (product.warrantyStatus === 'active') {
                 warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30">
                     <ShieldCheck className="w-3.5 h-3.5 text-brand-primary shrink-0" />
                     <span>Under Warranty</span>
                   </span>
                 );
               } else if (product.warrantyStatus === 'expiring_soon') {
                 warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50">
-                    <Clock className="w-3.5 h-3.5 text-brand-primary shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span>Expiring Soon</span>
                   </span>
                 );
               } else if (product.warrantyStatus === 'expired') {
                 warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-canvas text-brand-navy/70 border border-brand-border">
-                    <AlertTriangle className="w-3.5 h-3.5 text-brand-navy/60 shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                     <span>Expired</span>
                   </span>
                 );
@@ -521,7 +521,7 @@ const Products = () => {
                 >
                   {/* Column 1: Product Monogram, Name & Brand */}
                   <div className="col-span-12 sm:col-span-5 md:col-span-4 flex items-center gap-3 min-w-0 pr-2">
-                    <div className="w-9 h-9 rounded-xl bg-brand-canvas border border-brand-border text-brand-navy font-semibold text-xs flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-border/50 group-hover:text-brand-navy group-hover:border-brand-border transition-colors">
+                    <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
                       {monogram}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -547,7 +547,7 @@ const Products = () => {
 
                   {/* Column 2: Category Pill */}
                   <div className="hidden sm:block sm:col-span-2 text-left">
-                    <span className="inline-block text-[11px] font-medium text-slate-700 bg-slate-100 border border-slate-200/70 px-2.5 py-0.5 rounded-full truncate max-w-full">
+                    <span className="inline-block text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full truncate max-w-full">
                       {product.category || 'Others'}
                     </span>
                   </div>
@@ -604,35 +604,35 @@ const Products = () => {
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-brand-canvas border border-brand-border text-brand-navy font-semibold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-border/50 group-hover:text-brand-navy transition-colors">
+                      <div className="w-8 h-8 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
                         {monogram}
                       </div>
-                      <span className="text-[11px] font-medium text-brand-navy bg-brand-border/40 border border-brand-border px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full">
                         {product.category || 'Others'}
                       </span>
                     </div>
 
                     {/* Warranty pill */}
                     {product.warrantyStatus === 'active' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-navy bg-brand-border/60 border border-brand-border px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/30 px-2 py-0.5 rounded-full">
                         <ShieldCheck className="w-3 h-3 text-brand-primary" />
                         <span>Active</span>
                       </span>
                     )}
                     {product.warrantyStatus === 'expiring_soon' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-brand-navy bg-brand-border border border-brand-primary/50 px-2 py-0.5 rounded-full">
-                        <Clock className="w-3 h-3 text-brand-primary" />
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
+                        <Clock className="w-3 h-3 text-amber-600" />
                         <span>Expiring</span>
                       </span>
                     )}
                     {product.warrantyStatus === 'expired' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy/70 bg-brand-canvas border border-brand-border px-2 py-0.5 rounded-full">
-                        <AlertTriangle className="w-3 h-3 text-brand-navy/60" />
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
                         <span>Expired</span>
                       </span>
                     )}
                     {(!product.warrantyStatus || product.warrantyStatus === 'none') && (
-                      <span className="text-[11px] font-normal text-slate-400 bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-medium text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full">
                         No warranty
                       </span>
                     )}

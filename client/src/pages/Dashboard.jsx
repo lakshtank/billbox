@@ -111,7 +111,7 @@ const Dashboard = () => {
             <h1 className="text-xl sm:text-2xl font-semibold text-brand-navy tracking-tight leading-snug">
               {greeting}, {firstName} 👋
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
               <span>{stats?.activeWarranties || 0} Warranties Protected</span>
             </span>
@@ -353,7 +353,7 @@ const Dashboard = () => {
                           className="py-3 px-1.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/80 transition-colors rounded-xl group"
                         >
                           <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/70 font-semibold text-xs text-slate-700 flex items-center justify-center shrink-0">
+                            <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/25 font-bold text-xs text-brand-primary flex items-center justify-center shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
                               {storeInitials}
                             </div>
                             <div className="min-w-0">
@@ -370,7 +370,7 @@ const Dashboard = () => {
                             <span className="text-xs font-semibold text-slate-900 font-tabular block">
                               {formatCurrency(amt, rcpt.currency || 'INR')}
                             </span>
-                            <span className="text-[10px] text-slate-600 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-full font-normal inline-block mt-0.5">
+                            <span className="text-[10px] text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-medium inline-block mt-0.5">
                               {itemCount} {itemCount === 1 ? 'item' : 'items'}
                             </span>
                           </div>
@@ -402,10 +402,10 @@ const Dashboard = () => {
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200/70 text-slate-800 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary flex items-center justify-center">
                       <Shield className="w-5 h-5 text-brand-primary" />
                     </div>
-                    <span className="text-[11px] font-medium text-brand-navy bg-brand-border/60 border border-brand-border px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full">
                       Vault Active
                     </span>
                   </div>
@@ -503,7 +503,7 @@ const Dashboard = () => {
                             <span className="text-slate-900 text-xs font-semibold font-tabular">
                               {cat.total ? formatCurrency(cat.total, currency) : ''}
                             </span>
-                            <span className="text-[11px] font-medium text-slate-500 font-tabular bg-slate-100 px-1.5 py-0.5 rounded">
+                            <span className="text-[11px] font-medium text-brand-primary font-tabular bg-brand-primary/10 border border-brand-primary/20 px-1.5 py-0.5 rounded">
                               {pct}%
                             </span>
                           </div>

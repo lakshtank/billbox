@@ -18,11 +18,11 @@ const ReceiptCard = ({ receipt }) => {
       {/* Top Meta Header: Badges */}
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
             {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
           </span>
           {receipt.needsReview && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-brand-border text-brand-navy rounded border border-brand-primary">
+            <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-300">
               Review Flagged
             </span>
           )}

@@ -77,7 +77,7 @@ const NotificationBell = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-brand-navy">Warranty Reminders</span>
               {activeAlertsCount > 0 && (
-                <span className="text-[10px] font-semibold text-brand-navy bg-brand-border border border-brand-primary/40 px-2 py-0.5 rounded-full font-tabular">
+                <span className="text-[10px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-tabular">
                   {activeAlertsCount} expiring soon
                 </span>
               )}
@@ -126,7 +126,7 @@ const NotificationBell = () => {
                           {prod.productName}
                         </strong>
                         {prod.brand && (
-                          <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                          <span className="text-[10px] text-brand-primary font-medium bg-brand-primary/10 border border-brand-primary/20 px-1.5 py-0.2 rounded">
                             {prod.brand}
                           </span>
                         )}
@@ -143,16 +143,16 @@ const NotificationBell = () => {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {isExpired ? (
-                        <span className="text-[10px] font-semibold text-brand-navy/70 bg-brand-canvas border border-brand-border px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full font-tabular">
                           Expired
                         </span>
                       ) : isUrgent ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-navy bg-brand-border border border-brand-primary/50 px-2 py-0.5 rounded-full font-tabular">
-                          <Clock className="w-3 h-3 text-brand-primary" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full font-tabular">
+                          <Clock className="w-3 h-3 text-amber-600" />
                           <span>{days}d left</span>
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-brand-navy bg-brand-border/60 border border-brand-border px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-tabular">
                           {days}d left
                         </span>
                       )}

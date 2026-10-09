@@ -198,8 +198,8 @@ const ReminderCenter = () => {
             onClick={() => setActiveMainTab('reminders')}
             className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
               activeMainTab === 'reminders'
-                ? 'text-brand-navy border-b-2 border-brand-navy'
-                : 'text-slate-500 hover:text-brand-navy'
+                ? 'text-brand-primary border-b-2 border-brand-primary'
+                : 'text-slate-500 hover:text-brand-primary'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
@@ -211,8 +211,8 @@ const ReminderCenter = () => {
             onClick={() => setActiveMainTab('logs')}
             className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
               activeMainTab === 'logs'
-                ? 'text-brand-navy border-b-2 border-brand-navy'
-                : 'text-slate-500 hover:text-brand-navy'
+                ? 'text-brand-primary border-b-2 border-brand-primary'
+                : 'text-slate-500 hover:text-brand-primary'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -255,8 +255,8 @@ const ReminderCenter = () => {
                     onClick={() => setStatusFilter(tab.id)}
                     className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
                       statusFilter === tab.id
-                        ? 'bg-brand-navy text-white font-semibold'
-                        : 'bg-brand-surface text-slate-600 border border-brand-border hover:bg-slate-50'
+                        ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
+                        : 'bg-brand-surface text-slate-700 hover:text-brand-primary border border-brand-border hover:bg-brand-primary/10'
                     }`}
                   >
                     {tab.label}
@@ -277,22 +277,22 @@ const ReminderCenter = () => {
                   const daysLeft = prod.daysRemaining;
 
                   let countdownPill = (
-                    <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 font-tabular">
+                    <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200 font-tabular">
                       Expired
                     </span>
                   );
 
                   if (daysLeft > 30) {
                     countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30 font-tabular">
                         <ShieldCheck className="w-3 h-3 text-brand-primary" />
                         <span>{daysLeft} days left</span>
                       </span>
                     );
                   } else if (daysLeft > 0) {
                     countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50 font-tabular">
-                        <Clock className="w-3 h-3 text-brand-primary" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 font-tabular">
+                        <Clock className="w-3 h-3 text-amber-600" />
                         <span>{daysLeft} days left</span>
                       </span>
                     );
@@ -313,11 +313,11 @@ const ReminderCenter = () => {
                             {prod.productName}
                           </Link>
                           {prod.brand && (
-                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                            <span className="text-xs font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded">
                               {prod.brand}
                             </span>
                           )}
-                          <span className="text-[11px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded">
+                          <span className="text-[11px] font-medium text-slate-600 bg-brand-border/40 border border-brand-border px-2 py-0.5 rounded">
                             {prod.category}
                           </span>
                         </div>

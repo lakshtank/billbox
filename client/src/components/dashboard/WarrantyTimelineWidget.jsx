@@ -23,9 +23,9 @@ const WarrantyTimelineWidget = () => {
       label: 'Expiring Soon',
       range: '≤ 30 days',
       hasItems: dueSoon.count > 0,
-      numColor: dueSoon.count > 0 ? 'text-brand-navy font-bold' : 'text-slate-900',
-      dotColor: dueSoon.count > 0 ? 'bg-brand-navy ring-4 ring-brand-border' : 'bg-slate-300',
-      barColor: dueSoon.count > 0 ? 'bg-brand-navy' : 'bg-slate-200',
+      numColor: dueSoon.count > 0 ? 'text-amber-700 font-bold' : 'text-slate-900',
+      dotColor: dueSoon.count > 0 ? 'bg-amber-500 ring-4 ring-amber-100' : 'bg-slate-300',
+      barColor: dueSoon.count > 0 ? 'bg-amber-500' : 'bg-slate-200',
     },
     {
       id: 'next3Months',
@@ -43,9 +43,9 @@ const WarrantyTimelineWidget = () => {
       label: 'Next 6 Months',
       range: '91 – 180 days',
       hasItems: next6Months.count > 0,
-      numColor: 'text-slate-900',
-      dotColor: next6Months.count > 0 ? 'bg-slate-600 ring-4 ring-slate-100' : 'bg-slate-300',
-      barColor: next6Months.count > 0 ? 'bg-slate-600' : 'bg-slate-200',
+      numColor: next6Months.count > 0 ? 'text-brand-primary font-semibold' : 'text-slate-900',
+      dotColor: next6Months.count > 0 ? 'bg-brand-primary/80 ring-4 ring-brand-primary/20' : 'bg-slate-300',
+      barColor: next6Months.count > 0 ? 'bg-brand-primary/80' : 'bg-slate-200',
     },
     {
       id: 'later',
@@ -67,7 +67,7 @@ const WarrantyTimelineWidget = () => {
           <div>
             <h2 className="text-sm font-semibold text-slate-900 tracking-tight flex items-center gap-2">
               <span>Warranty Horizon</span>
-              <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200/60 font-tabular">
+              <span className="text-[11px] font-semibold text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/25 font-tabular">
                 {totalTracked} {totalTracked === 1 ? 'asset' : 'assets'}
               </span>
             </h2>

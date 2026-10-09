@@ -3,10 +3,10 @@ import toast from 'react-hot-toast';
 import { useUpdateReceiptStatus } from '../../queries/useReceiptMutations';
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', description: 'Currently tracked receipt', color: 'bg-brand-border/60 text-brand-navy border-brand-border' },
-  { value: 'nearing_expiry', label: 'Needs Attention', description: 'Action required on this item', color: 'bg-brand-border text-brand-navy border-brand-primary' },
-  { value: 'resolved', label: 'Resolved', description: 'Warranty claimed or handled', color: 'bg-brand-border text-brand-navy border-brand-primary' },
-  { value: 'archived', label: 'Archived', description: 'Filed away / no longer tracking', color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  { value: 'active', label: 'Active', description: 'Currently tracked receipt', color: 'bg-brand-primary/10 text-brand-primary border-brand-primary/30' },
+  { value: 'nearing_expiry', label: 'Needs Attention', description: 'Action required on this item', color: 'bg-amber-50 text-amber-800 border-amber-300' },
+  { value: 'resolved', label: 'Resolved', description: 'Warranty claimed or handled', color: 'bg-brand-primary/10 text-brand-primary border-brand-primary/30' },
+  { value: 'archived', label: 'Archived', description: 'Filed away / no longer tracking', color: 'bg-slate-100 text-slate-600 border-slate-200' },
 ];
 
 const ReceiptStatusControl = ({ receipt }) => {
