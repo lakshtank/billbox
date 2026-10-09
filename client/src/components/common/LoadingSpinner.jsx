@@ -8,7 +8,7 @@ const LoadingSpinner = ({ size = 'md' }) => {
   return (
     <div className="flex items-center justify-center p-4" role="status">
       <div
-        className={`${sizeClasses[size]} rounded-full border-slate-200 border-t-emerald-600 animate-spin`}
+        className={`${sizeClasses[size]} rounded-full border-brand-border border-t-brand-primary animate-spin`}
       />
       <span className="sr-only">Loading...</span>
     </div>

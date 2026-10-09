@@ -18,8 +18,8 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-3xl font-bold">
-            ⚠️
+          <div className="w-16 h-16 rounded-full bg-brand-border text-brand-navy flex items-center justify-center text-3xl font-bold">
+            ℹ️
           </div>
           <h2 className="text-xl font-bold text-slate-900">Something went wrong</h2>
           <p className="text-sm text-slate-500 max-w-md">

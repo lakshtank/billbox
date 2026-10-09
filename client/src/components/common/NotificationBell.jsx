@@ -63,7 +63,7 @@ const NotificationBell = () => {
       >
         <Bell className="w-5 h-5" />
         {activeAlertsCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white shadow-xs font-tabular">
+          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[10px] font-bold text-white shadow-xs font-tabular">
             {activeAlertsCount > 9 ? '9+' : activeAlertsCount}
           </span>
         )}
@@ -71,13 +71,13 @@ const NotificationBell = () => {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden font-sans text-slate-900 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-brand-surface rounded-2xl border border-brand-border shadow-2xl z-50 overflow-hidden font-sans text-brand-navy animate-in fade-in slide-in-from-top-1 duration-150">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div className="px-4 py-3 border-b border-brand-border flex items-center justify-between bg-brand-canvas">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900">Warranty Reminders</span>
+              <span className="text-xs font-bold text-brand-navy">Warranty Reminders</span>
               {activeAlertsCount > 0 && (
-                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-tabular">
+                <span className="text-[10px] font-semibold text-brand-navy bg-brand-border border border-brand-primary/40 px-2 py-0.5 rounded-full font-tabular">
                   {activeAlertsCount} expiring soon
                 </span>
               )}
@@ -122,7 +122,7 @@ const NotificationBell = () => {
                   >
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <strong className="text-xs font-bold text-slate-900 group-hover:text-emerald-800 transition-colors truncate">
+                        <strong className="text-xs font-bold text-slate-900 group-hover:text-brand-primary transition-colors truncate">
                           {prod.productName}
                         </strong>
                         {prod.brand && (
@@ -143,16 +143,16 @@ const NotificationBell = () => {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {isExpired ? (
-                        <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 border border-rose-200/60 px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-brand-navy/70 bg-brand-canvas border border-brand-border px-2 py-0.5 rounded-full font-tabular">
                           Expired
                         </span>
                       ) : isUrgent ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full font-tabular">
-                          <Clock className="w-3 h-3 text-amber-600" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-navy bg-brand-border border border-brand-primary/50 px-2 py-0.5 rounded-full font-tabular">
+                          <Clock className="w-3 h-3 text-brand-primary" />
                           <span>{days}d left</span>
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-brand-navy bg-brand-border/60 border border-brand-border px-2 py-0.5 rounded-full font-tabular">
                           {days}d left
                         </span>
                       )}
@@ -161,7 +161,7 @@ const NotificationBell = () => {
                         type="button"
                         onClick={(e) => handleToggleReminder(e, prod)}
                         className={`p-1.5 rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer ${
-                          prod.reminderEnabled ? 'text-emerald-700' : 'text-slate-400'
+                          prod.reminderEnabled ? 'text-brand-primary' : 'text-slate-400'
                         }`}
                         title={prod.reminderEnabled ? 'Mute alert' : 'Enable alert'}
                       >
@@ -179,11 +179,11 @@ const NotificationBell = () => {
           </div>
 
           {/* Footer link to Warranty Tracker */}
-          <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50 text-center">
+          <div className="px-4 py-2.5 border-t border-brand-border bg-brand-canvas text-center">
             <Link
               to="/warranties"
               onClick={() => setIsOpen(false)}
-              className="text-xs font-semibold text-emerald-800 hover:underline inline-flex items-center gap-1"
+              className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-1"
             >
               <span>View all in Warranty Tracker</span>
               <ExternalLink className="w-3 h-3" />

@@ -211,10 +211,10 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
   }, 0) + Number(initialData?.discountAmount || 0);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 font-sans text-[#0F172A]">
+    <form onSubmit={handleSubmit} className="space-y-6 font-sans text-brand-navy">
       {/* 1. Receipt Header & Totals Section Card Container */}
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 space-y-4 shadow-2xs">
-        <h3 className="text-base font-bold text-[#0F172A] tracking-tight border-b border-[#E2E8F0] pb-3">
+      <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-4 shadow-2xs">
+        <h3 className="text-base font-bold text-brand-navy tracking-tight border-b border-brand-border pb-3">
           Receipt header & totals
         </h3>
 
@@ -232,7 +232,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
               placeholder="e.g. Reliance Retail"
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
             />
           </div>
 
@@ -247,7 +247,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
               placeholder="e.g. INV-90428"
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-mono"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
             />
           </div>
 
@@ -266,9 +266,9 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               type="date"
               value={purchaseDate}
               onChange={(e) => setPurchaseDate(e.target.value)}
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
-            {errors.purchaseDate && <p className="text-xs text-rose-500 mt-1">{errors.purchaseDate}</p>}
+            {errors.purchaseDate && <p className="text-xs text-brand-navy font-medium mt-1">{errors.purchaseDate}</p>}
           </div>
         </div>
 
@@ -284,7 +284,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={subtotal}
               onChange={(e) => setSubtotal(e.target.value)}
               placeholder="0.00"
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -299,7 +299,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={shippingAmount}
               onChange={(e) => setShippingAmount(e.target.value)}
               placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -314,7 +314,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               value={taxAmount}
               onChange={(e) => setTaxAmount(e.target.value)}
               placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
             />
           </div>
 
@@ -323,7 +323,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               <label htmlFor="manual-grandtotal" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
                 <span>Grand total</span>
                 {totalSavings > 0 && (
-                  <span className="text-[11px] text-[#047857] font-medium font-tabular">
+                  <span className="text-[11px] text-brand-primary font-medium font-tabular">
                     Saved {currSym}{totalSavings.toFixed(2)}
                   </span>
                 )}
@@ -364,8 +364,8 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
       />
 
       {/* 3. Notes Section Card Container */}
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 space-y-2 shadow-2xs">
-        <label htmlFor="manual-notes" className="text-xs font-semibold text-slate-700 block">
+      <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-2 shadow-2xs">
+        <label htmlFor="manual-notes" className="text-xs font-semibold text-brand-navy block">
           Notes
         </label>
         <textarea
@@ -374,16 +374,16 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Add any notes about this purchase or receipt..."
-          className="w-full text-xs p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-sans"
+          className="w-full text-xs p-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-sans"
         />
       </div>
 
       {/* 4. Action Buttons Bar */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E2E8F0]">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-5 py-2.5 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs cursor-pointer"
+          className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
         >
           {isSubmitting ? 'Saving receipt...' : initialData ? 'Save changes' : 'Save receipt'}
         </button>

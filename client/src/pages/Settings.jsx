@@ -285,21 +285,21 @@ const Settings = () => {
   const pwdScore = getPasswordStrength(passwordForm.newPassword);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-6xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* 1. Page Header */}
       <div className="flex items-center justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
             Settings & Preferences
           </h1>
-          <p className="text-xs text-[#64748B] font-medium mt-1">
+          <p className="text-xs text-[#6B829E] font-normal mt-1">
             Configure system defaults, expiration notices, security, and account data exports.
           </p>
         </div>
       </div>
 
       {/* 2. Settings Tabs Navigation */}
-      <div className="flex items-center gap-1.5 border-b border-slate-200 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1.5 border-b border-brand-border overflow-x-auto pb-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -308,13 +308,13 @@ const Settings = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer shrink-0 ${
                 isActive
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                  ? 'bg-brand-border/60 text-brand-navy border border-brand-primary/40 shadow-2xs'
+                  : 'text-slate-600 hover:bg-brand-border/30 hover:text-brand-navy border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-700' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-brand-primary' : 'text-slate-400'}`} />
               <span>{tab.label}</span>
             </button>
           );
@@ -324,12 +324,12 @@ const Settings = () => {
       {/* 3. Tab Contents */}
       {/* TAB 1: General & Localization */}
       {activeTab === 'general' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
           <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
+            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
               General & Regional Preferences
             </h3>
-            <p className="text-xs text-[#64748B] font-medium mt-0.5">
+            <p className="text-xs text-[#64748B] font-normal mt-0.5">
               Set default currencies, date conventions, and timezones for the whole system.
             </p>
           </div>
@@ -337,13 +337,13 @@ const Settings = () => {
           <form onSubmit={handleSaveGeneral} className="space-y-5 max-w-2xl">
             {/* Preferred Currency */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Default Currency & Auto-Conversion
               </label>
               <select
                 value={generalForm.defaultCurrency}
                 onChange={(e) => setGeneralForm({ ...generalForm, defaultCurrency: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
+                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -355,13 +355,13 @@ const Settings = () => {
 
             {/* Date Format */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Display Date Format
               </label>
               <select
                 value={generalForm.dateFormat}
                 onChange={(e) => setGeneralForm({ ...generalForm, dateFormat: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
+                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
               >
                 {DATE_FORMATS.map((df) => (
                   <option key={df.id} value={df.id}>
@@ -373,13 +373,13 @@ const Settings = () => {
 
             {/* Timezone */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Account Timezone
               </label>
               <select
                 value={generalForm.timezone}
                 onChange={(e) => setGeneralForm({ ...generalForm, timezone: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
+                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
               >
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>
@@ -393,7 +393,7 @@ const Settings = () => {
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#047857] hover:bg-[#059669] rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 <span>Save Preferences</span>
@@ -405,13 +405,13 @@ const Settings = () => {
 
       {/* TAB 2: Notifications & Alerts */}
       {activeTab === 'notifications' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
           <div className="border-b border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
+              <h3 className="text-base font-semibold text-brand-navy tracking-tight">
                 Notification & Expiration Alert Preferences
               </h3>
-              <p className="text-xs text-[#64748B] font-medium mt-0.5">
+              <p className="text-xs text-[#64748B] font-normal mt-0.5">
                 Control email alerts and when you are notified prior to warranty expirations.
               </p>
             </div>
@@ -421,12 +421,12 @@ const Settings = () => {
               type="button"
               onClick={handleSendTestAlert}
               disabled={isSendingTestAlert}
-              className="px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 text-xs font-medium text-brand-navy bg-brand-border/60 hover:bg-brand-border border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSendingTestAlert ? (
                 <LoadingSpinner size="sm" />
               ) : (
-                <Send className="w-3.5 h-3.5 text-emerald-700" />
+                <Send className="w-3.5 h-3.5 text-brand-primary" />
               )}
               <span>Send Test Notification</span>
             </button>
@@ -436,7 +436,7 @@ const Settings = () => {
             {/* Email Notifications Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-slate-900 block">
+                <span className="text-xs font-medium text-slate-900 block">
                   Email Notifications
                 </span>
                 <p className="text-[11px] text-slate-500">
@@ -447,19 +447,19 @@ const Settings = () => {
                 type="checkbox"
                 checked={notificationForm.emailAlerts}
                 onChange={(e) => setNotificationForm({ ...notificationForm, emailAlerts: e.target.checked })}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                className="w-4 h-4 text-brand-primary rounded border-brand-border focus:ring-brand-primary cursor-pointer"
               />
             </div>
 
             {/* Expiry Advance Notice */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Warranty Expiry Advance Notice
               </label>
               <select
                 value={notificationForm.expiryDaysNotice}
                 onChange={(e) => setNotificationForm({ ...notificationForm, expiryDaysNotice: Number(e.target.value) })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
+                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
               >
                 <option value={45}>45 Days Before Expiry</option>
                 <option value={30}>30 Days Before Expiry (Recommended)</option>
@@ -471,7 +471,7 @@ const Settings = () => {
             {/* Monthly Summary Toggle */}
             <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-slate-900 block">
+                <span className="text-xs font-medium text-slate-900 block">
                   Monthly Spending Digest
                 </span>
                 <p className="text-[11px] text-slate-500">
@@ -482,7 +482,7 @@ const Settings = () => {
                 type="checkbox"
                 checked={notificationForm.monthlyDigest}
                 onChange={(e) => setNotificationForm({ ...notificationForm, monthlyDigest: e.target.checked })}
-                className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                className="w-4 h-4 text-brand-primary rounded border-brand-border focus:ring-brand-primary cursor-pointer"
               />
             </div>
 
@@ -490,7 +490,7 @@ const Settings = () => {
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#047857] hover:bg-[#059669] rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 <span>Update Notifications</span>
@@ -502,12 +502,12 @@ const Settings = () => {
 
       {/* TAB 3: Account Security */}
       {activeTab === 'security' && (
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
           <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
+            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
               Change Account Password
             </h3>
-            <p className="text-xs text-[#64748B] font-medium mt-0.5">
+            <p className="text-xs text-[#64748B] font-normal mt-0.5">
               Ensure your account is protected with a secure, strong password.
             </p>
           </div>
@@ -515,7 +515,7 @@ const Settings = () => {
           <form onSubmit={handleSavePassword} className="space-y-4 max-w-xl">
             {/* Current Password */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Current Password
               </label>
               <div className="relative">
@@ -524,7 +524,7 @@ const Settings = () => {
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans"
+                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
                   style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   placeholder="••••••••"
                   required
@@ -534,7 +534,7 @@ const Settings = () => {
 
             {/* New Password */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 New Password
               </label>
               <div className="relative">
@@ -543,7 +543,7 @@ const Settings = () => {
                   type="password"
                   value={passwordForm.newPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans"
+                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
                   style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   placeholder="At least 6 characters"
                   required
@@ -557,12 +557,12 @@ const Settings = () => {
                     <div
                       className={`h-full transition-all duration-300 ${
                         pwdScore <= 25
-                          ? 'bg-rose-500 w-1/4'
+                          ? 'bg-brand-navy/40 w-1/4'
                           : pwdScore <= 50
-                          ? 'bg-amber-500 w-2/4'
+                          ? 'bg-brand-primary/50 w-2/4'
                           : pwdScore <= 75
-                          ? 'bg-sky-500 w-3/4'
-                          : 'bg-emerald-500 w-full'
+                          ? 'bg-brand-primary/80 w-3/4'
+                          : 'bg-brand-primary w-full'
                       }`}
                     />
                   </div>
@@ -575,7 +575,7 @@ const Settings = () => {
 
             {/* Confirm Password */}
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -584,7 +584,7 @@ const Settings = () => {
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans"
+                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
                   style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   placeholder="••••••••"
                   required
@@ -596,7 +596,7 @@ const Settings = () => {
               <button
                 type="submit"
                 disabled={passwordMutation.isPending}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#047857] hover:bg-[#059669] rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {passwordMutation.isPending ? <LoadingSpinner size="sm" /> : <Save className="w-4 h-4" />}
                 <span>Update Password</span>
@@ -609,23 +609,23 @@ const Settings = () => {
       {/* TAB 4: Data & Export & Danger Zone */}
       {activeTab === 'data' && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
+              <h3 className="text-base font-semibold text-brand-navy tracking-tight">
                 Data Portability & Archives
               </h3>
-              <p className="text-xs text-[#64748B] font-medium mt-0.5">
+              <p className="text-xs text-[#64748B] font-normal mt-0.5">
                 Export your structured receipts and registered asset records at any time.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-              <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div className="p-5 rounded-2xl border border-brand-border bg-brand-canvas/60 space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border text-brand-primary flex items-center justify-center">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-900">Export as CSV</span>
+                  <span className="text-xs font-semibold text-brand-navy">Export as CSV</span>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Download a spreadsheet containing store names, dates, amounts, categories, and warranty statuses.
@@ -633,19 +633,19 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={handleExportCSV}
-                  className="px-4 py-2 text-xs font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium text-brand-navy bg-brand-surface hover:bg-brand-surface-hover border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 text-brand-primary" />
                   <span>Download CSV</span>
                 </button>
               </div>
 
-              <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
+              <div className="p-5 rounded-2xl border border-brand-border bg-brand-canvas/60 space-y-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border text-brand-primary flex items-center justify-center">
                     <FileJson className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-900">Export as JSON</span>
+                  <span className="text-xs font-semibold text-brand-navy">Export as JSON</span>
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Full structured JSON payload of all invoices, line items, and product associations.
@@ -653,7 +653,7 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={handleExportJSON}
-                  className="px-4 py-2 text-xs font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 text-xs font-medium text-slate-800 bg-brand-surface hover:bg-brand-surface-hover border border-slate-200 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download JSON</span>
@@ -663,10 +663,10 @@ const Settings = () => {
           </div>
 
           {/* Danger Zone: Reset Account Data */}
-          <div className="bg-white border border-rose-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 text-rose-700">
-              <AlertTriangle className="w-5 h-5" />
-              <h3 className="text-base font-extrabold tracking-tight">Danger Zone: Reset Account Data</h3>
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-4">
+            <div className="flex items-center gap-2.5 text-brand-navy">
+              <AlertTriangle className="w-5 h-5 text-brand-primary" />
+              <h3 className="text-base font-semibold tracking-tight">Danger Zone: Reset Account Data</h3>
             </div>
             <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
               Permanently erase all logged receipts, tracked products, and reminder activity history for this account. This action cannot be undone.
@@ -675,7 +675,7 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={() => setIsClearDataModalOpen(true)}
-                className="px-4 py-2.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2.5 text-xs font-semibold text-brand-navy bg-brand-canvas hover:bg-brand-border/50 border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Reset All Receipt Data</span>
@@ -688,11 +688,11 @@ const Settings = () => {
       {/* Confirmation Modal for Resetting Account Data */}
       {isClearDataModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-rose-200 rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-4 animate-in zoom-in-95 duration-150">
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-4 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-rose-600">
-                <AlertTriangle className="w-5 h-5" />
-                <h4 className="text-base font-extrabold text-slate-900">Confirm Data Reset</h4>
+              <div className="flex items-center gap-2 text-brand-navy">
+                <AlertTriangle className="w-5 h-5 text-brand-primary" />
+                <h4 className="text-base font-semibold text-brand-navy">Confirm Data Reset</h4>
               </div>
               <button
                 type="button"
@@ -708,15 +708,15 @@ const Settings = () => {
             </p>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                Type <span className="text-rose-600 font-black">DELETE</span> to confirm:
+              <label className="text-xs font-medium text-slate-700 block mb-1.5">
+                Type <span className="text-brand-navy font-bold">DELETE</span> to confirm:
               </label>
               <input
                 type="text"
                 value={clearConfirmationText}
                 onChange={(e) => setClearConfirmationText(e.target.value)}
                 placeholder="DELETE"
-                className="w-full text-xs py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-rose-400 font-sans"
+                className="w-full text-xs py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-brand-surface focus:outline-none focus:border-brand-primary font-sans"
               />
             </div>
 
@@ -724,7 +724,7 @@ const Settings = () => {
               <button
                 type="button"
                 onClick={() => setIsClearDataModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -732,7 +732,7 @@ const Settings = () => {
                 type="button"
                 disabled={clearConfirmationText !== 'DELETE' || isClearingData}
                 onClick={handleClearAllData}
-                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 text-xs font-semibold text-white bg-brand-navy hover:bg-brand-navy-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isClearingData ? <LoadingSpinner size="sm" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>Permanently Reset</span>

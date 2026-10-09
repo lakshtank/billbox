@@ -163,7 +163,7 @@ const BatchReview = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-8 text-[#0F172A] font-sans">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-8 text-brand-navy font-sans">
       {/* Document Viewer Modal */}
       {viewingFile && (
         <ReceiptViewer
@@ -175,16 +175,16 @@ const BatchReview = () => {
       )}
 
       {/* 1. Page Header Row */}
-      <div className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-[#E2E8F0]">
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-brand-border">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-[#64748B] mb-1">
-            <Link to="/receipts/new" className="hover:text-[#0F172A] no-underline text-[#64748B]">
+            <Link to="/receipts/new" className="hover:text-brand-navy no-underline text-[#64748B]">
               Add receipt
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="text-[#0F172A] font-medium">Batch review</span>
+            <span className="text-brand-navy font-medium">Batch review</span>
           </div>
-          <h1 className="text-[30px] font-bold text-[#0F172A] tracking-[-0.02em] leading-none">
+          <h1 className="text-[30px] font-bold text-brand-navy tracking-[-0.02em] leading-none">
             Batch receipt review
           </h1>
           <p className="text-xs text-[#64748B] font-normal mt-1.5">
@@ -198,7 +198,7 @@ const BatchReview = () => {
               type="button"
               onClick={handleSaveAll}
               disabled={isSavingAll}
-              className="px-4 py-2 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               {isSavingAll ? 'Saving all...' : `Save all (${needsReviewCount})`}
             </button>
@@ -207,7 +207,7 @@ const BatchReview = () => {
           <button
             type="button"
             onClick={() => navigate('/receipts')}
-            className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+            className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-brand-surface border border-brand-border rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Go to receipts →
           </button>
@@ -217,7 +217,7 @@ const BatchReview = () => {
       {/* 2. Progress Status Bar */}
       <div className="flex items-center justify-between gap-4 flex-wrap text-xs pt-1">
         <div>
-          <span className="text-sm font-bold text-[#0F172A] block">
+          <span className="text-sm font-semibold text-brand-navy block">
             {needsReviewCount === 0 && savedCount > 0
               ? 'All receipts in batch saved successfully'
               : `${needsReviewCount} receipts pending review and save`}
@@ -431,15 +431,15 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
   }, 0) + Number(extracted.discountAmount?.value || 0);
 
   return (
-    <div className="border-t border-[#E2E8F0] pt-6 space-y-6 font-sans text-[#0F172A]">
+    <div className="border-t border-brand-border pt-6 space-y-6 font-sans text-brand-navy">
       {/* Block Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#E2E8F0]">
+      <div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-brand-border">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-xs font-bold text-[#64748B] font-mono">
             #{fileIndex + 1}
           </span>
           <div className="min-w-0 flex items-center gap-2">
-            <h3 className="text-base font-bold text-[#0F172A] truncate max-w-[280px] sm:max-w-md">
+            <h3 className="text-base font-semibold text-brand-navy truncate max-w-[280px] sm:max-w-md">
               {fileItem.originalName || `Receipt file #${fileIndex + 1}`}
             </h3>
             <span className="text-[11px] font-medium text-[#64748B] font-mono">
@@ -453,22 +453,22 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
             <button
               type="button"
               onClick={() => onViewFile(fileItem)}
-              className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              className="px-3 py-1 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors cursor-pointer"
             >
               View document
             </button>
           )}
 
           {isSaved ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-              <svg className="w-3.5 h-3.5 text-[#047857] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+              <svg className="w-3.5 h-3.5 text-brand-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Saved
             </span>
           ) : fileItem.status === 'failed' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">
-              <svg className="w-3.5 h-3.5 text-[#DC2626] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-brand-canvas text-brand-navy border border-brand-border">
+              <svg className="w-3.5 h-3.5 text-brand-navy/70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                 <circle cx="12" cy="12" r="9" />
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -476,8 +476,8 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
               Failed
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-              <svg className="w-3.5 h-3.5 text-[#047857] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+              <svg className="w-3.5 h-3.5 text-brand-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Ready for review
@@ -502,7 +502,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="e.g. Reliance Digital"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
 
@@ -516,7 +516,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="INV-9042"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-mono"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
               />
             </div>
 
@@ -534,16 +534,16 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
                 type="date"
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
-              {errors.purchaseDate && <p className="text-xs text-rose-500 mt-1">{errors.purchaseDate}</p>}
+              {errors.purchaseDate && <p className="text-xs text-brand-navy font-medium mt-1">{errors.purchaseDate}</p>}
             </div>
 
             <div>
               <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
                 <span>Grand total</span>
                 {totalSavings > 0 && (
-                  <span className="text-[11px] text-[#047857] font-medium font-tabular">
+                  <span className="text-[11px] text-brand-primary font-medium font-tabular">
                     Saved ₹{totalSavings.toFixed(2)}
                   </span>
                 )}
@@ -584,7 +584,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
             <button
               type="submit"
               disabled={saveMutation.isPending}
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs cursor-pointer"
+              className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               {saveMutation.isPending ? 'Saving...' : 'Save receipt'}
             </button>
@@ -598,7 +598,7 @@ const BatchFileReviewCard = ({ fileItem, fileIndex, batchId, onViewFile, saveMut
           {fileItem.receiptId && (
             <Link
               to={`/receipts/${fileItem.receiptId}`}
-              className="text-xs font-semibold text-[#0F172A] hover:underline no-underline"
+              className="text-xs font-semibold text-brand-primary hover:underline no-underline"
             >
               View receipt →
             </Link>

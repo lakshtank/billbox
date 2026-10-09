@@ -126,11 +126,11 @@ const ReminderCenter = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-6 text-slate-900 font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* 1. Page Header */}
       <div className="flex items-center justify-between gap-4 pb-2">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">
+          <h1 className="text-3xl font-bold text-brand-navy tracking-tight leading-none">
             Reminder Center
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
@@ -141,11 +141,11 @@ const ReminderCenter = () => {
 
       {/* 2. KPI Summary Stat Tiles (4 Tiles) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
             WARRANTY TRACKERS
           </span>
-          <span className="text-2xl font-bold text-slate-900 font-tabular">
+          <span className="text-2xl font-bold text-brand-navy font-tabular">
             {stats.totalTracked || 0}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -153,11 +153,11 @@ const ReminderCenter = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
             REMINDERS ACTIVE
           </span>
-          <span className="text-2xl font-bold text-emerald-800 font-tabular">
+          <span className="text-2xl font-bold text-brand-primary font-tabular">
             {stats.remindersEnabled || 0}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -165,11 +165,11 @@ const ReminderCenter = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
             DUE SOON (&le;30 DAYS)
           </span>
-          <span className="text-2xl font-bold text-amber-700 font-tabular">
+          <span className="text-2xl font-bold text-brand-primary font-tabular">
             {stats.dueSoonCount || 0}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -177,11 +177,11 @@ const ReminderCenter = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
             NOTIFICATIONS SENT
           </span>
-          <span className="text-2xl font-bold text-slate-900 font-tabular">
+          <span className="text-2xl font-bold text-brand-navy font-tabular">
             {stats.logsSentCount || 0}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -192,14 +192,14 @@ const ReminderCenter = () => {
 
       {/* 3. Main Tabs Navigation Strip */}
       <div className="space-y-4 pt-2">
-        <div className="flex items-center gap-6 border-b border-slate-200 text-xs font-semibold">
+        <div className="flex items-center gap-6 border-b border-brand-border text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveMainTab('reminders')}
             className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
               activeMainTab === 'reminders'
-                ? 'text-slate-900 border-b-2 border-slate-900'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'text-brand-navy border-b-2 border-brand-navy'
+                : 'text-slate-500 hover:text-brand-navy'
             }`}
           >
             <Bell className="w-3.5 h-3.5" />
@@ -211,8 +211,8 @@ const ReminderCenter = () => {
             onClick={() => setActiveMainTab('logs')}
             className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
               activeMainTab === 'logs'
-                ? 'text-slate-900 border-b-2 border-slate-900'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'text-brand-navy border-b-2 border-brand-navy'
+                : 'text-slate-500 hover:text-brand-navy'
             }`}
           >
             <History className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ const ReminderCenter = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search products or brands..."
                   style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
-                  className="w-full text-xs py-2 bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 font-sans"
+                  className="w-full text-xs py-2 bg-brand-surface border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 font-sans"
                 />
                 {searchTerm && (
                   <button
@@ -255,8 +255,8 @@ const ReminderCenter = () => {
                     onClick={() => setStatusFilter(tab.id)}
                     className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
                       statusFilter === tab.id
-                        ? 'bg-slate-900 text-white font-semibold'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                        ? 'bg-brand-navy text-white font-semibold'
+                        : 'bg-brand-surface text-slate-600 border border-brand-border hover:bg-slate-50'
                     }`}
                   >
                     {tab.label}
@@ -284,15 +284,15 @@ const ReminderCenter = () => {
 
                   if (daysLeft > 30) {
                     countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-tabular">
-                        <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
+                        <ShieldCheck className="w-3 h-3 text-brand-primary" />
                         <span>{daysLeft} days left</span>
                       </span>
                     );
                   } else if (daysLeft > 0) {
                     countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/60 font-tabular">
-                        <Clock className="w-3 h-3 text-amber-600" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50 font-tabular">
+                        <Clock className="w-3 h-3 text-brand-primary" />
                         <span>{daysLeft} days left</span>
                       </span>
                     );
@@ -308,7 +308,7 @@ const ReminderCenter = () => {
                         <div className="flex items-center gap-2.5 flex-wrap">
                           <Link
                             to={`/products/${prod._id}`}
-                            className="text-sm sm:text-base font-bold text-slate-900 hover:text-emerald-800 transition-colors"
+                            className="text-sm sm:text-base font-bold text-brand-navy hover:text-brand-primary transition-colors"
                           >
                             {prod.productName}
                           </Link>
@@ -346,7 +346,7 @@ const ReminderCenter = () => {
                             value={prod.reminderLeadDays || 30}
                             onChange={(e) => handleLeadDaysChange(prod, e.target.value)}
                             disabled={!prod.reminderEnabled || daysLeft <= 0}
-                            className="text-xs py-1 px-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-slate-400 disabled:opacity-40 transition-colors cursor-pointer"
+                            className="text-xs py-1 px-2.5 bg-brand-surface border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-slate-400 disabled:opacity-40 transition-colors cursor-pointer"
                           >
                             {LEAD_DAYS_OPTIONS.map((opt) => (
                               <option key={opt.value} value={opt.value}>
@@ -362,7 +362,7 @@ const ReminderCenter = () => {
                           onClick={() => handleSendTestEmail(prod)}
                           disabled={testMutation.isPending}
                           title="Send test notification email now"
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-40"
                         >
                           <Send className="w-3 h-3 text-slate-500" />
                           <span className="hidden sm:inline">Test Alert</span>
@@ -375,7 +375,7 @@ const ReminderCenter = () => {
                             onClick={() => handleToggleReminder(prod)}
                             disabled={updateMutation.isPending}
                             className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
-                              prod.reminderEnabled ? 'bg-emerald-700' : 'bg-slate-200'
+                              prod.reminderEnabled ? 'bg-brand-primary' : 'bg-slate-200'
                             }`}
                             title={prod.reminderEnabled ? 'Reminders active (click to mute)' : 'Reminders muted (click to activate)'}
                           >
@@ -433,13 +433,13 @@ const ReminderCenter = () => {
 
                     <div className="shrink-0">
                       {log.status === 'sent' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy bg-brand-border/60 border border-brand-border px-2.5 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3 text-brand-primary" />
                           <span>Delivered</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 px-2.5 py-0.5 rounded-full">
-                          <XCircle className="w-3 h-3 text-rose-600" />
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy/80 bg-brand-canvas border border-brand-border px-2.5 py-0.5 rounded-full">
+                          <XCircle className="w-3 h-3 text-brand-navy/70" />
                           <span>Failed</span>
                         </span>
                       )}

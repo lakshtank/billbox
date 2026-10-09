@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import {
   LayoutDashboard,
   Receipt,
@@ -70,7 +71,7 @@ const Sidebar = () => {
       <aside
         className={`
           fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-60
-          bg-white border-r border-slate-200/80
+          bg-brand-sidebar border-r border-brand-border
           transition-transform duration-200 ease-in-out
           md:static md:h-full md:translate-x-0 shrink-0 flex flex-col justify-between p-4 overflow-y-auto font-sans
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -85,7 +86,7 @@ const Sidebar = () => {
                 closeSidebar();
                 navigate('/receipts/new');
               }}
-              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-[#047857] hover:bg-[#059669] text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white font-medium text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Receipt</span>
@@ -102,18 +103,41 @@ const Sidebar = () => {
                   to={item.to}
                   end={item.to === '/'}
                   onClick={closeSidebar}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold no-underline transition-colors ${
-                      isActive
-                        ? 'bg-emerald-50 text-emerald-800 font-extrabold'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                    }`
-                  }
+                  className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs no-underline select-none group"
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
-                      <span>{item.label}</span>
+                      {/* Animated Dark Glass Bubble */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="sidebar-active-bubble"
+                          className="absolute inset-0 rounded-xl glass-bubble-dark z-0"
+                          transition={{
+                            type: 'spring',
+                            stiffness: 400,
+                            damping: 28,
+                            mass: 0.8,
+                          }}
+                        />
+                      )}
+
+                      {/* Foreground Content */}
+                      <Icon
+                        className={`relative z-10 w-4 h-4 transition-colors duration-150 ${
+                          isActive
+                            ? 'text-white'
+                            : 'text-slate-500 group-hover:text-brand-navy'
+                        }`}
+                      />
+                      <span
+                        className={`relative z-10 transition-colors duration-150 ${
+                          isActive
+                            ? 'text-white font-medium'
+                            : 'text-slate-600 font-normal group-hover:text-brand-navy group-hover:font-medium'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
                     </>
                   )}
                 </NavLink>
@@ -123,7 +147,7 @@ const Sidebar = () => {
         </div>
 
         {/* Bottom Navigation: Profile & Settings */}
-        <div className="pt-4 border-t border-slate-200/80 space-y-1 mt-auto">
+        <div className="pt-4 border-t border-brand-border space-y-1 mt-auto">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -131,18 +155,41 @@ const Sidebar = () => {
                 key={item.to}
                 to={item.to}
                 onClick={closeSidebar}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold no-underline transition-colors ${
-                    isActive
-                      ? 'bg-emerald-50 text-emerald-800 font-extrabold'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`
-                }
+                className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs no-underline select-none group"
               >
                 {({ isActive }) => (
                   <>
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-700' : 'text-slate-500'}`} />
-                    <span>{item.label}</span>
+                    {/* Animated Dark Glass Bubble */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-active-bubble"
+                        className="absolute inset-0 rounded-xl glass-bubble-dark z-0"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 28,
+                          mass: 0.8,
+                        }}
+                      />
+                    )}
+
+                    {/* Foreground Content */}
+                    <Icon
+                      className={`relative z-10 w-4 h-4 transition-colors duration-150 ${
+                        isActive
+                          ? 'text-white'
+                          : 'text-slate-500 group-hover:text-brand-navy'
+                      }`}
+                    />
+                    <span
+                      className={`relative z-10 transition-colors duration-150 ${
+                        isActive
+                          ? 'text-white font-medium'
+                          : 'text-slate-600 font-normal group-hover:text-brand-navy group-hover:font-medium'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
                   </>
                 )}
               </NavLink>

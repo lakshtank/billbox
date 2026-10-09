@@ -11,19 +11,19 @@ const ReceiptCard = ({ receipt }) => {
   return (
     <Link
       to={`/receipts/${receipt._id}`}
-      className={`group block no-underline text-slate-900 bg-white border hover:border-slate-300 rounded-xl p-4 transition-all duration-150 ease-in-out hover:shadow-md flex flex-col justify-between h-full min-h-[210px] ${
-        receipt.needsReview ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200/90'
+      className={`group block no-underline text-slate-900 bg-brand-surface border hover:border-brand-primary rounded-xl p-4 transition-all duration-150 ease-in-out hover:shadow-md flex flex-col justify-between h-full min-h-[210px] ${
+        receipt.needsReview ? 'border-brand-primary bg-brand-border/20' : 'border-brand-border'
       }`}
     >
       {/* Top Meta Header: Badges */}
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-tabular">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
             {itemCount} {itemCount === 1 ? 'Item' : 'Items'}
           </span>
           {receipt.needsReview && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded border border-amber-300">
-              ⚠️ Review Flagged
+            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-brand-border text-brand-navy rounded border border-brand-primary">
+              Review Flagged
             </span>
           )}
         </div>
@@ -46,7 +46,7 @@ const ReceiptCard = ({ receipt }) => {
 
       {/* Main Content: Vendor Title as Heading */}
       <div className="mb-3 space-y-1">
-        <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-emerald-700 transition-colors">
+        <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-1 group-hover:text-brand-primary transition-colors">
           {vendorTitle}
         </h3>
 

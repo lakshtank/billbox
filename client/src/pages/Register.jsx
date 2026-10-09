@@ -61,17 +61,17 @@ const Register = () => {
   };
 
   return (
-    <div className="h-full w-full flex items-center justify-center bg-slate-50 p-4">
+    <div className="h-full w-full flex items-center justify-center bg-brand-canvas p-4 font-sans">
       <div className="w-full max-w-sm">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center mx-auto mb-3 text-white shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-navy to-brand-primary flex items-center justify-center mx-auto mb-3 text-white shadow-xs">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="5" width="20" height="14" rx="3" />
               <line x1="2" y1="10" x2="22" y2="10" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-brand-navy tracking-tight">
             Create an account
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -80,10 +80,10 @@ const Register = () => {
         </div>
 
         {/* Auth Surface Card */}
-        <div className="surface-card p-6 md:p-8">
+        <div className="surface-card p-6 md:p-8 bg-brand-surface border border-brand-border rounded-2xl shadow-xs">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="register-name" className="text-xs font-semibold text-slate-700">
+              <label htmlFor="register-name" className="text-xs font-semibold text-brand-navy">
                 Full Name
               </label>
               <input
@@ -95,11 +95,11 @@ const Register = () => {
                 placeholder="Jane Doe"
                 autoComplete="name"
               />
-              {errors.name && <p className="text-xs text-rose-500 mt-0.5">{errors.name}</p>}
+              {errors.name && <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.name}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="register-email" className="text-xs font-semibold text-slate-700">
+              <label htmlFor="register-email" className="text-xs font-semibold text-brand-navy">
                 Email
               </label>
               <input
@@ -111,11 +111,11 @@ const Register = () => {
                 placeholder="name@example.com"
                 autoComplete="email"
               />
-              {errors.email && <p className="text-xs text-rose-500 mt-0.5">{errors.email}</p>}
+              {errors.email && <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.email}</p>}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="register-password" className="text-xs font-semibold text-slate-700">
+              <label htmlFor="register-password" className="text-xs font-semibold text-brand-navy">
                 Password
               </label>
               <input
@@ -128,12 +128,12 @@ const Register = () => {
                 autoComplete="new-password"
               />
               {errors.password && (
-                <p className="text-xs text-rose-500 mt-0.5">{errors.password}</p>
+                <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.password}</p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="register-confirm" className="text-xs font-semibold text-slate-700">
+              <label htmlFor="register-confirm" className="text-xs font-semibold text-brand-navy">
                 Confirm Password
               </label>
               <input
@@ -146,23 +146,23 @@ const Register = () => {
                 autoComplete="new-password"
               />
               {errors.confirmPassword && (
-                <p className="text-xs text-rose-500 mt-0.5">{errors.confirmPassword}</p>
+                <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.confirmPassword}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="btn btn-primary w-full py-2.5 mt-2"
+              className="btn btn-primary w-full py-2.5 mt-2 bg-brand-primary hover:bg-brand-primary-hover text-white"
             >
               {registerMutation.isPending ? 'Creating account...' : 'Create account'}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          <div className="mt-6 pt-4 border-t border-brand-border text-center">
             <p className="text-xs text-slate-500">
               Already have an account?{' '}
-              <Link to="/login" className="text-emerald-700 font-bold hover:underline">
+              <Link to="/login" className="text-brand-primary font-bold hover:underline">
                 Sign in
               </Link>
             </p>

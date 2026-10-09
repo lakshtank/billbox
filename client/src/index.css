@@ -1,79 +1,164 @@
 /*
  * =====================================================
- * BILLBOX DESIGN SYSTEM — Slate & Emerald Precision
+ * BILLBOX DESIGN SYSTEM — 4-Color Precision Palette
  * =====================================================
  *
- * DIRECTION: Modern, premium fintech/productivity software.
- * Inspired by Linear, Mercury, Ramp, Vercel.
- *
- * COLOR PALETTE (WCAG AA Compliant):
- *   --color-bg-app:        #F8FAFC   Cool slate canvas
- *   --color-surface:       #FFFFFF   Pure white floating surface
- *   --color-surface-hover: #F1F5F9   Subtle slate hover wash
- *   --color-text-primary:  #0F172A   Slate 900 (High contrast body & headers)
- *   --color-text-secondary:#475569   Slate 600 (Subtext & labels)
- *   --color-text-muted:    #94A3B8   Slate 400 (Meta & placeholders)
- *   --color-accent:        #059669   Emerald 600 (Fills & primary buttons)
- *   --color-accent-hover:  #047857   Emerald 700
- *   --color-accent-text:   #047857   Emerald 700 (Text color — 5.9:1 contrast on white, WCAG AA)
- *   --color-accent-soft:   #ECFDF5   Emerald 50 (Soft badge background)
- *   --color-border:        #E2E8F0   Slate 200 (Hairline card borders)
- *   --color-border-subtle: #F1F5F9   Slate 100
- *   --color-danger:        #DC2626   Red 600 (Destructive actions)
- *   --color-danger-soft:   #FEF2F2   Red 50
+ * PALETTE SPECIFICATION:
+ *   #F9F7F7 (Canvas Background / Clean Off-White)
+ *   #DBE2EF (Hairline Borders / Subtle Badges / Dividers)
+ *   #3F72AF (Primary Brand Accent / Buttons / Active Highlights)
+ *   #112D4E (Deep Midnight Navy / High-Contrast Headings & Body)
  *
  * TYPOGRAPHY SYSTEM:
- *   Primary / Display: "Plus Jakarta Sans", sans-serif
+ *   Primary / Display: "Geist", "Inter", sans-serif
  *   Code / IDs:        "JetBrains Mono", monospace
- *
  * =====================================================
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-bg-app: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F1F5F9;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
-  --color-accent: #059669;
-  --color-accent-hover: #047857;
-  --color-accent-text: #047857;
-  --color-accent-soft: #ECFDF5;
-  --color-border: #E2E8F0;
-  --color-border-subtle: #F1F5F9;
-  --color-danger: #DC2626;
-  --color-danger-soft: #FEF2F2;
+  /* ========================================================================= */
+  /* BILLBOX MASTER THEME CONTROL CENTER                                       */
+  /* >>> CHANGE COLOR CODES HERE AT ONE PLACE TO RESTYLE THE WHOLE APP <<<     */
+  /* ========================================================================= */
+  --color-brand-canvas: #F2F1EF;        /* 1. Canvas / App Background (Platinum) */
+  --color-brand-border: #E2E0DC;        /* 2. Hairlines, borders, dividers, subtle chips */
+  --color-brand-primary: #154D57;       /* 3. Primary brand accent (Petroleum Teal) */
+  --color-brand-primary-hover: #0F3A42; /* 3b. Primary hover state */
+  --color-brand-navy: #000000;          /* 4. Deep contrast headings, text (Pure Black) */
+  --color-brand-navy-hover: #1A1A1A;    /* 4b. Dark button hover state */
+  --color-brand-surface: #FAFAF8;       /* 5. Card / Surface background (Porcelain - Option 1) */
+  --color-brand-surface-hover: #F2F0EC; /* 5b. Card surface hover state */
+  --color-brand-sidebar: #E8E6E2;       /* 6. Sidebar background (Soft Stone - Option 1) */
+  /* ========================================================================= */
 
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --color-bg-app: var(--color-brand-canvas);
+  --color-surface: var(--color-brand-surface);
+  --color-surface-hover: var(--color-brand-surface-hover);
+  --color-surface-subtle: var(--color-brand-border);
+  --color-sidebar: var(--color-brand-sidebar);
+  --color-border: var(--color-brand-border);
+  --color-border-subtle: var(--color-brand-border);
+
+  /* Aliases mapped directly to master theme */
+  --color-brand-white: var(--color-brand-canvas);
+  --color-brand-ice: var(--color-brand-border);
+  --color-brand-blue: var(--color-brand-primary);
+
+  /* Typography System */
+  --color-text-primary: var(--color-brand-navy);
+  --color-text-secondary: var(--color-brand-primary);
+  --color-text-body: var(--color-brand-navy);
+  --color-text-muted: #6B829E;
+
+  /* Primary Accent */
+  --color-accent: var(--color-brand-primary);
+  --color-accent-hover: var(--color-brand-primary-hover);
+  --color-accent-text: var(--color-brand-primary);
+  --color-accent-soft: var(--color-brand-border);
+
+  /* Semantic Alerts */
+  --color-danger: var(--color-brand-navy);
+  --color-danger-soft: var(--color-brand-border);
+
+  /* Re-mapping Tailwind rose-* to Theme Palette */
+  --color-rose-50: var(--color-brand-canvas);
+  --color-rose-100: var(--color-brand-border);
+  --color-rose-200: var(--color-brand-border);
+  --color-rose-500: var(--color-brand-navy);
+  --color-rose-600: var(--color-brand-navy);
+  --color-rose-700: var(--color-brand-navy);
+  --color-rose-800: var(--color-brand-navy);
+  --color-rose-900: var(--color-brand-navy-hover);
+
+  /* Re-mapping Tailwind amber-* to Theme Palette */
+  --color-amber-50: var(--color-brand-border);
+  --color-amber-100: var(--color-brand-border);
+  --color-amber-200: var(--color-brand-primary);
+  --color-amber-500: var(--color-brand-primary);
+  --color-amber-600: var(--color-brand-primary);
+  --color-amber-700: var(--color-brand-navy);
+  --color-amber-800: var(--color-brand-navy);
+  --color-amber-900: var(--color-brand-navy);
+
+  /* Re-mapping Tailwind yellow-* to Theme Palette */
+  --color-yellow-50: var(--color-brand-border);
+  --color-yellow-100: var(--color-brand-border);
+  --color-yellow-400: var(--color-brand-primary);
+  --color-yellow-500: var(--color-brand-primary);
+  --color-yellow-600: var(--color-brand-navy);
+
+  /* Re-mapping Tailwind red-* to Theme Palette */
+  --color-red-50: var(--color-brand-canvas);
+  --color-red-100: var(--color-brand-border);
+  --color-red-200: var(--color-brand-border);
+  --color-red-500: var(--color-brand-navy);
+  --color-red-600: var(--color-brand-navy);
+  --color-red-700: var(--color-brand-navy);
+
+  /* Re-mapping Tailwind emerald-* to Theme Palette */
+  --color-emerald-50: var(--color-brand-canvas);
+  --color-emerald-100: var(--color-brand-border);
+  --color-emerald-200: var(--color-brand-border);
+  --color-emerald-500: var(--color-brand-primary);
+  --color-emerald-600: var(--color-brand-primary);
+  --color-emerald-700: var(--color-brand-primary);
+  --color-emerald-800: var(--color-brand-navy);
+  --color-emerald-900: var(--color-brand-navy);
+  --color-emerald-950: var(--color-brand-navy-hover);
+
+  /* Re-mapping Tailwind slate-* to Theme Palette */
+  --color-slate-50: var(--color-brand-canvas);
+  --color-slate-100: var(--color-brand-surface-hover);
+  --color-slate-200: var(--color-brand-border);
+  --color-slate-300: #C5D2E2;
+  --color-slate-400: #7C93AE;
+  --color-slate-500: #55708F;
+  --color-slate-600: #3B5777;
+  --color-slate-700: #264567;
+  --color-slate-800: #183B63;
+  --color-slate-900: var(--color-brand-navy);
+  --color-slate-950: var(--color-brand-navy-hover);
+
+  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-body: var(--font-sans);
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* ===== Base Reset & System Font Override ===== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
   width: 100%;
   overflow: hidden;
   font-family: var(--font-sans);
+  font-weight: 400;
   color: var(--color-text-primary);
   background-color: var(--color-bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: normal;
 }
 
 /* ===== Typography Utility Classes ===== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-sans);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--color-text-primary);
 }
@@ -92,6 +177,7 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
 }
@@ -128,38 +214,41 @@ select.appearance-none {
 }
 
 /* ===== Form Input Styling ===== */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="date"],
-input[type="search"],
-select,
-textarea {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  font-family: var(--font-sans);
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: var(--color-text-primary);
-  background-color: #FFFFFF;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
+@layer base {
 
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
-  outline: none;
-}
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="search"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    background-color: var(--color-brand-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--color-text-muted);
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(63, 114, 175, 0.18);
+    outline: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-text-muted);
+  }
 }
 
 /* ===== Integrated Input Group (Currency Select + Number Input) ===== */
@@ -168,7 +257,7 @@ textarea::placeholder {
   align-items: center;
   width: 100%;
   height: 40px;
-  background-color: #F8FAFC;
+  background-color: var(--color-brand-canvas);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -176,7 +265,7 @@ textarea::placeholder {
 }
 
 .input-group:focus-within {
-  background-color: #FFFFFF;
+  background-color: var(--color-brand-surface);
   border-color: var(--color-accent);
   box-shadow: 0 0 0 1px var(--color-accent);
 }
@@ -192,7 +281,7 @@ textarea::placeholder {
   background-color: transparent !important;
   padding: 0.5rem 1.25rem 0.5rem 0.625rem !important;
   font-size: 0.75rem !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
   box-shadow: none !important;
   outline: none !important;
@@ -229,7 +318,7 @@ textarea::placeholder {
   align-items: center;
   width: 100%;
   height: 40px;
-  background-color: #F8FAFC;
+  background-color: var(--color-brand-canvas);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -237,7 +326,7 @@ textarea::placeholder {
 }
 
 .input-group-warranty:focus-within {
-  background-color: #FFFFFF;
+  background-color: var(--color-brand-surface);
   border-color: var(--color-accent);
   box-shadow: 0 0 0 1px var(--color-accent);
 }
@@ -293,7 +382,7 @@ textarea::placeholder {
   padding: 0.5625rem 1rem;
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -310,16 +399,26 @@ textarea::placeholder {
 .btn-primary {
   background-color: var(--color-accent);
   color: #FFFFFF;
-  box-shadow: 0 1px 2px 0 rgba(5, 150, 105, 0.2);
+  box-shadow: 0 1px 2px 0 rgba(63, 114, 175, 0.25);
 }
 
 .btn-primary:hover {
   background-color: var(--color-accent-hover);
-  box-shadow: 0 2px 4px 0 rgba(5, 150, 105, 0.3);
+  box-shadow: 0 2px 4px 0 rgba(63, 114, 175, 0.35);
+}
+
+.btn-navy {
+  background-color: var(--color-brand-navy);
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px 0 rgba(17, 45, 78, 0.2);
+}
+
+.btn-navy:hover {
+  background-color: var(--color-brand-navy-hover);
 }
 
 .btn-secondary {
-  background-color: #FFFFFF;
+  background-color: var(--color-brand-surface);
   color: var(--color-text-primary);
   border-color: var(--color-border);
   box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
@@ -327,11 +426,11 @@ textarea::placeholder {
 
 .btn-secondary:hover {
   background-color: var(--color-surface-hover);
-  border-color: #CBD5E1;
+  border-color: var(--color-border);
 }
 
 .btn-danger {
-  background-color: #FFFFFF;
+  background-color: var(--color-brand-surface);
   color: var(--color-danger);
   border-color: #FCA5A5;
 }
@@ -361,10 +460,13 @@ textarea::placeholder {
 }
 
 @keyframes pulse-ring {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.35;
   }
+
   50% {
     transform: scale(1.6);
     opacity: 0.1;
@@ -378,12 +480,26 @@ textarea::placeholder {
   border-radius: 4px;
 }
 
+/* ===== Dark Glass Bubble (Dark + Physical Glass Theme, No Gradient) ===== */
+.glass-bubble-dark {
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.6),
+    0 4px 14px -1px rgba(0, 0, 0, 0.30),
+    0 2px 5px rgba(0, 0, 0, 0.18);
+}
+
 /* ===== Keyframes & Animations ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -396,7 +512,10 @@ textarea::placeholder {
 
 /* ===== Motion Preference ===== */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }

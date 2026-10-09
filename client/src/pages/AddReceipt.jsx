@@ -55,11 +55,11 @@ const AddReceipt = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-8 text-[#0F172A] font-sans">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-8 text-brand-navy font-sans">
       {/* 1. Page Header Row */}
       <div className="flex items-start justify-between flex-wrap gap-4 pb-2">
         <div>
-          <h1 className="text-[30px] font-bold text-[#0F172A] tracking-[-0.02em] leading-none">
+          <h1 className="text-[30px] font-semibold text-brand-navy tracking-tight leading-none">
             Add receipt
           </h1>
           <p className="text-xs text-[#64748B] font-normal mt-1.5">
@@ -69,7 +69,7 @@ const AddReceipt = () => {
 
         {/* Mode Selector Tabs (Clean Segmented Control Pattern, No Emojis, No Heavy Boxes) */}
         {mode !== 'review' && (
-          <div className="inline-flex items-center gap-1 p-1 bg-slate-100/80 rounded-xl border border-[#E2E8F0]">
+          <div className="inline-flex items-center gap-1 p-1 bg-brand-border/50 rounded-xl border border-brand-border">
             <button
               type="button"
               onClick={() => {
@@ -78,8 +78,8 @@ const AddReceipt = () => {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'scan'
-                  ? 'bg-white text-[#0F172A] shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A] font-medium'
+                  ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
+                  : 'text-[#64748B] hover:text-brand-navy font-medium'
               }`}
             >
               Single scan
@@ -93,8 +93,8 @@ const AddReceipt = () => {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'batch'
-                  ? 'bg-white text-[#0F172A] shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A] font-medium'
+                  ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
+                  : 'text-[#64748B] hover:text-brand-navy font-medium'
               }`}
             >
               Batch upload
@@ -105,8 +105,8 @@ const AddReceipt = () => {
               onClick={() => setMode('manual')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 mode === 'manual'
-                  ? 'bg-white text-[#0F172A] shadow-2xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A] font-medium'
+                  ? 'bg-brand-surface text-brand-navy shadow-2xs font-bold'
+                  : 'text-[#64748B] hover:text-brand-navy font-medium'
               }`}
             >
               Enter manually

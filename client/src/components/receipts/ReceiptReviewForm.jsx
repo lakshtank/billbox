@@ -264,11 +264,11 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
   }, 0) + Number(extracted.discountAmount?.value || extracted.discountAmount || 0);
 
   return (
-    <div className="space-y-8 font-sans text-[#0F172A]">
+    <div className="space-y-8 font-sans text-brand-navy">
       {/* 1. Header Row */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] flex-wrap gap-4">
+      <div className="flex items-center justify-between pb-2 border-b border-brand-border flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">
+          <h2 className="text-xl font-bold text-brand-navy tracking-tight">
             Review extracted receipt
           </h2>
           <p className="text-xs text-[#64748B] font-normal mt-0.5">
@@ -280,7 +280,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-3.5 py-1.5 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors"
           >
             Scan again
           </button>
@@ -291,8 +291,8 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 2. Receipt Header & Totals Section Card Container */}
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 space-y-4 shadow-2xs">
-          <h3 className="text-base font-bold text-[#0F172A] tracking-tight border-b border-[#E2E8F0] pb-3">
+        <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-4 shadow-2xs font-sans text-brand-navy">
+          <h3 className="text-base font-bold text-brand-navy tracking-tight border-b border-brand-border pb-3">
             Receipt header & totals
           </h3>
 
@@ -310,7 +310,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="e.g. Reliance Retail"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
               />
             </div>
 
@@ -325,7 +325,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
                 placeholder="e.g. INV-90428"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-mono"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
               />
             </div>
 
@@ -344,9 +344,9 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 type="date"
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
-              {errors.purchaseDate && <p className="text-xs text-rose-500 mt-1">{errors.purchaseDate}</p>}
+              {errors.purchaseDate && <p className="text-xs text-brand-navy font-medium mt-1">{errors.purchaseDate}</p>}
             </div>
           </div>
 
@@ -362,7 +362,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={subtotal}
                 onChange={(e) => setSubtotal(e.target.value)}
                 placeholder="0.00"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 
@@ -377,7 +377,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={shippingAmount}
                 onChange={(e) => setShippingAmount(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 
@@ -392,7 +392,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
                 value={taxAmount}
                 onChange={(e) => setTaxAmount(e.target.value)}
                 placeholder="0"
-                className="w-full text-xs h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:bg-white focus:border-[#047857] focus:ring-1 focus:ring-[#047857] transition-colors font-tabular"
+                className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-[#94A3B8] focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
               />
             </div>
 
@@ -400,7 +400,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
               <label htmlFor="ocr-grandtotal" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
                 <span>Grand total</span>
                 {totalSavings > 0 && (
-                  <span className="text-[11px] text-[#047857] font-medium font-tabular">
+                  <span className="text-[11px] text-brand-primary font-medium font-tabular">
                     Saved {currSym}{totalSavings.toFixed(2)}
                   </span>
                 )}
@@ -440,12 +440,12 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
         />
 
         {/* 4. Action Buttons Bar */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E2E8F0]">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              className="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-brand-border rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -453,7 +453,7 @@ const ReceiptReviewForm = ({ ocrData, onCancel, onSuccess }) => {
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="px-5 py-2.5 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs cursor-pointer"
+            className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
           >
             {createMutation.isPending ? 'Saving receipt...' : 'Confirm & save receipt'}
           </button>

@@ -143,13 +143,13 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
     >
       {/* Responsive Modal Container Card */}
       <div
-        className="bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col w-[95vw] max-w-7xl h-[92vh] overflow-hidden text-slate-900 font-sans"
+        className="bg-brand-surface border border-brand-border rounded-2xl shadow-2xl flex flex-col w-[95vw] max-w-7xl h-[92vh] overflow-hidden text-brand-navy font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Toolbar */}
-        <div className="h-16 px-5 border-b border-slate-100 flex items-center justify-between gap-4 bg-white shrink-0">
+        <div className="h-16 px-5 border-b border-brand-border flex items-center justify-between gap-4 bg-brand-surface shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/60 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-brand-border/60 text-brand-primary border border-brand-border flex items-center justify-center shrink-0">
               {isPdf ? <FileText className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
             </div>
             <div className="min-w-0">
@@ -211,7 +211,7 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
               type="button"
               onClick={handleDownload}
               disabled={isDownloading}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
@@ -239,7 +239,7 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
         >
           {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-10 gap-2 font-sans">
-              <div className="w-6 h-6 border-2 border-slate-300 border-t-emerald-700 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-slate-300 border-t-brand-primary rounded-full animate-spin" />
               <span className="text-xs text-slate-500 font-medium">Loading document...</span>
             </div>
           )}
@@ -260,7 +260,7 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
               </button>
             </div>
           ) : isPdf ? (
-            <div className="w-full h-full rounded-xl overflow-hidden border border-slate-200 bg-white shadow-xs">
+            <div className="w-full h-full rounded-xl overflow-hidden border border-slate-200 bg-brand-surface shadow-xs">
               <object
                 data={`${fullFileUrl}#toolbar=0&navpanes=0&view=FitH`}
                 type="application/pdf"
@@ -299,7 +299,7 @@ const ReceiptViewer = ({ fileUrl, fileName = 'Receipt Document', fileType = 'ima
                   setHasError(true);
                 }}
                 draggable={false}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-sm border border-slate-200 bg-white"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-sm border border-slate-200 bg-brand-surface"
               />
             </div>
           )}

@@ -77,7 +77,7 @@ const ShareModal = ({ receipt, onClose }) => {
       aria-label={`Share receipt - ${vendorName}`}
     >
       <div
-        className="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-5 text-center"
+        className="bg-brand-surface border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-5 text-center"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -100,7 +100,7 @@ const ShareModal = ({ receipt, onClose }) => {
 
         {/* QR Code Container (Live rendering vs Paused Placeholder) */}
         {IS_PUBLIC_SHARING_ENABLED ? (
-          <div className="bg-white p-4 rounded-xl border border-slate-200 inline-block mx-auto shadow-2xs">
+          <div className="bg-brand-surface p-4 rounded-xl border border-slate-200 inline-block mx-auto shadow-2xs">
             <QRCodeSVG value={realPublicUrl} size={240} level="H" includeMargin={true} />
           </div>
         ) : (
@@ -131,7 +131,7 @@ const ShareModal = ({ receipt, onClose }) => {
           <button
             type="button"
             onClick={handleCopyLink}
-            className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-emerald-700 rounded-lg hover:bg-emerald-800 transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-brand-primary rounded-xl hover:bg-brand-primary-hover transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
           >
             {copiedLink ? (
               <>
@@ -150,7 +150,7 @@ const ShareModal = ({ receipt, onClose }) => {
             <button
               type="button"
               onClick={handleNativeShare}
-              className="w-full py-2 px-4 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+              className="w-full py-2 px-4 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
             >
               <Share2 className="w-3.5 h-3.5 text-slate-600" />
               <span>Share via...</span>

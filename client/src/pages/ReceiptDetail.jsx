@@ -80,12 +80,12 @@ const ReceiptDetail = () => {
     return (
       <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
-          <button onClick={() => setIsEditing(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <button onClick={() => setIsEditing(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
             ← Cancel
           </button>
           <h1 className="text-xl font-bold text-slate-900">Edit Receipt</h1>
         </div>
-        <div className="bg-white p-6 rounded-xl border border-slate-200">
+        <div className="bg-brand-surface p-6 rounded-xl border border-slate-200">
           <ReceiptForm
             initialData={receipt}
             onSubmit={handleUpdate}
@@ -124,7 +124,7 @@ const ReceiptDetail = () => {
   const isTrueMismatch = receipt.needsReview && products.length > 0 && !matchesGrand && !matchesSub && !matchesReconciled;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* Document Viewer Modal */}
       {showViewer && receipt.fileUrl && (
         <ReceiptViewer
@@ -163,28 +163,28 @@ const ReceiptDetail = () => {
 
       {/* Flagged Review Alert */}
       {isTrueMismatch && (
-        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 text-amber-900 text-xs">
+        <div className="p-4 rounded-2xl bg-brand-border/30 border border-brand-primary/50 flex items-center justify-between gap-3 text-brand-navy text-xs">
           <div className="flex items-center gap-2 font-medium">
-            <span>⚠️</span>
+            <span>ℹ️</span>
             <span>
               <strong>Review Required:</strong> Line item math mismatch detected. Please verify extracted amounts.
             </span>
           </div>
-          <button onClick={() => setIsEditing(true)} className="px-3 py-1 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 rounded-xl transition-colors">
+          <button onClick={() => setIsEditing(true)} className="px-3 py-1 text-xs font-bold text-brand-navy bg-brand-border hover:bg-brand-border/80 rounded-xl transition-colors">
             Edit Details
           </button>
         </div>
       )}
 
       {/* 2. Header Block Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs flex items-start justify-between gap-6 pb-6 min-w-0 flex-wrap">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs flex items-start justify-between gap-6 pb-6 min-w-0 flex-wrap">
         <div className="min-w-0 flex-1">
-          {/* Accent Color 1/3: Item count badge */}
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 mb-2">
+          {/* Item count badge */}
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border mb-2">
             {products.length} {products.length === 1 ? 'product' : 'products'}
           </span>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight truncate" title={vendorName}>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight truncate" title={vendorName}>
             {vendorName}
           </h1>
 
@@ -203,19 +203,19 @@ const ReceiptDetail = () => {
               GRAND TOTAL
             </span>
             {totalReceiptSavings > 0 && (
-              <span className="text-[11px] font-medium text-[#047857] font-tabular">
+              <span className="text-[11px] font-medium text-brand-primary font-tabular">
                 Saved {formatCurrency(totalReceiptSavings, receipt.currency)}
               </span>
             )}
           </div>
-          <span className="text-3xl sm:text-4xl font-bold text-slate-900 font-tabular tracking-tight leading-none">
+          <span className="text-3xl sm:text-4xl font-semibold text-slate-900 font-tabular tracking-tight leading-none">
             {formatCurrency(receipt.grandTotal || receipt.totalAmount, receipt.currency)}
           </span>
         </div>
       </div>
 
       {/* 3. Metadata Strip */}
-      <div className="rounded-xl border border-slate-200 bg-white grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-hidden">
+      <div className="rounded-xl border border-slate-200 bg-brand-surface grid grid-cols-2 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-hidden">
         <div className="p-4 space-y-1">
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
             Purchase Date
@@ -239,7 +239,7 @@ const ReceiptDetail = () => {
             <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
               Discount / Savings
             </span>
-            <span className="text-sm font-semibold text-[#047857] font-tabular block">
+            <span className="text-sm font-semibold text-brand-primary font-tabular block">
               -{formatCurrency(receipt.discountAmount, receipt.currency)}
             </span>
           </div>
@@ -293,7 +293,7 @@ const ReceiptDetail = () => {
             <div key={prod._id || idx} className="py-3.5 grid grid-cols-12 gap-4 items-center">
               {/* Product Info */}
               <div className="col-span-6 sm:col-span-7 pr-2">
-                <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                <h4 className="text-sm font-semibold text-slate-900 leading-snug">
                   {prod.productName}
                 </h4>
                 {(() => {
@@ -311,10 +311,10 @@ const ReceiptDetail = () => {
 
                     if (prod.warrantyStatus === 'expiring_soon') {
                       warrantyText = `${prod.warrantyPeriodValue} ${unitStr} warranty (expiring soon)`;
-                      warrantyClass = 'text-amber-600 font-medium';
+                      warrantyClass = 'text-brand-primary font-bold';
                     } else if (prod.warrantyStatus === 'expired') {
                       warrantyText = `Warranty expired`;
-                      warrantyClass = 'text-rose-600 font-medium';
+                      warrantyClass = 'text-brand-navy/70 font-semibold';
                     }
 
                     parts.push(<span key="warranty" className={warrantyClass}>{warrantyText}</span>);
@@ -349,10 +349,10 @@ const ReceiptDetail = () => {
                 {formatCurrency(prod.unitPrice, receipt.currency)}
               </div>
 
-              <div className="col-span-2 sm:col-span-1 text-right text-sm font-bold font-tabular text-slate-900">
+              <div className="col-span-2 sm:col-span-1 text-right text-sm font-semibold font-tabular text-slate-900">
                 {formatCurrency(prod.lineTotal || prod.unitPrice, receipt.currency)}
                 {prod.discountAmount > 0 && (
-                  <span className="text-[11px] font-medium text-[#047857] block font-sans">
+                  <span className="text-[11px] font-medium text-brand-primary block font-sans">
                     Saved {formatCurrency(prod.discountAmount, receipt.currency)}
                   </span>
                 )}
@@ -381,7 +381,7 @@ const ReceiptDetail = () => {
           type="button"
           onClick={handleDelete}
           disabled={deleteMutation.isPending}
-          className="px-4 py-2 text-xs font-semibold text-rose-700 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 hover:border-rose-300 transition-colors"
+          className="px-4 py-2 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-lg hover:bg-brand-canvas transition-colors cursor-pointer"
         >
           {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         </button>
@@ -389,7 +389,7 @@ const ReceiptDetail = () => {
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+          className="px-4 py-2 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
         >
           Edit
         </button>
@@ -397,18 +397,18 @@ const ReceiptDetail = () => {
         <button
           type="button"
           onClick={() => setShowShareModal(true)}
-          className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          className="px-4 py-2 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
         >
           <Share2 className="w-3.5 h-3.5 text-slate-600" />
           <span>Share</span>
         </button>
 
-        {/* Accent Color 3/3: Solid Deep Emerald Green Primary Button */}
+        {/* Primary Action Button */}
         {receipt.fileUrl ? (
           <button
             type="button"
             onClick={() => setShowViewer(true)}
-            className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 rounded-lg hover:bg-emerald-800 transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-white bg-brand-primary rounded-xl hover:bg-brand-primary-hover transition-colors cursor-pointer shadow-xs"
           >
             View Document
           </button>
@@ -416,7 +416,7 @@ const ReceiptDetail = () => {
           <button
             type="button"
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 text-xs font-semibold text-white bg-emerald-700 rounded-lg hover:bg-emerald-800 transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-white bg-brand-primary rounded-xl hover:bg-brand-primary-hover transition-colors cursor-pointer shadow-xs"
           >
             Edit Receipt
           </button>

@@ -10,23 +10,23 @@ const WarrantyBadge = ({ status, size = 'normal', showIcon = true }) => {
   const config = {
     active: {
       label: 'Active Warranty',
-      dotColor: 'bg-emerald-500',
-      classes: 'bg-emerald-50/70 text-emerald-800 border-emerald-200/80',
+      dotColor: 'bg-brand-primary',
+      classes: 'bg-brand-border/60 text-brand-navy border-brand-border',
     },
     expiring_soon: {
       label: 'Expiring Soon',
-      dotColor: 'bg-amber-500',
-      classes: 'bg-amber-50/80 text-amber-800 border-amber-200/80 font-medium',
+      dotColor: 'bg-brand-primary',
+      classes: 'bg-brand-border text-brand-navy border-brand-primary/50 font-semibold',
     },
     expired: {
       label: 'Expired',
-      dotColor: 'bg-slate-400',
-      classes: 'bg-slate-100 text-slate-600 border-slate-200',
+      dotColor: 'bg-brand-navy/40',
+      classes: 'bg-brand-canvas text-brand-navy/70 border-brand-border',
     },
     none: {
       label: 'No Warranty',
       dotColor: 'bg-slate-300',
-      classes: 'bg-slate-50 text-slate-500 border-slate-200/60',
+      classes: 'bg-brand-canvas text-slate-500 border-brand-border',
     },
   };
 

@@ -50,7 +50,7 @@ const StoreDetail = () => {
   const currency = stats.currency || 'INR';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* Receipt Viewer Modal */}
       {activeViewerReceipt && (
         <ReceiptViewer
@@ -71,41 +71,41 @@ const StoreDetail = () => {
       </div>
 
       {/* 2. Store Header Row Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs flex items-start justify-between gap-4 flex-wrap">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {stats.categories && stats.categories.map((cat) => (
               <span
                 key={cat}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60"
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border"
               >
                 {cat}
               </span>
             ))}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
             {stats.storeName}
           </h1>
 
-          <p className="text-xs text-[#64748B] font-medium mt-1.5 flex items-center gap-2 flex-wrap">
+          <p className="text-xs text-slate-500 font-normal mt-1.5 flex items-center gap-2 flex-wrap">
             {stats.firstPurchaseDate && (
-              <span>First purchase: <strong className="font-semibold text-slate-800 font-tabular">{formatDate(stats.firstPurchaseDate)}</strong></span>
+              <span>First purchase: <strong className="font-medium text-slate-800 font-tabular">{formatDate(stats.firstPurchaseDate)}</strong></span>
             )}
             {stats.latestPurchaseDate && (
               <>
                 <span className="text-slate-300">•</span>
-                <span>Latest purchase: <strong className="font-semibold text-slate-800 font-tabular">{formatDate(stats.latestPurchaseDate)}</strong></span>
+                <span>Latest purchase: <strong className="font-medium text-slate-800 font-tabular">{formatDate(stats.latestPurchaseDate)}</strong></span>
               </>
             )}
           </p>
         </div>
 
         <div className="text-right">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
             Total Spend at Store
           </span>
-          <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-tabular tracking-tight">
+          <span className="text-2xl sm:text-3xl font-semibold text-slate-900 font-tabular tracking-tight">
             {formatCurrency(stats.totalSpent, 'INR')}
           </span>
         </div>
@@ -113,11 +113,11 @@ const StoreDetail = () => {
 
       {/* 3. Metric Summary Cards (4 Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
             TOTAL RECEIPTS
           </span>
-          <span className="text-2xl font-black text-slate-900 font-tabular">
+          <span className="text-2xl font-semibold text-brand-navy font-tabular">
             {stats.receiptCount}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -125,11 +125,11 @@ const StoreDetail = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
             PRODUCTS BOUGHT
           </span>
-          <span className="text-2xl font-black text-slate-900 font-tabular">
+          <span className="text-2xl font-semibold text-brand-navy font-tabular">
             {stats.productCount}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -137,11 +137,11 @@ const StoreDetail = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
             AVG. BILL AMOUNT
           </span>
-          <span className="text-2xl font-black text-slate-900 font-tabular">
+          <span className="text-2xl font-semibold text-brand-navy font-tabular">
             {formatCurrency(stats.averageSpend, 'INR')}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -149,11 +149,11 @@ const StoreDetail = () => {
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
+          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
             ACTIVE WARRANTIES
           </span>
-          <span className="text-2xl font-black text-emerald-800 font-tabular">
+          <span className="text-2xl font-semibold text-brand-primary font-tabular">
             {stats.activeWarrantyCount || products.filter((p) => p.warrantyStatus === 'active').length}
           </span>
           <span className="text-xs text-slate-400 block mt-1">
@@ -164,14 +164,14 @@ const StoreDetail = () => {
 
       {/* 4. Tab Navigation Strip */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-200 text-xs">
+        <div className="flex items-center gap-2 border-b border-brand-border text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('receipts')}
             className={`pb-3 px-1 font-semibold transition-colors relative cursor-pointer ${
               activeTab === 'receipts'
-                ? 'text-slate-900 border-b-2 border-slate-900'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'text-brand-navy border-b-2 border-brand-navy'
+                : 'text-slate-500 hover:text-brand-navy'
             }`}
           >
             Receipts ({receipts.length})
@@ -182,8 +182,8 @@ const StoreDetail = () => {
             onClick={() => setActiveTab('products')}
             className={`pb-3 px-1 font-semibold transition-colors relative cursor-pointer ml-4 ${
               activeTab === 'products'
-                ? 'text-slate-900 border-b-2 border-slate-900'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'text-brand-navy border-b-2 border-brand-navy'
+                : 'text-slate-500 hover:text-brand-navy'
             }`}
           >
             Products & Warranties ({products.length})
@@ -207,7 +207,7 @@ const StoreDetail = () => {
                     className="min-w-0 flex-1 cursor-pointer"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-slate-900 group-hover:text-emerald-800 transition-colors font-tabular">
+                      <span className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors font-tabular">
                         {formatDate(rcpt.purchaseDate)}
                       </span>
                       {rcpt.invoiceNumber && (
@@ -237,7 +237,7 @@ const StoreDetail = () => {
                           e.stopPropagation();
                           setActiveViewerReceipt(rcpt);
                         }}
-                        className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+                        className="text-xs font-medium text-slate-600 hover:text-slate-900 bg-brand-surface border border-slate-200 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                       >
                         <FileText className="w-3.5 h-3.5 text-slate-500" />
                         <span className="hidden sm:inline">View Doc</span>
@@ -248,7 +248,7 @@ const StoreDetail = () => {
                       onClick={() => navigate(`/receipts/${rcpt._id}`)}
                       className="text-right cursor-pointer"
                     >
-                      <span className="text-base sm:text-lg font-bold text-slate-900 font-tabular block">
+                      <span className="text-base sm:text-lg font-medium text-slate-900 font-tabular block">
                         {formatCurrency(amt, rcptCurrency)}
                       </span>
                     </div>
@@ -283,22 +283,22 @@ const StoreDetail = () => {
 
                 if (prod.warrantyStatus === 'active') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60">
-                      <ShieldCheck className="w-3 h-3 text-emerald-700" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-border/60 text-brand-navy border border-brand-border">
+                      <ShieldCheck className="w-3 h-3 text-brand-primary" />
                       <span>Under Warranty</span>
                     </span>
                   );
                 } else if (prod.warrantyStatus === 'expiring_soon') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/60">
-                      <Clock className="w-3 h-3 text-amber-600" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50">
+                      <Clock className="w-3 h-3 text-brand-primary" />
                       <span>Expiring Soon</span>
                     </span>
                   );
                 } else if (prod.warrantyStatus === 'expired') {
                   warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200/60">
-                      <AlertTriangle className="w-3 h-3 text-rose-500" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-canvas text-brand-navy/70 border border-brand-border">
+                      <AlertTriangle className="w-3 h-3 text-brand-navy/60" />
                       <span>Expired</span>
                     </span>
                   );
@@ -312,7 +312,7 @@ const StoreDetail = () => {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-emerald-800 transition-colors truncate">
+                        <h3 className="text-sm sm:text-base font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate">
                           {prod.productName}
                         </h3>
                         {prod.brand && (
@@ -332,7 +332,7 @@ const StoreDetail = () => {
                         {prod.warrantyExpiryDate && (
                           <>
                             <span className="text-slate-300">•</span>
-                            <span>Expires: <strong className="font-semibold text-slate-700 font-tabular">{formatDate(prod.warrantyExpiryDate)}</strong></span>
+                            <span>Expires: <strong className="font-medium text-slate-700 font-tabular">{formatDate(prod.warrantyExpiryDate)}</strong></span>
                           </>
                         )}
                       </div>
@@ -344,10 +344,10 @@ const StoreDetail = () => {
 
                     <div className="flex items-center gap-3 shrink-0 text-right">
                       <div>
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
                           Spend
                         </span>
-                        <span className="text-base sm:text-lg font-bold text-slate-900 font-tabular tracking-tight leading-none block">
+                        <span className="text-base sm:text-lg font-medium text-slate-900 font-tabular tracking-tight leading-none block">
                           {price != null ? formatCurrency(price, currency) : '—'}
                         </span>
                       </div>

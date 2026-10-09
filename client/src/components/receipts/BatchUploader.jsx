@@ -143,20 +143,20 @@ const BatchUploader = () => {
   const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   return (
-    <div className="space-y-6 font-sans text-[#0F172A]">
+    <div className="space-y-6 font-sans text-brand-navy">
       {/* File Selection Mode */}
       {!isProcessingBatch && (
         <div className="space-y-4">
           {/* Network & Demo Mode Control Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-brand-canvas border border-brand-border rounded-xl text-xs">
             <div className="flex items-center gap-2.5">
-              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${forceOfflineMode ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                <Zap className="w-4 h-4" />
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-border text-brand-navy">
+                <Zap className="w-4 h-4 text-brand-primary" />
               </span>
               <div>
-                <div className="font-semibold text-slate-800 flex items-center gap-2">
+                <div className="font-semibold text-brand-navy flex items-center gap-2">
                   <span>{forceOfflineMode ? '⚡ Offline Batch Engine (Gemini Shut Down)' : '🤖 Google Gemini AI Batch Active'}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-brand-navy text-white' : 'bg-brand-border text-brand-navy'}`}>
                     {forceOfflineMode ? 'Gemini OFF' : 'Gemini AI'}
                   </span>
                 </div>
@@ -173,8 +173,8 @@ const BatchUploader = () => {
               onClick={toggleOfflineMode}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
                 forceOfflineMode
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
+                  ? 'bg-brand-navy hover:bg-brand-navy-hover text-white border-brand-navy shadow-xs'
+                  : 'bg-brand-surface hover:bg-brand-canvas text-brand-navy border-brand-border shadow-xs'
               }`}
               title="Toggle Gemini shutdown and offline OCR"
             >
@@ -197,8 +197,8 @@ const BatchUploader = () => {
               {...getRootProps()}
               className={`rounded-xl border border-dashed text-center cursor-pointer transition-colors p-8 md:p-12 ${
                 isDragActive
-                  ? 'border-[#047857] bg-emerald-50/30'
-                  : 'border-[#E2E8F0] hover:border-slate-400 bg-white'
+                  ? 'border-brand-primary bg-brand-border/30'
+                  : 'border-brand-border hover:border-brand-primary bg-brand-surface'
               } ${uploadBatchMutation.isPending ? 'opacity-70 pointer-events-none' : ''}`}
             >
               <input {...getInputProps()} />
@@ -222,7 +222,7 @@ const BatchUploader = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-[#0F172A]">
+                  <p className="text-sm font-semibold text-brand-navy">
                     {isDragActive ? 'Drop receipt files here...' : 'Click or drag & drop multiple receipts'}
                   </p>
                   <p className="text-xs text-[#64748B] font-normal">
@@ -232,7 +232,7 @@ const BatchUploader = () => {
 
                 <button
                   type="button"
-                  className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors shadow-xs mt-3 inline-flex items-center"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors shadow-xs mt-3 inline-flex items-center"
                   onClick={(e) => {
                     e.stopPropagation();
                     open();
@@ -249,7 +249,7 @@ const BatchUploader = () => {
             <div className="space-y-4">
               <input {...getInputProps()} />
               <div className="flex items-center justify-between pb-2 flex-wrap gap-2">
-                <span className="text-sm font-bold text-[#0F172A]">
+                <span className="text-sm font-semibold text-brand-navy">
                   Selected receipt files ({selectedFiles.length} of {MAX_FILES} max)
                 </span>
 
@@ -261,7 +261,7 @@ const BatchUploader = () => {
                         e.stopPropagation();
                         open();
                       }}
-                      className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors"
+                      className="px-3 py-1 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors"
                     >
                       + Add file
                     </button>
@@ -274,7 +274,7 @@ const BatchUploader = () => {
                   <button
                     type="button"
                     onClick={() => setSelectedFiles([])}
-                    className="text-xs text-rose-600 font-semibold hover:underline"
+                    className="text-xs text-brand-navy font-semibold hover:underline"
                   >
                     Clear all
                   </button>
@@ -282,7 +282,7 @@ const BatchUploader = () => {
               </div>
 
               {/* Hairline Divided Rows */}
-              <div className="divide-y divide-[#E2E8F0] border-t border-b border-[#E2E8F0]">
+              <div className="divide-y divide-brand-border border-t border-b border-brand-border">
                 {selectedFiles.map((file, idx) => (
                   <div
                     key={`${file.name}-${idx}`}
@@ -293,7 +293,7 @@ const BatchUploader = () => {
                         #{idx + 1}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-[#0F172A] truncate">
+                        <p className="text-xs font-semibold text-brand-navy truncate">
                           {file.name}
                         </p>
                         <p className="text-[11px] text-[#64748B] font-mono mt-0.5">
@@ -305,7 +305,7 @@ const BatchUploader = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(idx)}
-                      className="text-slate-400 hover:text-rose-600 text-xs font-bold p-1 cursor-pointer"
+                      className="text-slate-400 hover:text-brand-navy text-xs font-bold p-1 cursor-pointer"
                       title="Remove file"
                     >
                       ✕
@@ -322,7 +322,7 @@ const BatchUploader = () => {
                   type="button"
                   onClick={handleStartBatchUpload}
                   disabled={uploadBatchMutation.isPending}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs"
+                  className="px-5 py-2 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs"
                 >
                   {uploadBatchMutation.isPending ? 'Starting batch OCR...' : `Start batch OCR (${selectedFiles.length} files)`}
                 </button>
@@ -334,10 +334,10 @@ const BatchUploader = () => {
 
       {/* Batch Processing & Status Tracking View */}
       {isProcessingBatch && (
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 shadow-2xs space-y-6">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-2xs space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-2 pb-2">
             <div>
-              <h2 className="text-base font-bold text-[#0F172A] tracking-tight">
+              <h2 className="text-base font-semibold text-brand-navy tracking-tight">
                 Batch processing progress
               </h2>
               <p className="text-xs text-[#64748B] font-normal mt-0.5">
@@ -350,7 +350,7 @@ const BatchUploader = () => {
             <button
               type="button"
               onClick={handleResetBatch}
-              className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors cursor-pointer"
             >
               New batch upload
             </button>
@@ -364,9 +364,9 @@ const BatchUploader = () => {
                 {completedCount} / {totalCount} files ({progressPercent}%)
               </span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-[#E2E8F0]">
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-brand-border">
               <div
-                className="h-full bg-[#047857] transition-all duration-500 rounded-full"
+                className="h-full bg-brand-primary transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -374,23 +374,23 @@ const BatchUploader = () => {
 
           {/* File Status List */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] text-xs font-bold text-[#64748B] tracking-wider uppercase">
+            <div className="flex items-center justify-between pb-2 border-b border-brand-border text-xs font-bold text-[#64748B] tracking-wider uppercase">
               <span>File name</span>
               <span className="pr-4">Status</span>
             </div>
 
-            <div className="divide-y divide-[#E2E8F0]">
+            <div className="divide-y divide-brand-border">
               {batchData?.files?.map((f, idx) => (
                 <div
                   key={f._id || idx}
                   className="py-3 px-1 flex items-center justify-between gap-4 text-xs"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#0F172A] truncate">
+                    <p className="font-semibold text-brand-navy truncate">
                       {f.originalName || `File #${idx + 1}`}
                     </p>
                     {f.status === 'failed' && (
-                      <p className="text-[11px] text-rose-600 font-medium truncate mt-0.5">
+                      <p className="text-[11px] text-brand-navy/80 font-medium truncate mt-0.5">
                         {f.errorMessage || 'OCR processing failed'}
                       </p>
                     )}
@@ -398,7 +398,7 @@ const BatchUploader = () => {
 
                   <div className="shrink-0">
                     {f.status === 'queued' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0]">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-canvas text-brand-navy/80 border border-brand-border">
                         <svg className="w-3.5 h-3.5 text-[#64748B] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                           <circle cx="12" cy="12" r="9" />
                           <polyline points="12 6 12 12 16 14" />
@@ -407,8 +407,8 @@ const BatchUploader = () => {
                       </span>
                     )}
                     {f.status === 'processing' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F8FAFC] text-[#334155] border border-[#E2E8F0]">
-                        <svg className="w-3.5 h-3.5 text-[#047857] animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-border/40 text-brand-navy border border-brand-border">
+                        <svg className="w-3.5 h-3.5 text-brand-primary animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
@@ -416,24 +416,24 @@ const BatchUploader = () => {
                       </span>
                     )}
                     {(f.status === 'needs_review' || f.status === 'ready') && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-                        <svg className="w-3.5 h-3.5 text-[#047857] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+                        <svg className="w-3.5 h-3.5 text-brand-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         Ready for review
                       </span>
                     )}
                     {f.status === 'saved' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-                        <svg className="w-3.5 h-3.5 text-[#047857] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+                        <svg className="w-3.5 h-3.5 text-brand-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         Saved
                       </span>
                     )}
                     {f.status === 'failed' && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">
-                        <svg className="w-3.5 h-3.5 text-[#DC2626] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-canvas text-brand-navy border border-brand-border">
+                        <svg className="w-3.5 h-3.5 text-brand-navy shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                           <circle cx="12" cy="12" r="9" />
                           <line x1="12" y1="8" x2="12" y2="12" />
                           <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -449,14 +449,14 @@ const BatchUploader = () => {
 
           {/* Action Bar when Complete */}
           {isFinished && (
-            <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-between flex-wrap gap-3">
+            <div className="pt-4 border-t border-brand-border flex items-center justify-between flex-wrap gap-3">
               <p className="text-xs text-[#64748B] font-normal">
                 Batch processing complete. Review extracted data and save receipts.
               </p>
               <button
                 type="button"
                 onClick={() => navigate(`/receipts/batch/${activeBatchId}`)}
-                className="px-5 py-2.5 text-xs font-semibold text-white bg-[#047857] hover:bg-[#059669] rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
               >
                 Review & save batch receipts →
               </button>
@@ -466,7 +466,7 @@ const BatchUploader = () => {
       )}
 
       {errorMsg && (
-        <div className="p-3.5 border-l-4 border-l-rose-500 bg-white text-rose-800 text-xs font-medium">
+        <div className="p-3.5 border-l-4 border-l-brand-navy bg-brand-canvas text-brand-navy text-xs font-medium border border-brand-border">
           {errorMsg}
         </div>
       )}

@@ -108,17 +108,17 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
   const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
   return (
-    <div className="space-y-4 text-[#0F172A]">
+    <div className="space-y-4 text-brand-navy">
       {/* Network & Demo Mode Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-brand-canvas border border-brand-border rounded-xl text-xs">
         <div className="flex items-center gap-2.5">
-          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg ${forceOfflineMode ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-            <Zap className="w-4 h-4" />
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-brand-border text-brand-navy">
+            <Zap className="w-4 h-4 text-brand-primary" />
           </span>
           <div>
-            <div className="font-semibold text-slate-800 flex items-center gap-2">
+            <div className="font-semibold text-brand-navy flex items-center gap-2">
               <span>{forceOfflineMode ? '⚡ Offline Engine Active (Gemini Shut Down)' : '🤖 Google Gemini AI Engine Active'}</span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${forceOfflineMode ? 'bg-brand-navy text-white' : 'bg-brand-border text-brand-navy'}`}>
                 {forceOfflineMode ? 'Gemini OFF' : 'Gemini AI'}
               </span>
             </div>
@@ -135,8 +135,8 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
           onClick={toggleOfflineMode}
           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
             forceOfflineMode
-              ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs'
-              : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-xs'
+              ? 'bg-brand-navy hover:bg-brand-navy-hover text-white border-brand-navy shadow-xs'
+              : 'bg-brand-surface hover:bg-brand-canvas text-brand-navy border-brand-border shadow-xs'
           }`}
           title="Toggle Gemini shutdown and offline OCR"
         >
@@ -159,8 +159,8 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
         {...getRootProps()}
         className={`rounded-xl border border-dashed text-center cursor-pointer transition-colors p-8 md:p-12 ${
           isDragActive
-            ? 'border-[#047857] bg-emerald-50/30'
-            : 'border-[#E2E8F0] hover:border-slate-400 bg-white'
+            ? 'border-brand-primary bg-brand-border/30'
+            : 'border-brand-border hover:border-brand-primary bg-brand-surface'
         } ${uploadMutation.isPending ? 'opacity-70 pointer-events-none' : ''}`}
       >
         <input {...getInputProps()} />
@@ -169,7 +169,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
           <div className="py-6 flex flex-col items-center justify-center space-y-3">
             <LoadingSpinner size="lg" />
             <div className="space-y-1">
-              <p className="text-sm font-bold text-[#0F172A]">
+              <p className="text-sm font-semibold text-brand-navy">
                 {forceOfflineMode ? '⚡ Processing with Local Offline OCR...' : 'Scanning receipt with OCR...'}
               </p>
               <p className="text-xs text-[#64748B] font-normal">
@@ -200,7 +200,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-[#0F172A]">
+              <p className="text-sm font-semibold text-brand-navy">
                 {isDragActive ? 'Drop receipt file here...' : 'Click or drag & drop receipt here'}
               </p>
               <p className="text-xs text-[#64748B] font-normal">
@@ -211,7 +211,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
             {/* Standard Outline Secondary Button */}
             <button
               type="button"
-              className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-lg hover:bg-slate-50 transition-colors shadow-xs mt-3 inline-flex items-center"
+              className="px-3.5 py-1.5 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors shadow-xs mt-3 inline-flex items-center"
               onClick={(e) => {
                 e.stopPropagation();
                 open();
@@ -224,7 +224,7 @@ const ReceiptUploader = ({ onSuccess, onHandwritingDetected }) => {
       </div>
 
       {dragError && (
-        <div className="p-3.5 border-l-4 border-l-rose-500 bg-white text-rose-800 text-xs font-medium">
+        <div className="p-3.5 border-l-4 border-l-brand-navy bg-brand-canvas text-brand-navy text-xs font-medium border border-brand-border">
           {dragError}
         </div>
       )}

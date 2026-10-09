@@ -127,14 +127,14 @@ const Profile = () => {
     : 'Recent Member';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-6xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* 1. Page Header */}
       <div className="flex items-center justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
             Account Profile
           </h1>
-          <p className="text-xs text-[#64748B] font-medium mt-1">
+          <p className="text-xs text-slate-500 font-normal mt-1">
             Manage your personal profile, regional preferences, and account metadata.
           </p>
         </div>
@@ -142,7 +142,7 @@ const Profile = () => {
         <button
           type="button"
           onClick={() => navigate('/settings')}
-          className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+          className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-brand-surface hover:bg-brand-surface-hover border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
         >
           <Settings className="w-3.5 h-3.5 text-slate-500" />
           <span>Account Settings</span>
@@ -150,28 +150,28 @@ const Profile = () => {
       </div>
 
       {/* 2. Hero Profile Identity Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-emerald-50/60 to-transparent rounded-bl-full pointer-events-none" />
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-brand-border/60 to-transparent rounded-bl-full pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-5">
             {/* Avatar Initials Badge */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#047857] to-[#059669] text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-md shrink-0 border-2 border-white">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-brand-navy to-brand-primary text-white flex items-center justify-center font-medium text-xl sm:text-2xl shadow-md shrink-0 border-2 border-white">
               {initials}
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-semibold text-brand-navy tracking-tight">
                   {user?.name || 'User Profile'}
                 </h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
+                  <Sparkles className="w-3 h-3 text-brand-primary" />
                   <span>Standard Member</span>
                 </span>
               </div>
 
-              <p className="text-xs text-[#64748B] font-medium flex items-center gap-3 flex-wrap">
+              <p className="text-xs text-slate-500 font-normal flex items-center gap-3 flex-wrap">
                 <span className="flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
                   {user?.email}
@@ -186,8 +186,8 @@ const Profile = () => {
           </div>
 
           <div className="self-end sm:self-auto shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-canvas border border-brand-border text-xs font-medium text-brand-navy">
+              <CheckCircle2 className="w-3.5 h-3.5 text-brand-primary" />
               <span>Email Verified</span>
             </span>
           </div>
@@ -196,62 +196,62 @@ const Profile = () => {
 
       {/* 3. Account Lifetime Metrics (4 Tiles) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               Total Receipts
             </span>
             <Receipt className="w-4 h-4 text-slate-400" />
           </div>
-          <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] font-tabular block leading-tight">
+          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight">
             {stats.receiptCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
             Archived transactions
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               Tracked Items
             </span>
             <Package className="w-4 h-4 text-slate-400" />
           </div>
-          <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] font-tabular block leading-tight">
+          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight">
             {stats.productCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
             Standalone assets
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               Active Warranties
             </span>
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <ShieldCheck className="w-4 h-4 text-brand-primary" />
           </div>
-          <span className="text-2xl sm:text-3xl font-extrabold text-emerald-800 font-tabular block leading-tight">
+          <span className="text-2xl sm:text-3xl font-semibold text-brand-primary font-tabular block leading-tight">
             {stats.activeWarrantyCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
             Protected products
           </span>
         </div>
 
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-2xs">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
               Lifetime Spend
             </span>
             <DollarSign className="w-4 h-4 text-slate-400" />
           </div>
-          <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] font-tabular block leading-tight truncate">
+          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight truncate">
             {formatCurrency(stats.totalSpent, 'INR')}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
             Aggregated purchases
           </span>
         </div>
@@ -259,12 +259,12 @@ const Profile = () => {
 
       {/* 4. Edit Personal Profile Form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-7 shadow-xs space-y-6">
+        <div className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-7 shadow-xs space-y-6">
           <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-extrabold text-[#0F172A] tracking-tight">
+            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
               Personal Information
             </h3>
-            <p className="text-xs text-[#64748B] font-medium mt-0.5">
+            <p className="text-xs text-slate-500 font-normal mt-0.5">
               Update your personal details and how your profile is displayed.
             </p>
           </div>
@@ -273,7 +273,7 @@ const Profile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Full Name
                 </label>
                 <div className="relative">
@@ -282,7 +282,7 @@ const Profile = () => {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans"
+                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
                     style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                     placeholder="Your Full Name"
                     required
@@ -292,7 +292,7 @@ const Profile = () => {
 
               {/* Email (Read-only) */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Email Address
                 </label>
                 <div className="relative">
@@ -309,7 +309,7 @@ const Profile = () => {
 
               {/* Phone Number */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Phone Number
                 </label>
                 <div className="relative">
@@ -318,16 +318,16 @@ const Profile = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans"
+                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
                     style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
               </div>
 
-              {/* Default Currency */}
+              {/* Preferred Currency */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Preferred Currency
                 </label>
                 <div className="relative">
@@ -335,7 +335,7 @@ const Profile = () => {
                   <select
                     value={formData.defaultCurrency}
                     onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
+                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
                     style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   >
                     {CURRENCIES.map((c) => (
@@ -349,7 +349,7 @@ const Profile = () => {
 
               {/* Timezone */}
               <div className="sm:col-span-2">
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Timezone
                 </label>
                 <div className="relative">
@@ -357,7 +357,7 @@ const Profile = () => {
                   <select
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
+                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
                     style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
                   >
                     {TIMEZONES.map((tz) => (
@@ -374,13 +374,13 @@ const Profile = () => {
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-[#047857] hover:bg-[#059669] rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {updateMutation.isPending ? (
                   <LoadingSpinner size="sm" />
                 ) : isSaved ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <CheckCircle2 className="w-4 h-4 text-white" />
                     <span>Saved!</span>
                   </>
                 ) : (
@@ -396,37 +396,37 @@ const Profile = () => {
 
         {/* Sidebar Info Card */}
         <div className="space-y-6">
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs space-y-4">
+            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
               Security & Access
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                <div className="flex items-center justify-between text-slate-800 font-bold">
+              <div className="p-3.5 rounded-xl bg-brand-canvas border border-brand-border space-y-1">
+                <div className="flex items-center justify-between text-brand-navy font-medium">
                   <span>Password Status</span>
-                  <span className="text-emerald-700">Protected</span>
+                  <span className="text-brand-primary">Protected</span>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-slate-400 font-normal">
                   Password was set on account registration.
                 </p>
               </div>
 
               <Link
                 to="/settings"
-                className="w-full py-2 px-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 text-xs font-bold rounded-xl transition-colors inline-flex items-center justify-center gap-2 no-underline"
+                className="w-full py-2 px-3.5 bg-brand-surface hover:bg-brand-surface-hover border border-brand-border text-brand-navy text-xs font-medium rounded-xl transition-colors inline-flex items-center justify-center gap-2 no-underline"
               >
                 <span>Change Password</span>
               </Link>
             </div>
           </div>
 
-          <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-2xl p-5 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
+          <div className="bg-brand-border/40 border border-brand-border rounded-2xl p-5 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-brand-navy">
+              <ShieldCheck className="w-4 h-4 text-brand-primary" />
               <span>Encrypted Data Storage</span>
             </div>
-            <p className="text-[11px] text-slate-600 leading-relaxed">
+            <p className="text-[11px] text-brand-navy/70 leading-relaxed">
               Your invoices, receipts, and personal data are stored in a private, encrypted environment.
             </p>
           </div>

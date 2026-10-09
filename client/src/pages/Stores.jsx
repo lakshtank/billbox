@@ -84,25 +84,25 @@ const Stores = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* Search & Filter Popup Modal (Wider, Dropping from top) */}
       {isFilterModalOpen && (
         <div 
           onClick={() => setIsFilterModalOpen(false)}
-          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-start justify-center pt-6 sm:pt-12 px-4 pb-6 animate-in fade-in duration-150 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-brand-navy/40 backdrop-blur-xs flex items-start justify-center pt-6 sm:pt-12 px-4 pb-6 animate-in fade-in duration-150 overflow-y-auto"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-2xl w-full max-w-2xl sm:max-w-3xl space-y-5 animate-in slide-in-from-top-6 duration-200"
+            className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-7 shadow-2xl w-full max-w-2xl sm:max-w-3xl space-y-5 animate-in slide-in-from-top-6 duration-200"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800">
+                <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border flex items-center justify-center text-brand-primary">
                   <SlidersHorizontal className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 leading-none">Search & Filter Merchants</h3>
-                  <p className="text-xs text-slate-400 font-medium mt-0.5">Filter stores by name or sort by spending / frequency</p>
+                  <h3 className="text-base font-semibold text-brand-navy leading-none">Search & Filter Merchants</h3>
+                  <p className="text-xs text-slate-400 font-normal mt-0.5">Filter stores by name or sort by spending / frequency</p>
                 </div>
               </div>
               <button
@@ -117,7 +117,7 @@ const Stores = () => {
             <form onSubmit={handleApplyFilters} className="space-y-4">
               {/* Search Keyword */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                <label className="text-xs font-medium text-slate-700 block mb-1.5">
                   Search Merchant Name
                 </label>
                 <div className="relative">
@@ -128,14 +128,14 @@ const Stores = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search by store or vendor name..."
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 transition-colors font-sans"
+                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 transition-colors font-sans"
                     style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
                   />
                   {searchTerm && (
                     <button
                       type="button"
                       onClick={() => setSearchTerm('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-medium p-1 cursor-pointer"
                     >
                       ✕
                     </button>
@@ -145,7 +145,7 @@ const Stores = () => {
 
               {/* Sort Options */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-2">
+                <label className="text-xs font-medium text-slate-700 block mb-2">
                   Sort Order
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -156,10 +156,10 @@ const Stores = () => {
                         key={opt.id}
                         type="button"
                         onClick={() => setTempSort(opt.id)}
-                        className={`text-xs px-3.5 py-2 rounded-xl font-semibold border text-left transition-colors cursor-pointer ${
+                        className={`text-xs px-3.5 py-2 rounded-xl font-medium border text-left transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            ? 'bg-brand-border text-brand-navy border-brand-primary'
+                            : 'bg-brand-surface text-slate-600 border-brand-border hover:bg-brand-canvas'
                         }`}
                       >
                         {opt.label}
@@ -174,7 +174,7 @@ const Stores = () => {
                 <button
                   type="button"
                   onClick={handleClearAllFilters}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 px-2 py-2 cursor-pointer"
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800 px-2 py-2 cursor-pointer"
                 >
                   Reset All
                 </button>
@@ -183,13 +183,13 @@ const Stores = () => {
                   <button
                     type="button"
                     onClick={() => setIsFilterModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-xs font-bold text-white bg-[#047857] hover:bg-[#059669] rounded-xl transition-colors shadow-xs cursor-pointer"
+                    className="px-5 py-2 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs cursor-pointer"
                   >
                     Apply & Search
                   </button>
@@ -203,10 +203,10 @@ const Stores = () => {
       {/* 1. Page Header Row */}
       <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
             Stores & Merchants
           </h1>
-          <p className="text-xs text-[#64748B] font-medium mt-1">
+          <p className="text-xs text-slate-500 font-normal mt-1">
             Track spending, order frequency, and purchase history by merchant.
           </p>
         </div>
@@ -216,16 +216,16 @@ const Stores = () => {
           <button
             type="button"
             onClick={() => setIsFilterModalOpen(true)}
-            className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition-colors inline-flex items-center gap-2 cursor-pointer shadow-2xs ${
+            className={`px-3.5 py-2 text-xs font-medium rounded-xl border transition-colors inline-flex items-center gap-2 cursor-pointer shadow-2xs ${
               hasActiveFilters
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50'
+                ? 'bg-brand-border text-brand-navy border-brand-primary'
+                : 'bg-brand-surface text-brand-navy border-brand-border hover:bg-brand-canvas'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span>Search & Filter</span>
             {hasActiveFilters && (
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
             )}
           </button>
         </div>
@@ -236,7 +236,7 @@ const Stores = () => {
         <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
           <span className="text-slate-400 font-medium text-[11px]">Active Filters:</span>
           {searchParam && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-border/60 text-brand-navy font-semibold border border-brand-border">
               <span>"{searchParam}"</span>
               <button
                 onClick={() => {
@@ -244,14 +244,14 @@ const Stores = () => {
                   params.delete('search');
                   setSearchParams(params);
                 }}
-                className="hover:text-emerald-950 cursor-pointer font-bold"
+                className="hover:text-brand-primary cursor-pointer font-medium"
               >
                 ✕
               </button>
             </span>
           )}
           {sortParam !== 'spend_desc' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-border/60 text-brand-navy font-medium border border-brand-border">
               <span>Sort: {SORT_OPTIONS.find((s) => s.id === sortParam)?.label || sortParam}</span>
               <button
                 onClick={() => {
@@ -259,7 +259,7 @@ const Stores = () => {
                   params.delete('sort');
                   setSearchParams(params);
                 }}
-                className="hover:text-emerald-950 cursor-pointer font-bold"
+                className="hover:text-brand-navy cursor-pointer font-medium"
               >
                 ✕
               </button>
@@ -267,7 +267,7 @@ const Stores = () => {
           )}
           <button
             onClick={handleClearAllFilters}
-            className="text-xs font-semibold text-rose-600 hover:underline cursor-pointer ml-1"
+            className="text-xs font-medium text-brand-navy hover:text-brand-primary hover:underline cursor-pointer ml-1"
           >
             Clear all
           </button>
@@ -281,7 +281,7 @@ const Stores = () => {
           <button
             type="button"
             onClick={handleClearAllFilters}
-            className="text-xs font-semibold text-emerald-800 hover:underline cursor-pointer"
+            className="text-xs font-semibold text-brand-primary hover:underline cursor-pointer"
           >
             Clear filters
           </button>
@@ -301,20 +301,20 @@ const Stores = () => {
           onAction={searchParam ? handleClearSearch : () => navigate('/receipts/new')}
         />
       ) : (
-        <div className="divide-y divide-slate-100 border-b border-slate-100 font-sans">
+        <div className="divide-y divide-brand-border border-b border-brand-border font-sans">
           {stores.map((store) => {
             const currency = store.currency || 'INR';
             return (
               <div
                 key={store.storeKey || store.storeName}
                 onClick={() => navigate(`/stores/${encodeURIComponent(store.storeName)}`)}
-                className="py-4 md:py-5 px-2 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/70 transition-colors group"
+                className="py-4 md:py-5 px-2 flex items-center justify-between gap-4 cursor-pointer hover:bg-brand-border/20 transition-colors group"
               >
                 {/* Left: Store Name & Badges */}
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h3
-                      className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition-colors truncate"
+                      className="text-base sm:text-lg font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate"
                       title={store.storeName}
                     >
                       {store.storeName}
@@ -339,7 +339,7 @@ const Stores = () => {
                         <span className="text-slate-300">•</span>
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-slate-400" />
-                          <span>Last purchase: <strong className="font-semibold text-slate-700 font-tabular">{formatDate(store.latestPurchaseDate)}</strong></span>
+                          <span>Last purchase: <strong className="font-medium text-slate-700 font-tabular">{formatDate(store.latestPurchaseDate)}</strong></span>
                         </span>
                       </>
                     )}
@@ -362,10 +362,10 @@ const Stores = () => {
                 {/* Right: Total Spend & Arrow */}
                 <div className="flex items-center gap-3 shrink-0 text-right">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
                       Total Spend
                     </span>
-                    <span className="text-base sm:text-xl font-bold text-slate-900 font-tabular tracking-tight leading-none block">
+                    <span className="text-base sm:text-xl font-medium text-slate-900 font-tabular tracking-tight leading-none block">
                       {formatCurrency(store.totalSpent, 'INR')}
                     </span>
                   </div>
@@ -387,14 +387,14 @@ const Stores = () => {
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
             >
               Previous
             </button>
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
             >
               Next
             </button>

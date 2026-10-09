@@ -3,9 +3,9 @@ import toast from 'react-hot-toast';
 import { useUpdateReceiptStatus } from '../../queries/useReceiptMutations';
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', description: 'Currently tracked receipt', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
-  { value: 'nearing_expiry', label: 'Needs Attention', description: 'Action required on this item', color: 'bg-amber-50 text-amber-800 border-amber-200' },
-  { value: 'resolved', label: 'Resolved', description: 'Warranty claimed or handled', color: 'bg-blue-50 text-blue-800 border-blue-200' },
+  { value: 'active', label: 'Active', description: 'Currently tracked receipt', color: 'bg-brand-border/60 text-brand-navy border-brand-border' },
+  { value: 'nearing_expiry', label: 'Needs Attention', description: 'Action required on this item', color: 'bg-brand-border text-brand-navy border-brand-primary' },
+  { value: 'resolved', label: 'Resolved', description: 'Warranty claimed or handled', color: 'bg-brand-border text-brand-navy border-brand-primary' },
   { value: 'archived', label: 'Archived', description: 'Filed away / no longer tracking', color: 'bg-slate-100 text-slate-700 border-slate-200' },
 ];
 
@@ -82,7 +82,7 @@ const ReceiptStatusControl = ({ receipt }) => {
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-slate-200 py-1.5 z-20"
+          className="absolute right-0 mt-2 w-56 rounded-lg bg-brand-surface shadow-lg border border-slate-200 py-1.5 z-20"
           onMouseLeave={() => setIsOpen(false)}
         >
           {STATUS_OPTIONS.map((opt) => (
@@ -104,7 +104,7 @@ const ReceiptStatusControl = ({ receipt }) => {
       {/* Modal for Resolved Note prompt */}
       {showResolvedModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
+          <div className="bg-brand-surface rounded-xl max-w-md w-full p-6 shadow-xl border border-slate-100 space-y-4">
             <div>
               <h3 className="text-base font-bold text-slate-900">Mark Receipt as Resolved</h3>
               <p className="text-xs text-slate-600 mt-1">
@@ -115,7 +115,7 @@ const ReceiptStatusControl = ({ receipt }) => {
             <form onSubmit={handleConfirmResolved} className="space-y-4">
               <div>
                 <label htmlFor="resolvedNoteInput" className="text-xs font-semibold text-slate-700 block mb-1">
-                  Resolution Note <span className="text-rose-500">*</span>
+                  Resolution Note <span className="text-brand-primary">*</span>
                 </label>
                 <textarea
                   id="resolvedNoteInput"
@@ -126,9 +126,9 @@ const ReceiptStatusControl = ({ receipt }) => {
                     if (noteError) setNoteError('');
                   }}
                   placeholder="e.g. Returned to Sony store on Aug 2. Received replacement unit S/N #90248."
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  className="w-full text-xs p-2.5 rounded-lg border border-brand-border focus:border-brand-primary focus:ring-1 focus:ring-brand-primary"
                 />
-                {noteError && <p className="text-xs text-rose-500 mt-1">{noteError}</p>}
+                {noteError && <p className="text-xs text-brand-navy font-medium mt-1">{noteError}</p>}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

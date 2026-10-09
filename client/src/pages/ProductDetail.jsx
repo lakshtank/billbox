@@ -156,7 +156,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]/50 px-6 md:px-10 py-8 w-full max-w-7xl mx-auto space-y-6 text-[#0F172A] font-sans pb-24">
+    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
       {/* Original Receipt Viewer Modal */}
       {showViewer && receipt?.fileUrl && (
         <ReceiptViewer
@@ -181,7 +181,7 @@ const ProductDetail = () => {
           <button
             type="button"
             onClick={handleOpenEdit}
-            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200/80 rounded-xl hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-brand-surface border border-slate-200/80 rounded-xl hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
             <Edit2 className="w-3.5 h-3.5 text-slate-600" />
             <span>Edit</span>
@@ -190,37 +190,37 @@ const ProductDetail = () => {
           <button
             type="button"
             onClick={() => setIsDeleting(true)}
-            className="px-3.5 py-1.5 text-xs font-bold text-rose-700 bg-white border border-rose-200 rounded-xl hover:bg-rose-50 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            className="px-3.5 py-1.5 text-xs font-semibold text-brand-navy bg-brand-surface border border-brand-border rounded-xl hover:bg-brand-canvas transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
-            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+            <Trash2 className="w-3.5 h-3.5 text-brand-navy/70" />
             <span>Delete</span>
           </button>
         </div>
       </div>
 
       {/* 2. Product Hero Title Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs flex items-start justify-between gap-4 flex-wrap">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border">
               {product.category || 'Others'}
             </span>
 
             {product.warrantyStatus === 'active' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-border/60 text-brand-navy border border-brand-border">
+                <ShieldCheck className="w-3.5 h-3.5 text-brand-primary" />
                 <span>Under Warranty</span>
               </span>
             )}
             {product.warrantyStatus === 'expiring_soon' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/60">
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-border text-brand-navy border border-brand-primary/50">
+                <Clock className="w-3.5 h-3.5 text-brand-primary" />
                 <span>Expiring Soon</span>
               </span>
             )}
             {product.warrantyStatus === 'expired' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-canvas text-brand-navy/70 border border-brand-border">
+                <AlertTriangle className="w-3.5 h-3.5 text-brand-navy/60" />
                 <span>Expired</span>
               </span>
             )}
@@ -250,7 +250,7 @@ const ProductDetail = () => {
       {/* 3. Main Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Linked Receipt Info Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4 font-sans">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs space-y-4 font-sans">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <Store className="w-4 h-4 text-slate-500" />
@@ -259,7 +259,7 @@ const ProductDetail = () => {
             {receipt && (
               <Link
                 to={`/receipts/${receipt._id}`}
-                className="text-xs font-semibold text-emerald-800 hover:underline inline-flex items-center gap-1"
+                className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-1"
               >
                 <span>View Receipt</span>
                 <ExternalLink className="w-3 h-3" />
@@ -291,7 +291,7 @@ const ProductDetail = () => {
                   <button
                     type="button"
                     onClick={() => setShowViewer(true)}
-                    className="text-emerald-800 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    className="text-brand-primary font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>View document</span>
@@ -309,10 +309,10 @@ const ProductDetail = () => {
         </div>
 
         {/* Warranty Coverage Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4 font-sans">
+        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs space-y-4 font-sans">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
+              <ShieldCheck className="w-4 h-4 text-brand-primary" />
               <span>Warranty Coverage</span>
             </h2>
           </div>
@@ -346,10 +346,10 @@ const ProductDetail = () => {
                   <span
                     className={`font-bold font-tabular ${
                       daysLeft <= 0
-                        ? 'text-rose-600'
+                        ? 'text-brand-navy/70'
                         : daysLeft <= 30
-                        ? 'text-amber-700'
-                        : 'text-emerald-700'
+                        ? 'text-brand-primary'
+                        : 'text-brand-primary'
                     }`}
                   >
                     {daysLeft > 0 ? `${daysLeft} days left` : 'Expired'}
@@ -362,32 +362,32 @@ const ProductDetail = () => {
       </div>
 
       {/* 4. Financial Breakdown Strip */}
-      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 font-sans">
+      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 font-sans">
         <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">
           Financial Breakdown
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
             <span className="text-slate-400 font-medium block mb-1">Unit Price</span>
-            <span className="font-bold text-slate-900 text-base font-tabular">
+            <span className="font-bold text-brand-navy text-base font-tabular">
               {product.unitPrice != null ? formatCurrency(product.unitPrice, currency) : '—'}
             </span>
           </div>
           <div>
             <span className="text-slate-400 font-medium block mb-1">Quantity</span>
-            <span className="font-bold text-slate-900 text-base font-tabular">
+            <span className="font-bold text-brand-navy text-base font-tabular">
               {product.quantity || 1}
             </span>
           </div>
           <div>
             <span className="text-slate-400 font-medium block mb-1">Discounts</span>
-            <span className="font-bold text-slate-900 text-base font-tabular">
+            <span className="font-bold text-brand-navy text-base font-tabular">
               {product.discountAmount ? formatCurrency(product.discountAmount, currency) : '0.00'}
             </span>
           </div>
           <div>
             <span className="text-slate-400 font-medium block mb-1">Line Total</span>
-            <span className="font-bold text-emerald-800 text-base font-tabular">
+            <span className="font-bold text-brand-primary text-base font-tabular">
               {price != null ? formatCurrency(price, currency) : '—'}
             </span>
           </div>
@@ -398,7 +398,7 @@ const ProductDetail = () => {
       {isEditing && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div
-            className="bg-white rounded-2xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl space-y-5 font-sans"
+            className="bg-brand-surface rounded-2xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl space-y-5 font-sans"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -443,7 +443,7 @@ const ProductDetail = () => {
                   <select
                     value={editForm.category}
                     onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 bg-white focus:outline-none focus:border-slate-400 font-sans text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 bg-brand-surface focus:outline-none focus:border-slate-400 font-sans text-xs"
                   >
                     {DEFAULT_CATEGORIES.map((c) => (
                       <option key={c} value={c}>
@@ -494,7 +494,7 @@ const ProductDetail = () => {
                   <select
                     value={editForm.warrantyStatus}
                     onChange={(e) => setEditForm({ ...editForm, warrantyStatus: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 bg-white focus:outline-none focus:border-slate-400 font-sans text-xs"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-slate-900 bg-brand-surface focus:outline-none focus:border-slate-400 font-sans text-xs"
                   >
                     <option value="none">None</option>
                     <option value="active">Active</option>
@@ -508,14 +508,14 @@ const ProductDetail = () => {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="px-4 py-2 font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={updateMutation.isPending}
-                  className="px-4 py-2 font-semibold text-white bg-emerald-700 rounded-lg hover:bg-emerald-800 transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-4 py-2 font-semibold text-white bg-brand-primary rounded-lg hover:bg-brand-primary-hover transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -528,7 +528,7 @@ const ProductDetail = () => {
       {/* Delete Confirmation Modal */}
       {isDeleting && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md w-full shadow-xl space-y-4 font-sans">
+          <div className="bg-brand-surface rounded-xl border border-slate-200 p-6 max-w-md w-full shadow-xl space-y-4 font-sans">
             <h3 className="text-lg font-bold text-slate-900">Delete Product</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
               Are you sure you want to delete <strong className="text-slate-900">{product.productName}</strong>?
@@ -539,7 +539,7 @@ const ProductDetail = () => {
                 type="button"
                 onClick={() => setIsDeleting(false)}
                 disabled={deleteMutation.isPending}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
@@ -547,7 +547,7 @@ const ProductDetail = () => {
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={deleteMutation.isPending}
-                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 text-xs font-semibold text-white bg-brand-navy rounded-lg hover:bg-brand-navy-hover transition-colors cursor-pointer disabled:opacity-50"
               >
                 {deleteMutation.isPending ? 'Deleting...' : 'Delete Product'}
               </button>
