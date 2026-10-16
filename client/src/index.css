@@ -65,8 +65,6 @@ body,
   scrollbar-color: var(--line-strong) transparent;
 }
 
-html,
-body,
 #main {
   scrollbar-gutter: stable;
 }
