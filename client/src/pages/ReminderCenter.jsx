@@ -213,30 +213,30 @@ export default function ReminderCenter() {
             </div>
           ) : (
             <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
-              <table className="w-full text-left border-collapse table-fixed text-sm">
-                <colgroup>
-                  <col className="w-[35%] min-w-[200px]" />
-                  <col className="w-[20%] min-w-[130px]" />
-                  <col className="w-[20%] min-w-[130px]" />
-                  <col className="w-[15%] min-w-[100px]" />
-                  <col className="w-[10%] min-w-[80px]" />
-                </colgroup>
-                <thead>
-                  <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
-                    <th className="py-2.5 px-4 font-semibold">Product</th>
-                    <th className="py-2.5 px-4 font-semibold">Expiry</th>
-                    <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
-                    <th className="py-2.5 px-4 font-semibold">Channel</th>
-                    <th className="py-2.5 px-4 font-semibold text-center">Alert</th>
-                  </tr>
-                </thead>
-                <m.tbody
-                  variants={variants.stagger(0.015)}
-                  initial={shouldStagger ? 'hidden' : false}
-                  animate="show"
-                  className="divide-y divide-line-subtle"
-                >
-                  <LayoutGroup id="billbox-reminders-rows">
+              <LayoutGroup id="billbox-reminders-rows">
+                <table className="w-full text-left border-collapse table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-[35%] min-w-[200px]" />
+                    <col className="w-[20%] min-w-[130px]" />
+                    <col className="w-[20%] min-w-[130px]" />
+                    <col className="w-[15%] min-w-[100px]" />
+                    <col className="w-[10%] min-w-[80px]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                      <th className="py-2.5 px-4 font-semibold">Product</th>
+                      <th className="py-2.5 px-4 font-semibold">Expiry</th>
+                      <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
+                      <th className="py-2.5 px-4 font-semibold">Channel</th>
+                      <th className="py-2.5 px-4 font-semibold text-center">Alert</th>
+                    </tr>
+                  </thead>
+                  <m.tbody
+                    variants={variants.stagger(0.015)}
+                    initial={shouldStagger ? 'hidden' : false}
+                    animate="show"
+                    className="divide-y divide-line-subtle"
+                  >
                     {filteredItems.map((prod, index) => {
                         const isStaggered = index < 12;
                         const enableLayout = filteredItems.length <= 50;
@@ -246,7 +246,9 @@ export default function ReminderCenter() {
                             key={prod._id}
                             layout={enableLayout ? 'position' : false}
                             transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                            variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                            variants={variants.fade}
+                            initial={shouldStagger && isStaggered ? 'hidden' : false}
+                            animate="show"
                             className="group hover:bg-hover/60 transition-colors"
                           >
                             {/* Product Name, Brand & Merchant */}
@@ -316,9 +318,9 @@ export default function ReminderCenter() {
                           </m.tr>
                         );
                       })}
-                  </LayoutGroup>
-                </m.tbody>
-              </table>
+                  </m.tbody>
+                </table>
+              </LayoutGroup>
             </div>
           )}
         </div>

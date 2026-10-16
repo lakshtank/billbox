@@ -717,37 +717,37 @@ export function WarrantyTracker() {
           ) : (
             <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
               <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-                <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
-                  <thead>
-                    <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                      <th className="py-2.5 px-3 w-10 text-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            filteredProducts.length > 0 &&
-                            selectedIds.size === filteredProducts.length
-                          }
-                          onChange={handleToggleSelectAll}
-                          className="rounded border-line size-3.5 cursor-pointer accent-accent"
-                        />
-                      </th>
-                      <th className="py-2.5 px-3 w-[260px]">Product</th>
-                      <th className="py-2.5 px-3 w-[150px]">Merchant</th>
-                      <th className="py-2.5 px-3 w-[110px]">Purchased</th>
-                      <th className="py-2.5 px-3 w-[110px]">Expires</th>
-                      <th className="py-2.5 px-3 w-[120px]">Days left</th>
-                      <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
-                      <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
-                      <th className="py-2.5 px-2 w-[40px] text-center"></th>
-                    </tr>
-                  </thead>
-                  <m.tbody
-                    variants={variants.stagger(0.015)}
-                    initial={shouldStagger ? 'hidden' : false}
-                    animate="show"
-                    className="divide-y divide-line-subtle"
-                  >
-                    <LayoutGroup id="billbox-warranty-rows">
+                <LayoutGroup id="billbox-warranty-rows">
+                  <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+                    <thead>
+                      <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                        <th className="py-2.5 px-3 w-10 text-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              filteredProducts.length > 0 &&
+                              selectedIds.size === filteredProducts.length
+                            }
+                            onChange={handleToggleSelectAll}
+                            className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                          />
+                        </th>
+                        <th className="py-2.5 px-3 w-[260px]">Product</th>
+                        <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                        <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                        <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                        <th className="py-2.5 px-3 w-[120px]">Days left</th>
+                        <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
+                        <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
+                        <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                      </tr>
+                    </thead>
+                    <m.tbody
+                      variants={variants.stagger(0.015)}
+                      initial={shouldStagger ? 'hidden' : false}
+                      animate="show"
+                      className="divide-y divide-line-subtle"
+                    >
                       {filteredProducts.map((product, index) => {
                           if (!product) return null;
                           const { metrics } = product;
@@ -770,7 +770,9 @@ export function WarrantyTracker() {
                               key={product._id}
                               layout={enableLayout ? 'position' : false}
                               transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                              variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                              variants={variants.fade}
+                              initial={shouldStagger && isStaggered ? 'hidden' : false}
+                              animate="show"
                               onClick={() => navigate(`/products/${product._id}`)}
                               className={`hover:bg-subtle/40 transition-colors cursor-pointer group ${metrics.railClass}`}
                             >
@@ -880,9 +882,9 @@ export function WarrantyTracker() {
                             </m.tr>
                           );
                         })}
-                    </LayoutGroup>
-                  </m.tbody>
-                </table>
+                    </m.tbody>
+                  </table>
+                </LayoutGroup>
               </div>
             </div>
           )}

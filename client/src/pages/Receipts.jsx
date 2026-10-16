@@ -113,7 +113,9 @@ function ReceiptGridCard({ receipt, onNavigate, isStaggered = false, shouldStagg
   return (
     <m.div
       layout="position"
-      variants={shouldStagger && isStaggered ? variants.fadeUp : undefined}
+      variants={variants.fadeUp}
+      initial={shouldStagger && isStaggered ? 'hidden' : false}
+      animate="show"
       whileHover={{ y: -2, transition: { duration: 0.15, ease: [0.2, 0, 0, 1] } }}
       transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
       onClick={() => onNavigate(to, { viewTransition: true })}

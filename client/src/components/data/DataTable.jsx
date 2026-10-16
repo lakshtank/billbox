@@ -190,7 +190,8 @@ export function DataTable({
         )}
       >
         <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-          <table className="w-full border-collapse text-left text-sm table-fixed">
+          <LayoutGroup id="billbox-datatable-rows">
+            <table className="w-full border-collapse text-left text-sm table-fixed">
             {/* Table Header: clean divider line, no heavy card box fill */}
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -335,66 +336,67 @@ export function DataTable({
                   </td>
                 </tr>
               ) : (
-                <LayoutGroup id="billbox-datatable-rows">
-                  {rows.map((row, index) => {
-                    const isSelected = row.getIsSelected();
-                    const isStaggered = index < 12;
-                    const enableLayout = rows.length <= 50;
-                    const rowKey = row.original?._id || row.original?.id || row.id;
+                rows.map((row, index) => {
+                  const isSelected = row.getIsSelected();
+                  const isStaggered = index < 12;
+                  const enableLayout = rows.length <= 50;
+                  const rowKey = row.original?._id || row.original?.id || row.id;
 
-                    return (
-                      <m.tr
-                        key={rowKey}
-                        layout={enableLayout ? 'position' : false}
-                        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                        variants={shouldStagger && isStaggered ? variants.fade : undefined}
-                        onClick={(e) => handleRowClick(row, e)}
-                        className={cn(
-                          'transition-colors duration-fast group',
-                          // Comfortable (h-10 / h-12) and compact (h-8) specs
-                          density === 'compact' ? 'h-8 text-xs' : 'h-10 md:h-12 text-sm',
-                          onRowClick && 'cursor-pointer hover:bg-hover/50',
-                          isSelected && 'bg-selected/60 border-l-2 border-l-accent'
-                        )}
-                      >
-                        {row.getVisibleCells().map((cell, idx) => {
-                          const isSelectCol = cell.column.id === 'select';
-                          const colSize = cell.column.columnDef.size;
-                          const colStyle = isSelectCol
-                            ? { width: '40px', minWidth: '40px', maxWidth: '40px' }
-                            : colSize
-                            ? { width: `${colSize}px`, minWidth: `${colSize}px` }
-                            : { minWidth: '220px' };
+                  return (
+                    <m.tr
+                      key={rowKey}
+                      layout={enableLayout ? 'position' : false}
+                      transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                      variants={variants.fade}
+                      initial={shouldStagger && isStaggered ? 'hidden' : false}
+                      animate="show"
+                      onClick={(e) => handleRowClick(row, e)}
+                      className={cn(
+                        'transition-colors duration-fast group',
+                        // Comfortable (h-10 / h-12) and compact (h-8) specs
+                        density === 'compact' ? 'h-8 text-xs' : 'h-10 md:h-12 text-sm',
+                        onRowClick && 'cursor-pointer hover:bg-hover/50',
+                        isSelected && 'bg-selected/60 border-l-2 border-l-accent'
+                      )}
+                    >
+                      {row.getVisibleCells().map((cell, idx) => {
+                        const isSelectCol = cell.column.id === 'select';
+                        const colSize = cell.column.columnDef.size;
+                        const colStyle = isSelectCol
+                          ? { width: '40px', minWidth: '40px', maxWidth: '40px' }
+                          : colSize
+                          ? { width: `${colSize}px`, minWidth: `${colSize}px` }
+                          : { minWidth: '220px' };
 
-                          return (
-                            <td
-                              key={cell.id}
-                              style={colStyle}
-                              className={cn(
-                                'whitespace-nowrap align-middle',
-                                isSelectCol ? 'w-10 px-2 text-center' : 'px-3.5',
-                                !isSelectCol && idx === 0 && 'pl-4',
-                                cell.column.columnDef.meta?.align === 'right' && 'text-right tnum',
-                                isSelected && idx === 0 && (!isSelectCol ? 'pl-3.5' : '')
+                        return (
+                          <td
+                            key={cell.id}
+                            style={colStyle}
+                            className={cn(
+                              'whitespace-nowrap align-middle',
+                              isSelectCol ? 'w-10 px-2 text-center' : 'px-3.5',
+                              !isSelectCol && idx === 0 && 'pl-4',
+                              cell.column.columnDef.meta?.align === 'right' && 'text-right tnum',
+                              isSelected && idx === 0 && (!isSelectCol ? 'pl-3.5' : '')
+                            )}
+                          >
+                            <div className={cn(isSelectCol && 'flex items-center justify-center w-full')}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
                               )}
-                            >
-                              <div className={cn(isSelectCol && 'flex items-center justify-center w-full')}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </m.tr>
-                    );
-                  })}
-                </LayoutGroup>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </m.tr>
+                  );
+                })
               )}
             </m.tbody>
           </table>
-        </div>
+        </LayoutGroup>
+      </div>
 
         {/* Footer: Pagination */}
         <div

@@ -519,27 +519,27 @@ export function Products() {
       ) : viewMode === 'table' ? (
         <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
           <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-            <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
-              <thead>
-                <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                  <th className="py-2.5 px-3 w-[260px]">Product</th>
-                  <th className="py-2.5 px-3 w-[120px]">Brand</th>
-                  <th className="py-2.5 px-3 w-[120px]">Category</th>
-                  <th className="py-2.5 px-3 w-[150px]">Merchant</th>
-                  <th className="py-2.5 px-3 w-[110px]">Purchased</th>
-                  <th className="py-2.5 px-3 w-[120px]">Warranty</th>
-                  <th className="py-2.5 px-3 w-[110px]">Expires</th>
-                  <th className="py-2.5 px-3 w-[110px] text-right">Value</th>
-                  <th className="py-2.5 px-2 w-[40px] text-center"></th>
-                </tr>
-              </thead>
-              <m.tbody
-                variants={variants.stagger(0.025)}
-                initial={shouldStagger ? 'hidden' : false}
-                animate="show"
-                className="divide-y divide-line-subtle"
-              >
-                <LayoutGroup id="billbox-products-rows">
+            <LayoutGroup id="billbox-products-rows">
+              <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+                <thead>
+                  <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                    <th className="py-2.5 px-3 w-[260px]">Product</th>
+                    <th className="py-2.5 px-3 w-[120px]">Brand</th>
+                    <th className="py-2.5 px-3 w-[120px]">Category</th>
+                    <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                    <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                    <th className="py-2.5 px-3 w-[120px]">Warranty</th>
+                    <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                    <th className="py-2.5 px-3 w-[110px] text-right">Value</th>
+                    <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                  </tr>
+                </thead>
+                <m.tbody
+                  variants={variants.stagger(0.025)}
+                  initial={shouldStagger ? 'hidden' : false}
+                  animate="show"
+                  className="divide-y divide-line-subtle"
+                >
                   {products.map((prod, index) => {
                     if (!prod) return null;
                     const receipt =
@@ -558,7 +558,9 @@ export function Products() {
                         key={prod._id}
                         layout={enableLayout ? 'position' : false}
                         transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                        variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                        variants={variants.fade}
+                        initial={shouldStagger && isStaggered ? 'hidden' : false}
+                        animate="show"
                         onClick={() => navigate(`/products/${prod._id}`)}
                         className="hover:bg-subtle/40 transition-colors cursor-pointer group"
                       >
@@ -653,9 +655,9 @@ export function Products() {
                         </m.tr>
                       );
                     })}
-                </LayoutGroup>
-              </m.tbody>
-            </table>
+                </m.tbody>
+              </table>
+            </LayoutGroup>
           </div>
         </div>
       ) : (
@@ -681,7 +683,9 @@ export function Products() {
                 <m.div
                   key={prod._id}
                   layout={products.length <= 50 ? 'position' : false}
-                  variants={shouldStagger && isStaggered ? variants.fadeUp : undefined}
+                  variants={variants.fadeUp}
+                  initial={shouldStagger && isStaggered ? 'hidden' : false}
+                  animate="show"
                   whileHover={{ y: -2, transition: { duration: 0.15, ease: [0.2, 0, 0, 1] } }}
                   transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
                   onClick={() => navigate(`/products/${prod._id}`)}
