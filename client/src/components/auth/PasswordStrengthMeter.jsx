@@ -1,14 +1,17 @@
 import * as React from 'react';
+import * as m from 'motion/react-m';
+import { useMotionTier } from '@/hooks/useMotionTier';
 import { cn } from '../../lib/utils';
 
 /**
- * Step 11: 4-segment password strength bar + text label
+ * Step 11 & Step 13.6: 4-segment password strength bar + text label
  * - Levels:
  *   1: Weak (1 red bar bg-bad-solid)
  *   2: Fair (2 amber bars bg-warn-solid)
  *   3: Good (3 cosmic teal bars bg-accent)
  *   4: Strong (4 green bars bg-ok-solid)
  * - Copy rules: sentence case, no exclamation marks.
+ * - Staggered scaleX fill with 60ms stagger per active segment.
  */
 export function calculatePasswordStrength(password = '') {
   if (!password) return 0;
@@ -31,12 +34,15 @@ const STRENGTH_CONFIG = {
 };
 
 export function PasswordStrengthMeter({ password = '', className }) {
+  const tier = useMotionTier();
   const strength = calculatePasswordStrength(password);
   const current = STRENGTH_CONFIG[strength];
 
   if (!password) {
     return null;
   }
+
+  const shouldAnimate = tier !== 'none';
 
   return (
     <div className={cn('space-y-1.5 mt-2 font-sans', className)} aria-live="polite">
@@ -47,11 +53,26 @@ export function PasswordStrengthMeter({ password = '', className }) {
           return (
             <div
               key={seg}
-              className={cn(
-                'h-full rounded-full transition-colors duration-fast',
-                isActive ? current.color : 'bg-subtle'
-              )}
-            />
+              className="h-full rounded-full bg-subtle overflow-hidden relative"
+            >
+              <m.div
+                initial={false}
+                animate={{ scaleX: isActive ? 1 : 0 }}
+                transition={
+                  shouldAnimate
+                    ? {
+                        duration: 0.22,
+                        delay: isActive ? (seg - 1) * 0.06 : 0,
+                        ease: [0.16, 1, 0.3, 1],
+                      }
+                    : { duration: 0 }
+                }
+                className={cn(
+                  'h-full w-full rounded-full origin-left transition-colors duration-fast',
+                  current.color
+                )}
+              />
+            </div>
           );
         })}
       </div>
@@ -68,3 +89,4 @@ export function PasswordStrengthMeter({ password = '', className }) {
 }
 
 export default PasswordStrengthMeter;
+

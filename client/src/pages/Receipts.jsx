@@ -847,6 +847,8 @@ export function Receipts() {
           rowSelection={rowSelection}
           onRowSelectionChange={setRowSelection}
           onRowClick={(row) => navigate(`/receipts/${row._id}`)}
+          onRowDelete={(receipt) => setDeletingReceipt(receipt)}
+          onRowShare={(receipt) => setShareModalReceipt(receipt)}
           bulkActions={renderBulkActions}
           onClearSelection={() => setRowSelection({})}
           isSelectMode={isSelectMode}

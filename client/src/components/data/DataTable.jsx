@@ -32,6 +32,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { variants, spring } from '@/lib/motion';
+import { SwipeRow } from './SwipeRow';
 
 /**
  * DataTable Component (TanStack Table)
@@ -56,6 +57,8 @@ export function DataTable({
   rowSelection = {},
   onRowSelectionChange,
   onRowClick,
+  onRowDelete,
+  onRowShare,
   isLoading = false,
   error = null,
   emptyTitle = 'No records found',
@@ -228,13 +231,10 @@ export function DataTable({
               rows.map((row, index) => {
                 const isSelected = row.getIsSelected();
                 const rowKey = row.original?._id || row.original?.id || row.id;
-                return (
-                  <m.div
-                    key={`mobile-${rowKey}`}
-                    layout="position"
-                    variants={variants.fade}
-                    initial={shouldStagger && index < 12 ? 'hidden' : false}
-                    animate="show"
+                const hasSwipe = Boolean(onRowDelete || onRowShare);
+
+                const rowContent = (
+                  <div
                     onClick={(e) => handleRowClick(row, e)}
                     className={cn(
                       'min-h-[56px] transition-colors duration-fast active:bg-hover/80 cursor-pointer',
@@ -246,6 +246,27 @@ export function DataTable({
                       row,
                       onRowClick: (e) => handleRowClick(row, e),
                     })}
+                  </div>
+                );
+
+                return (
+                  <m.div
+                    key={`mobile-${rowKey}`}
+                    layout="position"
+                    variants={variants.fade}
+                    initial={shouldStagger && index < 12 ? 'hidden' : false}
+                    animate="show"
+                  >
+                    {hasSwipe ? (
+                      <SwipeRow
+                        onDelete={onRowDelete ? () => onRowDelete(row.original) : undefined}
+                        onShare={onRowShare ? () => onRowShare(row.original) : undefined}
+                      >
+                        {rowContent}
+                      </SwipeRow>
+                    ) : (
+                      rowContent
+                    )}
                   </m.div>
                 );
               })
