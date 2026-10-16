@@ -33,6 +33,13 @@ export function useGlobalShortcuts() {
         return;
       }
 
+      // Handle Ctrl+B / Cmd+B for sidebar toggle
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('billbox:toggle-sidebar'));
+        return;
+      }
+
       // Ignore if Cmd, Ctrl, or Alt is pressed (except for browser/system shortcuts)
       if (e.metaKey || e.ctrlKey || e.altKey) {
         return;

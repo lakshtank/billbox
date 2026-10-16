@@ -86,6 +86,12 @@ export function Sidebar() {
     window.dispatchEvent(new CustomEvent('billbox:open-shortcuts'));
   };
 
+  React.useEffect(() => {
+    const handleToggle = () => toggleSidebarCollapse();
+    window.addEventListener('billbox:toggle-sidebar', handleToggle);
+    return () => window.removeEventListener('billbox:toggle-sidebar', handleToggle);
+  }, [toggleSidebarCollapse]);
+
   const userInitial = user?.name
     ? user.name.charAt(0).toUpperCase()
     : user?.email
@@ -98,9 +104,9 @@ export function Sidebar() {
   return (
     <m.aside
       animate={{ width: sidebarCollapsed ? 64 : 240 }}
-      transition={spring.soft}
+      transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.8 }}
       className={cn(
-        'hidden md:flex flex-col shrink-0 sticky top-0 h-dvh bg-sidebar border-r border-line font-sans select-none overflow-hidden',
+        'hidden md:flex flex-col shrink-0 sticky top-0 h-dvh bg-sidebar border-r border-line font-sans select-none overflow-hidden will-change-[width]',
         sidebarCollapsed ? 'w-16' : 'w-60'
       )}
     >
@@ -108,35 +114,51 @@ export function Sidebar() {
       <div
         className={cn(
           'h-14 shrink-0 flex items-center border-b border-line px-3',
-          sidebarCollapsed ? 'justify-center gap-1' : 'justify-between'
+          sidebarCollapsed ? 'justify-center' : 'justify-between'
         )}
       >
         {sidebarCollapsed ? (
-          <div className="flex flex-col items-center gap-1">
-            <Logo size="md" showWordmark={false} />
-            <button
-              type="button"
-              onClick={toggleSidebarCollapse}
-              className="p-1 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
-              aria-label="Expand sidebar"
-              title="Expand sidebar"
-            >
-              <PanelLeftOpen className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={toggleSidebarCollapse}
+                className="relative group size-9 rounded-lg flex items-center justify-center hover:bg-hover transition-colors cursor-pointer"
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+              >
+                <div className="transition-all duration-200 group-hover:scale-90 group-hover:opacity-0">
+                  <Logo size="md" showWordmark={false} />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 text-fg">
+                  <PanelLeftOpen className="w-4 h-4 text-accent" />
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Expand sidebar <kbd className="ml-1 text-[10px] font-mono opacity-70">⌘B</kbd>
+            </TooltipContent>
+          </Tooltip>
         ) : (
-          <>
+          <div className="flex items-center justify-between w-full min-w-0">
             <Logo size="md" showWordmark={true} />
-            <button
-              type="button"
-              onClick={toggleSidebarCollapse}
-              className="p-1.5 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
-              aria-label="Collapse sidebar"
-              title="Collapse sidebar"
-            >
-              <PanelLeftClose className="w-4 h-4" />
-            </button>
-          </>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={toggleSidebarCollapse}
+                  className="p-1.5 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer shrink-0"
+                  aria-label="Collapse sidebar"
+                  title="Collapse sidebar"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                Collapse sidebar <kbd className="ml-1 text-[10px] font-mono opacity-70">⌘B</kbd>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         )}
       </div>
 
@@ -146,7 +168,6 @@ export function Sidebar() {
           const Icon = item.icon;
           const link = (
             <NavLink
-              key={item.to}
               to={item.to}
               end={item.to === '/'}
               onMouseEnter={() => item.routeKey && prefetchRoute(item.routeKey)}
@@ -183,10 +204,11 @@ export function Sidebar() {
                   <AnimatePresence initial={false}>
                     {!sidebarCollapsed && (
                       <m.span
-                        className="relative text-sm font-medium whitespace-nowrap truncate"
-                        initial={{ opacity: 0, x: -4 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                        className="relative text-sm font-medium whitespace-nowrap truncate overflow-hidden"
+                        initial={{ opacity: 0, width: 0, x: -6 }}
+                        animate={{ opacity: 1, width: 'auto', x: 0 }}
+                        exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
+                        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                       >
                         {item.label}
                       </m.span>
@@ -197,19 +219,17 @@ export function Sidebar() {
             </NavLink>
           );
 
-          if (sidebarCollapsed) {
-            return (
-              <Tooltip key={item.to}>
-                <TooltipTrigger asChild>{link}</TooltipTrigger>
+          return (
+            <Tooltip key={item.to} disableHoverableContent={!sidebarCollapsed}>
+              <TooltipTrigger asChild>{link}</TooltipTrigger>
+              {sidebarCollapsed && (
                 <TooltipContent side="right">
                   {item.label}
                   {item.hasDot ? ` (${item.dotCount} expiring)` : ''}
                 </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          return link;
+              )}
+            </Tooltip>
+          );
         })}
 
         {/* Divider before Settings */}
@@ -253,10 +273,11 @@ export function Sidebar() {
                   <AnimatePresence initial={false}>
                     {!sidebarCollapsed && (
                       <m.span
-                        className="relative text-sm font-medium whitespace-nowrap truncate"
-                        initial={{ opacity: 0, x: -4 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                        className="relative text-sm font-medium whitespace-nowrap truncate overflow-hidden"
+                        initial={{ opacity: 0, width: 0, x: -6 }}
+                        animate={{ opacity: 1, width: 'auto', x: 0 }}
+                        exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
+                        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                       >
                         Settings
                       </m.span>
@@ -267,15 +288,14 @@ export function Sidebar() {
             </NavLink>
           );
 
-          if (sidebarCollapsed) {
-            return (
-              <Tooltip key="/settings">
-                <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
+          return (
+            <Tooltip key="/settings" disableHoverableContent={!sidebarCollapsed}>
+              <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
+              {sidebarCollapsed && (
                 <TooltipContent side="right">Settings</TooltipContent>
-              </Tooltip>
-            );
-          }
-          return settingsLink;
+              )}
+            </Tooltip>
+          );
         })()}
       </nav>
 
@@ -299,10 +319,11 @@ export function Sidebar() {
               <AnimatePresence initial={false}>
                 {!sidebarCollapsed && (
                   <m.div
-                    className="min-w-0 flex-1 flex items-center justify-between"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                    className="min-w-0 flex-1 flex items-center justify-between overflow-hidden"
+                    initial={{ opacity: 0, width: 0, x: -6 }}
+                    animate={{ opacity: 1, width: 'auto', x: 0 }}
+                    exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
+                    transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-fg truncate leading-tight">
