@@ -4,6 +4,7 @@ import {
   Store,
   Search,
   ChevronRight,
+  ChevronDown,
   FileText,
   Package,
   Plus,
@@ -163,17 +164,20 @@ export default function Stores() {
         {/* Sort Options */}
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-xs text-fg-3 font-medium hidden sm:inline">Sort:</span>
-          <select
-            value={sortParam}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="w-auto shrink-0 text-xs h-9 px-3 rounded-[8px] border border-line bg-surface text-fg font-medium focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative inline-flex items-center">
+            <select
+              value={sortParam}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="appearance-none w-auto shrink-0 text-xs h-9 pl-3 pr-8 rounded-[8px] border border-line bg-surface text-fg font-medium focus:outline-none focus:border-accent transition-colors cursor-pointer shadow-2xs"
+            >
+              {SORT_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id} className="bg-surface text-fg">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-fg-3 pointer-events-none" />
+          </div>
 
           {/* Inline Reset button (Zero layout shift: table below never moves downwards) */}
           {hasActiveFilters && (
@@ -223,11 +227,11 @@ export default function Stores() {
           <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
             <table className="w-full text-left border-collapse table-fixed text-sm">
               <colgroup>
-                <col className="w-[40%] min-w-[220px]" />
-                <col className="w-[15%] min-w-[100px]" />
-                <col className="w-[15%] min-w-[100px]" />
+                <col className="w-[35%] min-w-[220px]" />
+                <col className="w-[15%] min-w-[110px]" />
+                <col className="w-[15%] min-w-[110px]" />
                 <col className="w-[18%] min-w-[120px]" />
-                <col className="w-[12%] min-w-[100px]" />
+                <col className="w-[17%] min-w-[120px]" />
               </colgroup>
               <thead>
                 <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">

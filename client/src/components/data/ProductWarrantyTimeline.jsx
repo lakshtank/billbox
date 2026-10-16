@@ -90,29 +90,35 @@ export function ProductWarrantyTimeline({
           <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
             Warranty status
           </span>
-          <div className={`text-3xl font-bold font-mono tnum tracking-tight mt-0.5 ${textColor}`}>
+          <div className={`text-3xl font-bold tracking-tight mt-0.5 flex items-baseline gap-2 ${textColor}`}>
             {tier === 'none' || daysLeft == null ? (
               daysText
             ) : daysLeft < 0 ? (
-              <span className="inline-flex items-center gap-1">
-                <span>Expired</span>
-                <NumberFlow
-                  value={animatedDays}
-                  transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                  spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                />
-                <span>days ago</span>
+              <span className="inline-flex items-baseline gap-2">
+                <span className="text-xl font-semibold font-sans">Expired</span>
+                <span className="font-mono tnum">
+                  <NumberFlow
+                    value={animatedDays}
+                    transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                    spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                  />
+                </span>
+                <span className="text-xl font-semibold font-sans">days ago</span>
               </span>
             ) : daysLeft === 0 ? (
               <span>Expires today</span>
             ) : (
-              <span className="inline-flex items-center gap-1">
-                <NumberFlow
-                  value={animatedDays}
-                  transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                  spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                />
-                <span>{daysLeft === 1 ? 'day left' : 'days left'}</span>
+              <span className="inline-flex items-baseline gap-2">
+                <span className="font-mono tnum">
+                  <NumberFlow
+                    value={animatedDays}
+                    transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                    spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                  />
+                </span>
+                <span className="text-xl font-semibold font-sans">
+                  {daysLeft === 1 ? 'day left' : 'days left'}
+                </span>
               </span>
             )}
           </div>
@@ -140,43 +146,27 @@ export function ProductWarrantyTimeline({
       {/* Interactive Timeline Bar */}
       <div className="space-y-2 pt-3">
         <div className="relative w-full h-8 flex items-center">
-          {/* Base track line */}
-          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-subtle" />
-
-          {/* SVG line draws left -> right with pathLength */}
-          <svg
-            className="absolute inset-0 w-full h-full overflow-visible pointer-events-none"
-            viewBox="0 0 100 32"
-            preserveAspectRatio="none"
-          >
-            <m.line
-              x1="0"
-              y1="16"
-              x2={clampedElapsed}
-              y2="16"
-              stroke="currentColor"
-              className={
-                statusKey === 'expired'
-                  ? 'text-bad'
-                  : statusKey === 'expiring'
-                  ? 'text-warn'
-                  : 'text-accent'
-              }
-              strokeWidth="6"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-              initial={shouldAnimate ? { pathLength: 0 } : { pathLength: 1 }}
-              animate={{ pathLength: 1 }}
+          {/* Base track line + Solid Active drawing bar */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-subtle overflow-hidden">
+            <m.div
+              className={`h-full rounded-full ${dotBg}`}
+              style={{
+                transformOrigin: 'left',
+                width: `${clampedElapsed}%`,
+                willChange: 'transform',
+              }}
+              initial={shouldAnimate ? { scaleX: 0 } : { scaleX: 1 }}
+              animate={{ scaleX: 1 }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             />
-          </svg>
+          </div>
 
           {/* Start Point (Purchased) */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 size-3 rounded-full bg-surface border-2 border-accent" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 size-3 rounded-full bg-surface border-2 border-accent z-10" />
 
           {/* Today Marker (drops in from top with spring) */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-10"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-20"
             style={{ left: `${clampedElapsed}%` }}
           >
             <m.div
@@ -208,7 +198,7 @@ export function ProductWarrantyTimeline({
 
           {/* End Point (Expires) */}
           <div
-            className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 size-3 rounded-full bg-surface border-2 ${
+            className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 size-3 rounded-full bg-surface border-2 z-10 ${
               clampedElapsed >= 100 ? markerColor : 'border-line-strong'
             }`}
           />
