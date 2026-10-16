@@ -113,7 +113,7 @@ export function ResetPassword() {
 
   return (
     <AuthLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5">
         {isExpired ? (
           /* Invalid or expired token: replace the form with an error state,
              "This link has expired", button "Request a new link" (to /forgot-password) */
@@ -121,13 +121,13 @@ export function ResetPassword() {
             variants={formContainerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-6"
+            className="space-y-4 sm:space-y-5"
           >
             <m.div variants={fieldVariants} className="w-10 h-10 rounded-lg bg-bad-bg border border-bad-line flex items-center justify-center text-bad-fg">
               <AlertCircle className="w-5 h-5 text-bad-solid" />
             </m.div>
 
-            <m.div variants={fieldVariants} className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 This link has expired
               </h1>
@@ -136,9 +136,9 @@ export function ResetPassword() {
               </p>
             </m.div>
 
-            <m.div variants={fieldVariants} className="pt-2">
+            <m.div variants={fieldVariants} className="pt-1">
               <Link to="/forgot-password" className="block w-full">
-                <Button variant="primary" size="lg" className="w-full h-12 text-sm font-medium">
+                <Button variant="primary" size="lg" className="w-full h-11 sm:h-12 text-sm font-medium">
                   Request a new link
                 </Button>
               </Link>
@@ -149,10 +149,10 @@ export function ResetPassword() {
             variants={formContainerVariants}
             initial="hidden"
             animate="show"
-            className={cn('space-y-6', shake && 'shake')}
+            className={cn('space-y-4 sm:space-y-5', shake && 'shake')}
           >
             {/* Header */}
-            <m.div variants={fieldVariants} className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Set a new password
               </h1>
@@ -166,7 +166,7 @@ export function ResetPassword() {
               <m.div
                 variants={fieldVariants}
                 role="alert"
-                className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
+                className="flex items-start gap-2.5 p-2.5 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
                 <p className="flex-1">{serverError}</p>
@@ -174,9 +174,9 @@ export function ResetPassword() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-3 sm:space-y-3.5" noValidate>
               {/* New Password */}
-              <m.div variants={fieldVariants} className="space-y-1.5">
+              <m.div variants={fieldVariants} className="space-y-1">
                 <Label htmlFor="reset-password">New password</Label>
                 <div className="relative">
                   <Input
@@ -221,7 +221,7 @@ export function ResetPassword() {
               </m.div>
 
               {/* Confirm New Password */}
-              <m.div variants={fieldVariants} className="space-y-1.5">
+              <m.div variants={fieldVariants} className="space-y-1">
                 <Label htmlFor="reset-confirm-password">Confirm password</Label>
                 <div className="relative">
                   <Input
@@ -264,13 +264,13 @@ export function ResetPassword() {
                 )}
               </m.div>
 
-              <m.div variants={fieldVariants} className="pt-2">
+              <m.div variants={fieldVariants} className="pt-1">
                 <Button
                   type="submit"
                   variant="primary"
                   size="lg"
                   loading={isSubmitting || resetMutation.isPending}
-                  className="w-full h-12 text-sm font-medium"
+                  className="w-full h-11 sm:h-12 text-sm font-medium"
                 >
                   Update password
                 </Button>

@@ -85,9 +85,9 @@ export function AuthLayout({ children }) {
   };
 
   return (
-    <div className="min-h-dvh w-full flex flex-col lg:flex-row bg-bg-app font-sans relative selection:bg-accent-tint">
+    <div className="min-h-dvh h-dvh max-h-dvh w-full flex flex-col lg:flex-row bg-bg-app font-sans relative selection:bg-accent-tint overflow-y-auto lg:overflow-hidden">
       {/* Fixed theme toggle: 32px ghost button top-right, no bar behind it */}
-      <div className="fixed top-4 right-4 z-20 sm:top-6 sm:right-6">
+      <div className="fixed top-3 right-3 z-20 sm:top-5 sm:right-5">
         <ThemeToggle
           variant="ghost"
           className="w-8 h-8 lg:text-[#D3D9D4] lg:hover:text-white lg:hover:bg-white/10"
@@ -95,19 +95,19 @@ export function AuthLayout({ children }) {
       </div>
 
       {/* Left (Form side) */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-8 lg:p-10 min-h-dvh w-full lg:max-w-[50%]">
+      <div className="flex-1 flex flex-col justify-between p-5 sm:p-6 lg:p-8 min-h-dvh lg:min-h-0 h-full max-h-dvh w-full lg:max-w-[50%] overflow-y-auto lg:overflow-hidden">
         {/* Top-left Wordmark (ONE only) */}
         <div className="shrink-0">
           <Logo size="md" showWordmark={true} />
         </div>
 
         {/* Vertically & horizontally centered form block: max-w-[400px] */}
-        <div className="w-full max-w-[400px] mx-auto py-6 my-auto">
+        <div className="w-full max-w-[400px] mx-auto py-2 my-auto">
           {children}
         </div>
 
         {/* Bottom copyright */}
-        <div className="shrink-0 text-xs text-fg-3">
+        <div className="shrink-0 text-xs text-fg-3 pt-2">
           <p>© BillBox</p>
         </div>
       </div>
@@ -115,7 +115,7 @@ export function AuthLayout({ children }) {
       {/* Right (Brand panel, visible >=1024px only, hidden below) */}
       <div
         onMouseMove={handleMouseMove}
-        className="hidden lg:flex flex-1 flex-col justify-between p-12 xl:p-16 bg-[#124E66] dark:bg-[#212A31] border-l-0 select-none relative overflow-hidden min-h-dvh group"
+        className="hidden lg:flex flex-1 flex-col justify-between p-6 xl:p-8 2xl:p-12 bg-[#124E66] dark:bg-[#212A31] border-l-0 select-none relative overflow-hidden min-h-dvh lg:min-h-0 h-full max-h-dvh group"
       >
         {/* Step 15 Cursor spotlight: follows pointer with soft radial highlight */}
         <div
@@ -136,53 +136,53 @@ export function AuthLayout({ children }) {
         {/* Centered Content Block: max-w-[520px] */}
         <div className="my-auto w-full max-w-[520px] mx-auto relative z-10 text-left">
           {/* 1. Overline */}
-          <div className="text-[12px] font-medium uppercase tracking-[0.08em] !text-[#D3D9D4]">
+          <div className="text-[11px] xl:text-[12px] font-medium uppercase tracking-[0.08em] !text-[#D3D9D4]">
             BillBox
           </div>
 
           {/* 2. Headline */}
-          <h2 className="text-[48px] leading-[52px] font-semibold tracking-[-0.03em] !text-[#FFFFFF] mt-4 [text-wrap:balance]">
+          <h2 className="text-[26px] xl:text-[32px] 2xl:text-[38px] leading-[1.15] font-semibold tracking-[-0.03em] !text-[#FFFFFF] mt-2 xl:mt-3 [text-wrap:balance]">
             Never lose a receipt or miss a warranty again.
           </h2>
 
           {/* 3. Body */}
-          <p className="text-[18px] leading-[28px] !text-[#D3D9D4] max-w-[44ch] mt-5">
+          <p className="text-[13px] xl:text-[15px] leading-snug xl:leading-normal !text-[#D3D9D4] max-w-[44ch] mt-2 xl:mt-2.5">
             Upload a bill, BillBox reads it, and you always know what&apos;s covered.
           </p>
 
           {/* Step 15 Mock Receipts Table (labelled "Preview", builds in row by row via GSAP) */}
           <div
             ref={brandScopeRef}
-            className="mt-6 rounded-[12px] border border-white/20 bg-white/10 p-4 backdrop-blur-xs shadow-lg max-w-[480px]"
+            className="mt-3 xl:mt-4 rounded-[10px] xl:rounded-[12px] border border-white/20 bg-white/10 p-2.5 xl:p-3 backdrop-blur-xs shadow-lg max-w-[480px]"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-white/15">
+            <div className="flex items-center justify-between pb-1.5 border-b border-white/15">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-semibold uppercase tracking-wider !text-[#D3D9D4]">
                   Preview
                 </span>
                 <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-mono">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/15 text-white text-[10px] xl:text-[11px] font-mono">
                 <span className="!text-[#D3D9D4]">Tracked:</span>
                 <NumberFlow value={kpiCount} />
               </div>
             </div>
 
-            <table className="w-full text-left text-xs mt-2 border-collapse">
+            <table className="w-full text-left text-xs mt-1.5 border-collapse">
               <thead data-auth-intro="header">
                 <tr className="text-white/60 text-[10px] uppercase font-semibold border-b border-white/10">
-                  <th className="py-1.5">Merchant</th>
-                  <th className="py-1.5">Date</th>
-                  <th className="py-1.5 text-right">Status</th>
+                  <th className="py-1">Merchant</th>
+                  <th className="py-1">Date</th>
+                  <th className="py-1 text-right">Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr data-auth-intro="row" className="border-b border-white/10 text-white">
-                  <td className="py-2 font-medium">Apple Store</td>
-                  <td className="py-2 !text-[#D3D9D4]">12 Oct</td>
-                  <td className="py-2 text-right">
+                  <td className="py-1 font-medium text-xs">Apple Store</td>
+                  <td className="py-1 text-xs !text-[#D3D9D4]">12 Oct</td>
+                  <td className="py-1 text-right">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium transition-colors duration-300 ${
+                      className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors duration-300 ${
                         statusBadge === 'Matched'
                           ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/30'
                           : 'bg-amber-500/25 text-amber-200 border border-amber-400/30'
@@ -193,19 +193,19 @@ export function AuthLayout({ children }) {
                   </td>
                 </tr>
                 <tr data-auth-intro="row" className="border-b border-white/10 text-white">
-                  <td className="py-2 font-medium">Amazon</td>
-                  <td className="py-2 !text-[#D3D9D4]">08 Oct</td>
-                  <td className="py-2 text-right">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/25 text-emerald-200 border border-emerald-400/30">
+                  <td className="py-1 font-medium text-xs">Amazon</td>
+                  <td className="py-1 text-xs !text-[#D3D9D4]">08 Oct</td>
+                  <td className="py-1 text-right">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/25 text-emerald-200 border border-emerald-400/30">
                       Matched
                     </span>
                   </td>
                 </tr>
                 <tr data-auth-intro="row" className="text-white">
-                  <td className="py-2 font-medium">IKEA</td>
-                  <td className="py-2 !text-[#D3D9D4]">29 Sep</td>
-                  <td className="py-2 text-right">
-                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/25 text-emerald-200 border border-emerald-400/30">
+                  <td className="py-1 font-medium text-xs">IKEA</td>
+                  <td className="py-1 text-xs !text-[#D3D9D4]">29 Sep</td>
+                  <td className="py-1 text-right">
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/25 text-emerald-200 border border-emerald-400/30">
                       Matched
                     </span>
                   </td>
@@ -214,48 +214,48 @@ export function AuthLayout({ children }) {
             </table>
           </div>
 
-          {/* 4. Steps list: 48px below body, 3 rows separated by 1px dividers, py-5 */}
-          <div className="mt-8 border-t border-white/20 divide-y divide-white/20">
+          {/* 4. Steps list: 3 rows separated by 1px dividers */}
+          <div className="mt-3 xl:mt-4 border-t border-white/20 divide-y divide-white/20">
             {/* Step 1 */}
-            <div className="flex items-start gap-4 py-5">
-              <div className="w-10 shrink-0 font-mono text-[13px] !text-[#D3D9D4] pt-0.5">
+            <div className="flex items-start gap-3 py-1.5 xl:py-2">
+              <div className="w-8 shrink-0 font-mono text-[12px] xl:text-[13px] !text-[#D3D9D4] pt-0.5">
                 01
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-[16px] font-medium !text-[#FFFFFF] leading-snug">
+                <h3 className="text-[13px] xl:text-[14px] font-medium !text-[#FFFFFF] leading-snug">
                   Upload
                 </h3>
-                <p className="text-[14px] leading-[20px] !text-[#D3D9D4] mt-1">
+                <p className="text-[11px] xl:text-[12px] leading-[16px] !text-[#D3D9D4] mt-0.5">
                   Add a photo or PDF of any bill.
                 </p>
               </div>
             </div>
 
             {/* Step 2 */}
-            <div className="flex items-start gap-4 py-5">
-              <div className="w-10 shrink-0 font-mono text-[13px] !text-[#D3D9D4] pt-0.5">
+            <div className="flex items-start gap-3 py-1.5 xl:py-2">
+              <div className="w-8 shrink-0 font-mono text-[12px] xl:text-[13px] !text-[#D3D9D4] pt-0.5">
                 02
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-[16px] font-medium !text-[#FFFFFF] leading-snug">
+                <h3 className="text-[13px] xl:text-[14px] font-medium !text-[#FFFFFF] leading-snug">
                   Review
                 </h3>
-                <p className="text-[14px] leading-[20px] !text-[#D3D9D4] mt-1">
+                <p className="text-[11px] xl:text-[12px] leading-[16px] !text-[#D3D9D4] mt-0.5">
                   Check the details BillBox found.
                 </p>
               </div>
             </div>
 
             {/* Step 3 */}
-            <div className="flex items-start gap-4 py-5">
-              <div className="w-10 shrink-0 font-mono text-[13px] !text-[#D3D9D4] pt-0.5">
+            <div className="flex items-start gap-3 py-1.5 xl:py-2">
+              <div className="w-8 shrink-0 font-mono text-[12px] xl:text-[13px] !text-[#D3D9D4] pt-0.5">
                 03
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-[16px] font-medium !text-[#FFFFFF] leading-snug">
+                <h3 className="text-[13px] xl:text-[14px] font-medium !text-[#FFFFFF] leading-snug">
                   Track
                 </h3>
-                <p className="text-[14px] leading-[20px] !text-[#D3D9D4] mt-1">
+                <p className="text-[11px] xl:text-[12px] leading-[16px] !text-[#D3D9D4] mt-0.5">
                   See every warranty and when it ends.
                 </p>
               </div>
@@ -264,8 +264,8 @@ export function AuthLayout({ children }) {
         </div>
 
         {/* 6. Footer: pinned bottom-left, 13px, #D3D9D4 */}
-        <div className="w-full max-w-[520px] mx-auto relative z-10 pt-6 text-left">
-          <span className="text-[13px] !text-[#D3D9D4]">© BillBox</span>
+        <div className="w-full max-w-[520px] mx-auto relative z-10 pt-2 xl:pt-3 text-left">
+          <span className="text-[12px] xl:text-[13px] !text-[#D3D9D4]">© BillBox</span>
         </div>
       </div>
     </div>

@@ -120,10 +120,10 @@ export function Register() {
         variants={formContainerVariants}
         initial="hidden"
         animate={isSuccess ? { opacity: 0, transition: { duration: 0.12 } } : 'show'}
-        className={cn('space-y-6', shake && 'shake')}
+        className={cn('space-y-3 sm:space-y-3.5', shake && 'shake')}
       >
         {/* Header */}
-        <m.div variants={fieldVariants} className="space-y-1.5">
+        <m.div variants={fieldVariants} className="space-y-0.5">
           <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
             Create your account
           </h1>
@@ -137,7 +137,7 @@ export function Register() {
           <m.div
             variants={fieldVariants}
             role="alert"
-            className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
+            className="flex items-start gap-2.5 p-2.5 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
           >
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
             <p className="flex-1">{serverError}</p>
@@ -145,9 +145,9 @@ export function Register() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-2.5 sm:space-y-3" noValidate>
           {/* Full Name */}
-          <m.div variants={fieldVariants} className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1">
             <Label htmlFor="register-name">Full name</Label>
             <Input
               id="register-name"
@@ -172,7 +172,7 @@ export function Register() {
           </m.div>
 
           {/* Email */}
-          <m.div variants={fieldVariants} className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1">
             <Label htmlFor="register-email">Email</Label>
             <Input
               id="register-email"
@@ -197,7 +197,7 @@ export function Register() {
           </m.div>
 
           {/* Password with 4-segment strength bar and text label */}
-          <m.div variants={fieldVariants} className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1">
             <Label htmlFor="register-password">Password</Label>
             <div className="relative">
               <Input
@@ -245,7 +245,7 @@ export function Register() {
           </m.div>
 
           {/* Confirm Password */}
-          <m.div variants={fieldVariants} className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1">
             <Label htmlFor="register-confirm-password">Confirm password</Label>
             <div className="relative">
               <Input
@@ -302,13 +302,13 @@ export function Register() {
           </m.p>
 
           {/* Primary full-width button (48px) */}
-          <m.div variants={fieldVariants} className="pt-2">
+          <m.div variants={fieldVariants} className="pt-1">
             <Button
               type="submit"
               variant="primary"
               size="lg"
               loading={isSubmitting || registerMutation.isPending}
-              className="w-full h-12 text-sm font-medium"
+              className="w-full h-11 sm:h-12 text-sm font-medium"
             >
               Create account
             </Button>

@@ -99,10 +99,10 @@ export function Login() {
         variants={formContainerVariants}
         initial="hidden"
         animate={isSuccess ? { opacity: 0, transition: { duration: 0.12 } } : 'show'}
-        className={cn('space-y-6', shake && 'shake')}
+        className={cn('space-y-4 sm:space-y-5', shake && 'shake')}
       >
         {/* Header */}
-        <m.div variants={fieldVariants} className="space-y-1.5">
+        <m.div variants={fieldVariants} className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
             Sign in
           </h1>
@@ -124,7 +124,7 @@ export function Login() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-3.5 sm:space-y-4" noValidate>
           {/* Email field */}
           <m.div variants={fieldVariants} className="space-y-1.5">
             <Label htmlFor="login-email">Email</Label>

@@ -80,7 +80,7 @@ export function ForgotPassword() {
 
   return (
     <AuthLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-5">
         {isSuccess ? (
           /* Success state replaces the form:
              MailCheck icon in a 40px bg-subtle tile,
@@ -91,13 +91,13 @@ export function ForgotPassword() {
             variants={formContainerVariants}
             initial="hidden"
             animate="show"
-            className="space-y-6"
+            className="space-y-4 sm:space-y-5"
           >
             <m.div variants={fieldVariants} className="w-10 h-10 rounded-lg bg-subtle border border-line flex items-center justify-center text-fg">
               <MailCheck className="w-5 h-5 text-fg" />
             </m.div>
 
-            <m.div variants={fieldVariants} className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Check your email
               </h1>
@@ -106,9 +106,9 @@ export function ForgotPassword() {
               </p>
             </m.div>
 
-            <m.div variants={fieldVariants} className="pt-2">
+            <m.div variants={fieldVariants} className="pt-1">
               <Link to="/login" className="block w-full">
-                <Button variant="primary" size="lg" className="w-full h-12 text-sm font-medium">
+                <Button variant="primary" size="lg" className="w-full h-11 sm:h-12 text-sm font-medium">
                   Back to sign in
                 </Button>
               </Link>
@@ -119,10 +119,10 @@ export function ForgotPassword() {
             variants={formContainerVariants}
             initial="hidden"
             animate="show"
-            className={cn('space-y-6', shake && 'shake')}
+            className={cn('space-y-4 sm:space-y-5', shake && 'shake')}
           >
             {/* Header */}
-            <m.div variants={fieldVariants} className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Reset your password
               </h1>
@@ -136,7 +136,7 @@ export function ForgotPassword() {
               <m.div
                 variants={fieldVariants}
                 role="alert"
-                className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
+                className="flex items-start gap-2.5 p-2.5 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
                 <p className="flex-1">{serverError}</p>
@@ -144,7 +144,7 @@ export function ForgotPassword() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-3.5 sm:space-y-4" noValidate>
               <m.div variants={fieldVariants} className="space-y-1.5">
                 <Label htmlFor="forgot-email">Email</Label>
                 <Input
