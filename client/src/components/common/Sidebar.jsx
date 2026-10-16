@@ -123,7 +123,7 @@ export function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebarCollapse}
-                className="relative group size-9 rounded-lg flex items-center justify-center hover:bg-hover transition-colors cursor-pointer"
+                className="relative group size-10 rounded-lg flex items-center justify-center hover:bg-hover transition-colors cursor-pointer"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
@@ -131,7 +131,7 @@ export function Sidebar() {
                   <Logo size="md" showWordmark={false} />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 text-fg">
-                  <PanelLeftOpen className="w-4 h-4 text-accent" />
+                  <PanelLeftOpen className="w-5 h-5 text-accent" />
                 </div>
               </button>
             </TooltipTrigger>
