@@ -162,7 +162,7 @@ const AppLayout = () => {
             Skip to content
           </a>
 
-          <main ref={mainRef} id="main" tabIndex="-1" data-lenis-prevent="true" className="flex-1 min-w-0 h-full overflow-y-auto pb-20 md:pb-8 focus:outline-none bg-bg-app">
+          <main ref={mainRef} id="main" tabIndex="-1" className="flex-1 min-w-0 h-full overflow-y-auto pb-20 md:pb-8 focus:outline-none bg-bg-app">
           <div className="max-w-[1280px] mx-auto px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8 min-h-full">
             <Routes>
               <Route element={<AnimatedOutlet />}>
