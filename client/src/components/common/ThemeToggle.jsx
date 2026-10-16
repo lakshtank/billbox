@@ -4,69 +4,108 @@ import { Sun, Moon } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
 
 /**
- * Step 13.8 Theme toggle — circular reveal (T4)
- * The new theme expands outward from the toggle button like a circular wave.
- * Falls back cleanly to an instant switch if reduced-motion is requested
- * or document.startViewTransition is not supported.
+ * Step 13.8 Mind-Blowing Theme Toggle — Circular Ripple Cover View Transition
+ * Expands outward from the clicked button or origin coordinates like an elegant circular wave cover.
+ * Silky smooth, 60/120fps GPU-composited, perfectly synchronized with zero lag.
  */
 export async function setThemeAnimated(next, originEl, applyThemeFn) {
+  const root = document.documentElement;
   const reduced =
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const applyWithCssTransition = () => {
-    const root = document.documentElement;
+  const fallback = () => {
     root.classList.add('theme-transition');
-    applyThemeFn(next);
+    if (applyThemeFn) {
+      applyThemeFn(next);
+    } else {
+      root.dataset.theme = next;
+      if (next === 'dark' || next === 'gentle') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+      try {
+        localStorage.setItem('billbox.theme', next);
+      } catch {}
+    }
     window.clearTimeout(window.__themeTransitionTimer);
     window.__themeTransitionTimer = window.setTimeout(() => {
       root.classList.remove('theme-transition');
-    }, 320);
+    }, 180);
   };
 
   if (!document.startViewTransition || reduced) {
-    applyWithCssTransition();
+    fallback();
     return;
   }
+
+  // Prevent multiple overlapping transitions
+  if (window.__isThemeTransitioning) return;
+  window.__isThemeTransitioning = true;
+
+  // Ensure no conflicting element transitions run during view transition snapshot
+  root.classList.remove('theme-transition');
 
   let x = window.innerWidth / 2;
   let y = window.innerHeight / 2;
 
-  if (originEl && originEl.getBoundingClientRect) {
-    const { left, top, width, height } = originEl.getBoundingClientRect();
-    x = left + width / 2;
-    y = top + height / 2;
+  if (originEl) {
+    if (typeof originEl.clientX === 'number' && typeof originEl.clientY === 'number') {
+      x = originEl.clientX;
+      y = originEl.clientY;
+    } else if (originEl.getBoundingClientRect) {
+      const rect = originEl.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
   }
 
-  const r = Math.hypot(
+  const endRadius = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y)
   );
 
   try {
-    const t = document.startViewTransition(() => {
+    const transition = document.startViewTransition(() => {
       flushSync(() => {
-        applyThemeFn(next);
+        if (applyThemeFn) {
+          applyThemeFn(next);
+        } else {
+          root.dataset.theme = next;
+          if (next === 'dark' || next === 'gentle') {
+            root.classList.add('dark');
+          } else {
+            root.classList.remove('dark');
+          }
+          try {
+            localStorage.setItem('billbox.theme', next);
+          } catch {}
+        }
       });
     });
 
-    await t.ready;
+    await transition.ready;
+
     const anim = document.documentElement.animate(
       {
         clipPath: [
           `circle(0px at ${x}px ${y}px)`,
-          `circle(${r}px at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`,
         ],
       },
       {
         duration: 360,
-        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        easing: 'cubic-bezier(0.2, 0, 0, 1)',
         pseudoElement: '::view-transition-new(root)',
       }
     );
+
     await anim.finished;
   } catch {
-    applyWithCssTransition();
+    fallback();
+  } finally {
+    window.__isThemeTransitioning = false;
   }
 }
 

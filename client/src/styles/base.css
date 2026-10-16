@@ -201,10 +201,10 @@ body {
   }
 }
 
-/* Step 13.8 Theme toggle circular reveal view transition */
+/* Step 13.8 Theme toggle circular ripple cover view transition */
 ::view-transition-group(root) {
   animation-duration: 360ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
 ::view-transition-old(root),
@@ -212,25 +212,49 @@ body {
   animation: none;
   mix-blend-mode: normal;
 }
+
 ::view-transition-old(root) {
   z-index: 1;
 }
+
 ::view-transition-new(root) {
   z-index: 9999;
 }
 
-/* Silky smooth theme transition across all design tokens */
+/* Lightweight fallback theme transition for non-view-transition environments (160ms) */
 html.theme-transition,
-html.theme-transition *,
-html.theme-transition *::before,
-html.theme-transition *::after {
-  transition: background-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 280ms cubic-bezier(0.16, 1, 0.3, 1),
-              color 280ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1),
-              fill 280ms cubic-bezier(0.16, 1, 0.3, 1),
-              stroke 280ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+html.theme-transition body,
+html.theme-transition main,
+html.theme-transition header,
+html.theme-transition nav,
+html.theme-transition aside,
+html.theme-transition section,
+html.theme-transition article,
+html.theme-transition div,
+html.theme-transition table,
+html.theme-transition thead,
+html.theme-transition tbody,
+html.theme-transition tr,
+html.theme-transition td,
+html.theme-transition th,
+html.theme-transition p,
+html.theme-transition span,
+html.theme-transition h1,
+html.theme-transition h2,
+html.theme-transition h3,
+html.theme-transition h4,
+html.theme-transition h5,
+html.theme-transition h6,
+html.theme-transition button,
+html.theme-transition input,
+html.theme-transition textarea,
+html.theme-transition select,
+html.theme-transition a {
+  transition: background-color 160ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+              color 160ms cubic-bezier(0.2, 0, 0, 1) !important;
   transition-delay: 0s !important;
 }
+
 
 
