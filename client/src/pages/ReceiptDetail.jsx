@@ -1237,47 +1237,88 @@ export function ReceiptDetail() {
                   ))}
                 </div>
               ) : (
-                <div className="w-full overflow-hidden">
-                  <table className="w-full text-left border-collapse table-fixed text-xs">
-                    <thead>
-                      <tr className="border-b border-line-subtle text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                        <th className="py-2 px-1">Item</th>
-                        <th className="py-2 px-1 text-center w-12">Qty</th>
-                        <th className="py-2 px-1 text-right w-24">Unit</th>
-                        <th className="py-2 px-1 text-right w-28">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line-subtle">
-                      {products.map((prod, idx) => (
-                        <tr key={prod._id || idx} className="hover:bg-subtle/30 transition-colors">
-                          <td className="py-2.5 px-1 pr-2">
-                            <div className="font-medium text-fg leading-snug">{prod.productName}</div>
-                            <div className="text-[11px] text-fg-3 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                              {prod.brand && <span>Brand: {prod.brand}</span>}
-                              {prod.category && <span>· {prod.category}</span>}
-                              {prod.warrantyPeriodValue > 0 && (
-                                <span className="inline-flex items-center gap-1 text-accent font-medium">
-                                  <ShieldCheck className="size-3" />
-                                  <span>
-                                    {prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'} warranty
-                                  </span>
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-1 text-center font-mono text-fg-2 tnum align-top pt-3">
-                            {prod.quantity || 1}
-                          </td>
-                          <td className="py-2.5 px-1 text-right font-mono text-fg-2 tnum align-top pt-3 whitespace-nowrap">
-                            {formatCurrency(prod.unitPrice, receipt.currency)}
-                          </td>
-                          <td className="py-2.5 px-1 text-right font-mono font-semibold text-fg tnum align-top pt-3 whitespace-nowrap">
-                            {formatCurrency(prod.lineTotal || prod.unitPrice, receipt.currency)}
-                          </td>
+                <div className="w-full">
+                  {/* Mobile Native Line Items (< sm) */}
+                  <div className="sm:hidden space-y-3 divide-y divide-line-subtle">
+                    {products.map((prod, idx) => (
+                      <div key={prod._id || idx} className="pt-3 first:pt-0 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-semibold text-sm text-fg leading-snug flex-1">
+                            {prod.productName}
+                          </span>
+                          <span className="text-right shrink-0 font-mono font-bold text-sm text-fg tnum">
+                            {formatCurrency(
+                              prod.lineTotal != null && prod.lineTotal !== ''
+                                ? prod.lineTotal
+                                : Number(prod.quantity || 1) * Number(prod.unitPrice || 0),
+                              receipt.currency
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-fg-3">
+                          <span className="font-mono tnum">
+                            {prod.quantity || 1} × {formatCurrency(prod.unitPrice, receipt.currency)}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[11px] truncate max-w-[160px]">
+                            {prod.brand && <span>{prod.brand}</span>}
+                            {prod.category && <span>· {prod.category}</span>}
+                          </div>
+                        </div>
+                        {prod.warrantyPeriodValue > 0 && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent bg-accent-tint/60 px-2 py-0.5 rounded-full border border-accent/20">
+                              <ShieldCheck className="size-3" />
+                              <span>{prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'} warranty</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View (>= sm) */}
+                  <div className="hidden sm:block w-full overflow-hidden">
+                    <table className="w-full text-left border-collapse table-fixed text-xs">
+                      <thead>
+                        <tr className="border-b border-line-subtle text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                          <th className="py-2 px-1">Item</th>
+                          <th className="py-2 px-1 text-center w-12">Qty</th>
+                          <th className="py-2 px-1 text-right w-24">Unit</th>
+                          <th className="py-2 px-1 text-right w-28">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-line-subtle">
+                        {products.map((prod, idx) => (
+                          <tr key={prod._id || idx} className="hover:bg-subtle/30 transition-colors">
+                            <td className="py-2.5 px-1 pr-2">
+                              <div className="font-medium text-fg leading-snug">{prod.productName}</div>
+                              <div className="text-[11px] text-fg-3 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                {prod.brand && <span>Brand: {prod.brand}</span>}
+                                {prod.category && <span>· {prod.category}</span>}
+                                {prod.warrantyPeriodValue > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-accent font-medium">
+                                    <ShieldCheck className="size-3" />
+                                    <span>
+                                      {prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'} warranty
+                                    </span>
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-1 text-center font-mono text-fg-2 tnum align-top pt-3">
+                              {prod.quantity || 1}
+                            </td>
+                            <td className="py-2.5 px-1 text-right font-mono text-fg-2 tnum align-top pt-3 whitespace-nowrap">
+                              {formatCurrency(prod.unitPrice, receipt.currency)}
+                            </td>
+                            <td className="py-2.5 px-1 text-right font-mono font-semibold text-fg tnum align-top pt-3 whitespace-nowrap">
+                              {formatCurrency(prod.lineTotal || prod.unitPrice, receipt.currency)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </m.div>
@@ -1511,59 +1552,100 @@ export function ReceiptDetail() {
                   </h3>
                 </div>
 
-                <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
-                  <table className="w-full text-left border-collapse table-fixed text-xs">
-                    <thead>
-                      <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                        <th className="py-3 px-4 w-10 text-center">#</th>
-                        <th className="py-3 px-4">Item description & details</th>
-                        <th className="py-3 px-3 w-32">Category</th>
-                        <th className="py-3 px-3 w-16 text-center">Qty</th>
-                        <th className="py-3 px-4 w-28 text-right">Unit price</th>
-                        <th className="py-3 px-4 w-32 text-center">Warranty</th>
-                        <th className="py-3 px-4 w-28 text-right">Line total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line-subtle">
-                      {products.map((prod, idx) => (
-                        <tr key={prod._id || idx} className="hover:bg-subtle/30 transition-colors">
-                          <td className="py-3.5 px-4 text-center font-mono text-fg-3 tnum">
-                            {idx + 1}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <div className="font-semibold text-sm text-fg leading-snug">
-                              {prod.productName}
-                            </div>
-                            {prod.brand && (
-                              <div className="text-xs text-fg-3 mt-0.5">Brand: {prod.brand}</div>
+                <div className="w-full">
+                  {/* Mobile Native Line Items (< sm) */}
+                  <div className="sm:hidden space-y-3 p-3 rounded-[12px] border border-line bg-surface shadow-2xs divide-y divide-line-subtle">
+                    {products.map((prod, idx) => (
+                      <div key={prod._id || idx} className="pt-3 first:pt-0 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-semibold text-sm text-fg leading-snug flex-1">
+                            {prod.productName}
+                          </span>
+                          <span className="text-right shrink-0 font-mono font-bold text-sm text-fg tnum">
+                            {formatCurrency(
+                              prod.lineTotal != null && prod.lineTotal !== ''
+                                ? prod.lineTotal
+                                : Number(prod.quantity || 1) * Number(prod.unitPrice || 0),
+                              receipt.currency
                             )}
-                          </td>
-                          <td className="py-3.5 px-3 text-fg-2">
-                            {prod.category || 'General'}
-                          </td>
-                          <td className="py-3.5 px-3 text-center font-mono text-fg-2 tnum">
-                            {prod.quantity || 1}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono text-fg-2 tnum whitespace-nowrap">
-                            {formatCurrency(prod.unitPrice, receipt.currency)}
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            {prod.warrantyPeriodValue > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-tint text-accent border border-accent-line">
-                                <ShieldCheck className="size-3.5" />
-                                <span>{prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'}</span>
-                              </span>
-                            ) : (
-                              <span className="text-xs text-fg-3">—</span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono font-semibold text-fg tnum whitespace-nowrap">
-                            {formatCurrency(prod.lineTotal || prod.unitPrice, receipt.currency)}
-                          </td>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-fg-3">
+                          <span className="font-mono tnum">
+                            {prod.quantity || 1} × {formatCurrency(prod.unitPrice, receipt.currency)}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[11px] truncate max-w-[160px]">
+                            {prod.brand && <span>{prod.brand}</span>}
+                            {prod.category && <span>· {prod.category}</span>}
+                          </div>
+                        </div>
+                        {prod.warrantyPeriodValue > 0 && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent bg-accent-tint/60 px-2 py-0.5 rounded-full border border-accent/20">
+                              <ShieldCheck className="size-3" />
+                              <span>{prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'} warranty</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Table View (>= sm) */}
+                  <div className="hidden sm:block w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+                    <table className="w-full text-left border-collapse table-fixed text-xs">
+                      <thead>
+                        <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                          <th className="py-3 px-4 w-10 text-center">#</th>
+                          <th className="py-3 px-4">Item description & details</th>
+                          <th className="py-3 px-3 w-32">Category</th>
+                          <th className="py-3 px-3 w-16 text-center">Qty</th>
+                          <th className="py-3 px-4 w-28 text-right">Unit price</th>
+                          <th className="py-3 px-4 w-32 text-center">Warranty</th>
+                          <th className="py-3 px-4 w-28 text-right">Line total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-line-subtle">
+                        {products.map((prod, idx) => (
+                          <tr key={prod._id || idx} className="hover:bg-subtle/30 transition-colors">
+                            <td className="py-3.5 px-4 text-center font-mono text-fg-3 tnum">
+                              {idx + 1}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-semibold text-sm text-fg leading-snug">
+                                {prod.productName}
+                              </div>
+                              {prod.brand && (
+                                <div className="text-xs text-fg-3 mt-0.5">Brand: {prod.brand}</div>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-3 text-fg-2">
+                              {prod.category || 'General'}
+                            </td>
+                            <td className="py-3.5 px-3 text-center font-mono text-fg-2 tnum">
+                              {prod.quantity || 1}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono text-fg-2 tnum whitespace-nowrap">
+                              {formatCurrency(prod.unitPrice, receipt.currency)}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              {prod.warrantyPeriodValue > 0 ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-tint text-accent border border-accent-line">
+                                  <ShieldCheck className="size-3.5" />
+                                  <span>{prod.warrantyPeriodValue} {prod.warrantyPeriodUnit || 'mo'}</span>
+                                </span>
+                              ) : (
+                                <span className="text-xs text-fg-3">—</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono font-semibold text-fg tnum whitespace-nowrap">
+                              {formatCurrency(prod.lineTotal || prod.unitPrice, receipt.currency)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </>
             )}

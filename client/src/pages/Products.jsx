@@ -361,8 +361,8 @@ export function Products() {
           )}
         </div>
 
-        {/* Filters & View Switcher */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-start sm:justify-end">
+        {/* Filters & View Switcher with smooth mobile horizontal scroll */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain py-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-nowrap justify-start sm:justify-end shrink-0">
           {/* Multi-Category Popover */}
           <Popover>
             <PopoverTrigger asChild>

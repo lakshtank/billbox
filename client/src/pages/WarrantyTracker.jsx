@@ -436,8 +436,8 @@ export function WarrantyTracker() {
           />
         </div>
 
-        {/* Right-side summary strip: 4 clickable tab shortcuts */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Right-side summary strip: 4 clickable tab shortcuts (desktop only to prevent clutter on mobile) */}
+        <div className="hidden sm:flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setActiveTab('active')}
@@ -505,50 +505,52 @@ export function WarrantyTracker() {
       </div>
 
       {/* 2. Filter Bar & Quick Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
-        {/* Segmented Quick Tabs with layoutId gliding active indicator */}
-        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar relative w-full sm:w-auto">
-          {STATUS_TABS.map((tab) => {
-            const isSelected = activeTab === tab.id;
-            const tabCount = counts[tab.id] ?? counts.all;
-            const Icon = tab.icon;
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Segmented Quick Tabs with layoutId gliding active indicator & smooth touch scroll */}
+        <div className="w-full sm:w-auto overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain py-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs shrink-0 min-w-max">
+            {STATUS_TABS.map((tab) => {
+              const isSelected = activeTab === tab.id;
+              const tabCount = counts[tab.id] ?? counts.all;
+              const Icon = tab.icon;
 
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] font-medium transition-colors cursor-pointer whitespace-nowrap z-10 ${
-                  isSelected
-                    ? 'text-fg font-semibold'
-                    : 'text-fg-3 hover:text-fg'
-                }`}
-              >
-                {isSelected && (
-                  <m.div
-                    layoutId="warranty-tab"
-                    className="absolute inset-0 bg-surface rounded-[7px] border border-line-subtle shadow-xs z-[-1]"
-                    transition={spring.snappy}
-                  >
-                    <div className="absolute bottom-0 inset-x-2.5 h-[2px] bg-accent rounded-full" />
-                  </m.div>
-                )}
-                <Icon className={`size-3.5 ${isSelected ? 'text-accent' : 'text-fg-3'}`} />
-                <span>{tab.label}</span>
-                <span className="font-mono text-[11px] tnum px-1.5 py-0.2 rounded-full bg-subtle/80 text-fg-3">
-                  {tier !== 'none' ? (
-                    <NumberFlow
-                      value={tabCount}
-                      transformTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                      spinTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
-                    />
-                  ) : (
-                    tabCount
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] font-medium transition-colors cursor-pointer whitespace-nowrap z-10 ${
+                    isSelected
+                      ? 'text-fg font-semibold'
+                      : 'text-fg-3 hover:text-fg'
+                  }`}
+                >
+                  {isSelected && (
+                    <m.div
+                      layoutId="warranty-tab"
+                      className="absolute inset-0 bg-surface rounded-[7px] border border-line-subtle shadow-xs z-[-1]"
+                      transition={spring.snappy}
+                    >
+                      <div className="absolute bottom-0 inset-x-2.5 h-[2px] bg-accent rounded-full" />
+                    </m.div>
                   )}
-                </span>
-              </button>
-            );
-          })}
+                  <Icon className={`size-3.5 ${isSelected ? 'text-accent' : 'text-fg-3'}`} />
+                  <span>{tab.label}</span>
+                  <span className="font-mono text-[11px] tnum px-1.5 py-0.2 rounded-full bg-subtle/80 text-fg-3">
+                    {tier !== 'none' ? (
+                      <NumberFlow
+                        value={tabCount}
+                        transformTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                        spinTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                      />
+                    ) : (
+                      tabCount
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Search & Category Filter */}
@@ -559,7 +561,7 @@ export function WarrantyTracker() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search product, brand, merchant..."
+              placeholder="Search warranties..."
               className="w-full text-xs h-9 pl-8 pr-7 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-3 focus:outline-none focus:border-accent transition-colors"
             />
             {searchTerm && (

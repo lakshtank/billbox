@@ -396,7 +396,7 @@ export default function Settings() {
       <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 items-start">
         {/* Left Sub-Nav */}
         <nav
-          className="flex md:flex-col overflow-x-auto no-scrollbar gap-1 border-b md:border-b-0 md:border-r border-line pb-2 md:pb-0 md:pr-3 shrink-0"
+          className="flex md:flex-col overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain gap-1 border-b md:border-b-0 md:border-r border-line pb-2 md:pb-0 md:pr-3 shrink-0"
           aria-label="Settings sections"
         >
           {NAV_SECTIONS.map((sec) => {
