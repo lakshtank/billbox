@@ -28,6 +28,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { getAuthenticatedFileUrl } from '../utils/fileUrl';
+import { WarrantyInput } from '../components/receipts/WarrantyInput';
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP'];
 
@@ -1114,37 +1115,26 @@ export default function BatchReview() {
                               <span className="text-[11px] font-medium text-fg-muted shrink-0">
                                 Warranty cover:
                               </span>
-                              <Input
-                                type="number"
-                                min="0"
-                                value={item.warrantyPeriodValue || ''}
-                                onChange={(e) =>
+                              <WarrantyInput
+                                value={item.warrantyPeriodValue}
+                                unit={item.warrantyPeriodUnit}
+                                onValueChange={(val) =>
                                   handleItemField(
                                     reviewingIndex,
                                     item.id,
                                     'warrantyPeriodValue',
-                                    e.target.value
+                                    val
                                   )
                                 }
-                                placeholder="0"
-                                className="w-16 text-xs h-7 text-center font-tabular bg-surface"
-                              />
-                              <select
-                                value={item.warrantyPeriodUnit || 'months'}
-                                onChange={(e) =>
+                                onUnitChange={(val) =>
                                   handleItemField(
                                     reviewingIndex,
                                     item.id,
                                     'warrantyPeriodUnit',
-                                    e.target.value
+                                    val
                                   )
                                 }
-                                className="w-24 text-xs h-7 px-2 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent cursor-pointer"
-                              >
-                                <option value="months">months</option>
-                                <option value="years">years</option>
-                                <option value="days">days</option>
-                              </select>
+                              />
                             </div>
                           </div>
                         );

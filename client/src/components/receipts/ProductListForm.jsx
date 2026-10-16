@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Plus, Trash2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { WarrantyInput } from './WarrantyInput';
 import {
   Select,
   SelectContent,
@@ -137,28 +138,13 @@ export function ProductListForm({
 
                   {/* Warranty */}
                   <td className="py-2.5 px-2 align-top pt-2.5">
-                    <div className="flex items-center gap-1 justify-center">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={item.warrantyPeriodValue || ''}
-                        onChange={(e) => onItemChange(item.id, 'warrantyPeriodValue', e.target.value)}
-                        placeholder="0"
-                        className="h-8 text-xs tnum w-12 text-center bg-surface px-1"
+                    <div className="flex items-center justify-center">
+                      <WarrantyInput
+                        value={item.warrantyPeriodValue}
+                        unit={item.warrantyPeriodUnit}
+                        onValueChange={(val) => onItemChange(item.id, 'warrantyPeriodValue', val)}
+                        onUnitChange={(val) => onItemChange(item.id, 'warrantyPeriodUnit', val)}
                       />
-                      <Select
-                        value={item.warrantyPeriodUnit || 'months'}
-                        onValueChange={(val) => onItemChange(item.id, 'warrantyPeriodUnit', val)}
-                      >
-                        <SelectTrigger className="h-8 text-[11px] w-14 bg-surface px-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="months">mo</SelectItem>
-                          <SelectItem value="years">yr</SelectItem>
-                          <SelectItem value="days">d</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </td>
 

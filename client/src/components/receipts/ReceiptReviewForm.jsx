@@ -35,6 +35,7 @@ import { DEFAULT_CATEGORIES } from '../../constants/category.constants';
 import { getAuthenticatedFileUrl } from '@/utils/fileUrl';
 import { spring, ease } from '@/lib/motion';
 import { firstReceiptMoment } from '@/lib/confetti';
+import { WarrantyInput } from './WarrantyInput';
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'CAD', 'AUD'];
 
@@ -688,15 +689,15 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
 
                 {/* High-density Table with touch horizontal scrolling on mobile */}
                 <div className="w-full overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
-                  <table className="w-full text-left border-collapse table-fixed min-w-[540px]">
+                  <table className="w-full text-left border-collapse table-fixed min-w-[580px]">
                     <thead>
                       <tr className="border-b border-line-subtle text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
                         <th className="py-2 px-1 w-6 text-center">#</th>
                         <th className="py-2 px-1.5 w-auto">Description & Brand</th>
                         <th className="py-2 px-1 w-12 text-center">Qty</th>
-                        <th className="py-2 px-1.5 w-20 text-right">Unit price</th>
-                        <th className="py-2 px-1.5 w-20 text-center">Warranty</th>
-                        <th className="py-2 px-1.5 w-20 text-right">Total</th>
+                        <th className="py-2 px-1.5 w-24 text-right">Unit price</th>
+                        <th className="py-2 px-1.5 w-32 text-center">Warranty</th>
+                        <th className="py-2 px-1.5 w-24 text-right">Total</th>
                         <th className="py-2 px-1 w-7 text-center"></th>
                       </tr>
                     </thead>
@@ -744,32 +745,17 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
                             />
                           </td>
                           <td className="py-2 px-1.5 align-top pt-2">
-                            <div className="flex items-center gap-1 justify-center">
-                              <Input
-                                type="number"
-                                min="0"
-                                value={item.warrantyPeriodValue || ''}
-                                onChange={(e) =>
-                                  handleItemChange(item.id, 'warrantyPeriodValue', e.target.value)
-                                }
-                                placeholder="0"
-                                className="h-8 text-xs tnum w-10 text-center bg-surface px-1"
-                              />
-                              <Select
-                                value={item.warrantyPeriodUnit || 'months'}
+                            <div className="flex items-center justify-center">
+                              <WarrantyInput
+                                value={item.warrantyPeriodValue}
+                                unit={item.warrantyPeriodUnit}
                                 onValueChange={(val) =>
+                                  handleItemChange(item.id, 'warrantyPeriodValue', val)
+                                }
+                                onUnitChange={(val) =>
                                   handleItemChange(item.id, 'warrantyPeriodUnit', val)
                                 }
-                              >
-                                <SelectTrigger className="h-8 text-[11px] w-12 bg-surface px-1">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="months">mo</SelectItem>
-                                  <SelectItem value="years">yr</SelectItem>
-                                  <SelectItem value="days">d</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              />
                             </div>
                           </td>
                           <td className="py-2 px-1.5 text-right align-top pt-3.5 font-mono text-xs font-semibold text-fg tnum truncate">
