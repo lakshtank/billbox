@@ -14,28 +14,44 @@ export async function setThemeAnimated(next, originEl, applyThemeFn) {
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (!document.startViewTransition || reduced || !originEl) {
+  const applyWithCssTransition = () => {
+    const root = document.documentElement;
+    root.classList.add('theme-transition');
     applyThemeFn(next);
+    window.clearTimeout(window.__themeTransitionTimer);
+    window.__themeTransitionTimer = window.setTimeout(() => {
+      root.classList.remove('theme-transition');
+    }, 320);
+  };
+
+  if (!document.startViewTransition || reduced) {
+    applyWithCssTransition();
     return;
   }
 
-  const { left, top, width, height } = originEl.getBoundingClientRect();
-  const x = left + width / 2;
-  const y = top + height / 2;
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
+
+  if (originEl && originEl.getBoundingClientRect) {
+    const { left, top, width, height } = originEl.getBoundingClientRect();
+    x = left + width / 2;
+    y = top + height / 2;
+  }
+
   const r = Math.hypot(
     Math.max(x, window.innerWidth - x),
     Math.max(y, window.innerHeight - y)
   );
 
-  const t = document.startViewTransition(() => {
-    flushSync(() => {
-      applyThemeFn(next);
-    });
-  });
-
   try {
+    const t = document.startViewTransition(() => {
+      flushSync(() => {
+        applyThemeFn(next);
+      });
+    });
+
     await t.ready;
-    document.documentElement.animate(
+    const anim = document.documentElement.animate(
       {
         clipPath: [
           `circle(0px at ${x}px ${y}px)`,
@@ -43,13 +59,14 @@ export async function setThemeAnimated(next, originEl, applyThemeFn) {
         ],
       },
       {
-        duration: 520,
-        easing: 'cubic-bezier(.16,1,.3,1)',
+        duration: 360,
+        easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
         pseudoElement: '::view-transition-new(root)',
       }
     );
+    await anim.finished;
   } catch {
-    // Graceful fallback if pseudoElement animation throws
+    applyWithCssTransition();
   }
 }
 

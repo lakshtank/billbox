@@ -52,7 +52,13 @@ export const ThemeProvider = ({
     } catch (e) {
       console.warn('Failed to save theme to localStorage:', e);
     }
+    const root = document.documentElement;
+    root.classList.add('theme-transition');
     setThemeState(validTheme);
+    window.clearTimeout(window.__themeTransitionTimer);
+    window.__themeTransitionTimer = window.setTimeout(() => {
+      root.classList.remove('theme-transition');
+    }, 320);
   }, [storageKey]);
 
   const value = useMemo(

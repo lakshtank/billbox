@@ -22,6 +22,7 @@ import { useReceiptsQuery } from '../queries/useReceiptsQuery';
 import { usePreferences } from '@/context/PreferencesContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '../components/common/PageHeader';
+import { setThemeAnimated } from '../components/common/ThemeToggle';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
@@ -710,7 +711,7 @@ export default function Settings() {
                     {/* Light Tile */}
                     <button
                       type="button"
-                      onClick={() => setTheme('light')}
+                      onClick={(e) => setThemeAnimated('light', e.currentTarget, setTheme)}
                       className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
                         theme === 'light'
                           ? 'border-accent ring-1 ring-accent bg-selected/20'
@@ -735,7 +736,7 @@ export default function Settings() {
                     {/* Gentle Tile (formerly Dark) */}
                     <button
                       type="button"
-                      onClick={() => setTheme('gentle')}
+                      onClick={(e) => setThemeAnimated('gentle', e.currentTarget, setTheme)}
                       className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
                         theme === 'gentle'
                           ? 'border-accent ring-1 ring-accent bg-selected/20'
@@ -760,7 +761,7 @@ export default function Settings() {
                     {/* Dark Tile (Deep Pitch Obsidian) */}
                     <button
                       type="button"
-                      onClick={() => setTheme('dark')}
+                      onClick={(e) => setThemeAnimated('dark', e.currentTarget, setTheme)}
                       className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
                         theme === 'dark'
                           ? 'border-accent ring-1 ring-accent bg-selected/20'
