@@ -10,3 +10,4 @@ export { Timeline } from './Timeline';
 export { DocumentViewer } from './DocumentViewer';
 export { ErrorState } from './ErrorState';
 export { ProductWarrantyTimeline } from './ProductWarrantyTimeline';
+export { BarList } from './BarList';

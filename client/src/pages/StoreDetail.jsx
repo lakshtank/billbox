@@ -12,6 +12,7 @@ import { DateCell } from '../components/data/DateCell';
 import { KpiTile } from '../components/data/KpiTile';
 import { SpendingChart } from '../components/data/SpendingChart';
 import { StatusBadge } from '../components/data/StatusBadge';
+import { BarList } from '../components/data/BarList';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 
@@ -228,25 +229,15 @@ export default function StoreDetail() {
               No category breakdown available
             </div>
           ) : (
-            <div className="space-y-3.5 flex-1 justify-center flex flex-col">
-              {categorySpendData.map((item) => (
-                <div key={item.name} className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-fg truncate">{item.name}</span>
-                    <span className="tnum font-semibold text-fg">
-                      <Money value={item.spend} currency={currency} />
-                    </span>
-                  </div>
-                  {/* Horizontal Bar (8px tall, radius 4) */}
-                  <div className="w-full bg-subtle rounded-full h-2 overflow-hidden border border-line-subtle">
-                    <div
-                      className="bg-accent h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(item.percentage, 4)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <BarList
+              data={categorySpendData.map((item) => ({
+                name: item.name,
+                value: item.spend,
+                spend: item.spend,
+                percentage: item.percentage,
+              }))}
+              currency={currency}
+            />
           )}
         </div>
       </div>
