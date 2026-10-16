@@ -5,6 +5,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Minimize2,
   RotateCw,
   Download,
   ExternalLink,
@@ -20,7 +21,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 /**
  * DocumentViewer Component
  * Supports standalone authenticated URLs, Blob URLs, and embedded base64 data URIs.
- * Handles both Images (with Motion gestures: mouse wheel zoom, drag pan with inertia, double-tap, touch pinch, and rotate) and PDFs.
+ * Handles both Images and PDFs with rich zoom, pan, rotate, and fullscreen controls.
  */
 export function DocumentViewer({
   url,
@@ -38,6 +39,18 @@ export function DocumentViewer({
   const yMV = useMotionValue(0);
   const [currentScale, setCurrentScale] = React.useState(1);
   const [rotation, setRotation] = React.useState(0);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  // Close fullscreen on Escape
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [hasError, setHasError] = React.useState(false);
@@ -107,11 +120,11 @@ export function DocumentViewer({
     return authenticatedDirectUrl || localBlobUrl || inlineDataUri || '';
   }, [useFallback, authenticatedDirectUrl, localBlobUrl, inlineDataUri]);
 
-  // Optimized PDF view URL with Chrome PDF engine parameters for full fit without scrollbar
+  // Optimized PDF view URL with Chrome PDF engine parameters for full fit to width
   const pdfViewUrl = React.useMemo(() => {
     if (!activeUrl || !isPdf) return activeUrl;
     if (activeUrl.includes('#')) return activeUrl;
-    return `${activeUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+    return `${activeUrl}#toolbar=0&navpanes=0&view=FitH`;
   }, [activeUrl, isPdf]);
 
   // URL for new tab navigation (prefer authenticated direct link, otherwise blob)
@@ -156,7 +169,7 @@ export function DocumentViewer({
     if (!canvas) return;
 
     const onWheel = (e) => {
-      if (isPdf || hasError || !activeUrl) return;
+      if (hasError || !activeUrl) return;
       e.preventDefault();
 
       const current = scaleMV.get();
@@ -174,7 +187,7 @@ export function DocumentViewer({
     return () => {
       canvas.removeEventListener('wheel', onWheel);
     };
-  }, [isPdf, hasError, activeUrl, scaleMV, xMV, yMV]);
+  }, [hasError, activeUrl, scaleMV, xMV, yMV]);
 
   // Touch pinch-zoom listener
   const handleTouchStart = (e) => {
@@ -248,7 +261,6 @@ export function DocumentViewer({
 
   // Double-click / double-tap: toggle fit (1x) ↔ 2×, animated with spring.snappy
   const handleDoubleClick = () => {
-    if (isPdf) return;
     const current = scaleMV.get();
     if (current > 1.05) {
       handleResetZoom();
@@ -261,6 +273,7 @@ export function DocumentViewer({
     <div
       className={cn(
         'relative flex flex-col overflow-hidden rounded-[12px] border border-line bg-subtle w-full h-full min-h-[380px]',
+        isFullscreen && 'fixed inset-0 z-50 rounded-none border-0 h-screen w-screen min-h-0 bg-surface shadow-2xl',
         className
       )}
     >
@@ -272,7 +285,7 @@ export function DocumentViewer({
 
         {/* Desktop Toolbar Controls */}
         <div className="hidden sm:flex items-center gap-1">
-          {!isPdf && activeUrl && (
+          {activeUrl && (
             <>
               <Button
                 variant="ghost"
@@ -308,7 +321,7 @@ export function DocumentViewer({
                 size="sm"
                 className="size-7 p-0 cursor-pointer"
                 onClick={handleResetZoom}
-                title="Fit to screen (Double-click image)"
+                title="Fit to screen (100%)"
                 aria-label="Fit to screen"
               >
                 <Maximize2 className="size-3.5" />
@@ -322,6 +335,16 @@ export function DocumentViewer({
                 aria-label="Rotate"
               >
                 <RotateCw className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-7 p-0 cursor-pointer"
+                onClick={() => setIsFullscreen((prev) => !prev)}
+                title={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen'}
+                aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+              >
+                {isFullscreen ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
               </Button>
               <div className="h-4 w-px bg-line mx-1" />
             </>
@@ -378,11 +401,11 @@ export function DocumentViewer({
         onDoubleClick={handleDoubleClick}
         className={cn(
           'relative flex-1 flex items-center justify-center overflow-hidden p-2 min-h-[300px] bg-subtle select-none',
-          !isPdf && currentScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+          currentScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
         )}
       >
-        {/* Step 16.3: Mobile Floating Pill Toolbar (< sm) */}
-        {!isPdf && activeUrl && (
+        {/* Mobile Floating Pill Toolbar (< sm) */}
+        {activeUrl && (
           <div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 rounded-full border border-line bg-surface/90 px-2.5 py-1 shadow-lg backdrop-blur-md">
             <Button
               variant="ghost"
@@ -475,69 +498,50 @@ export function DocumentViewer({
                   </a>
                 )}
               </div>
-            ) : isPdf && isMobile ? (
-              <div className="flex flex-col items-center justify-center gap-4 text-center p-6 w-full min-h-[360px] bg-subtle/40 rounded-[12px] border border-line select-none">
-                <div className="size-16 rounded-2xl bg-accent-tint border border-accent/20 flex items-center justify-center shadow-xs">
-                  <FileText className="size-8 text-accent" />
-                </div>
-                <div className="space-y-1 max-w-[280px]">
-                  <h4 className="text-sm font-semibold text-fg truncate" title={resolvedFilename}>
-                    {resolvedFilename}
-                  </h4>
-                  <p className="text-xs text-fg-3">PDF Document</p>
-                </div>
-                <div className="flex flex-col gap-2.5 w-full max-w-[240px] pt-2">
-                  {tabNavigationUrl && (
-                    <a
-                      href={tabNavigationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-[8px] bg-accent px-4 py-2.5 text-xs font-semibold text-on-accent hover:bg-accent-hover shadow-xs transition-colors cursor-pointer"
+            ) : isPdf ? (
+              <div
+                className="relative w-full h-full overflow-auto flex items-center justify-center p-1 sm:p-2 no-scrollbar"
+                style={{ cursor: currentScale > 1 ? 'grab' : 'default' }}
+              >
+                <div
+                  style={{
+                    transform: `scale(${currentScale}) rotate(${rotation}deg)`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    width: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
+                    height: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
+                    minHeight: isFullscreen ? 'calc(100vh - 70px)' : '440px',
+                  }}
+                  className="w-full h-full flex items-center justify-center origin-top transition-transform"
+                >
+                  <object
+                    data={pdfViewUrl}
+                    type="application/pdf"
+                    className="w-full h-full min-h-[440px] rounded-[8px] border-0 bg-surface shadow-2xs"
+                    onLoad={() => setIsLoaded(true)}
+                    onError={handleMediaError}
+                  >
+                    <iframe
+                      src={pdfViewUrl}
+                      title={resolvedFilename}
+                      className="w-full h-full min-h-[440px] rounded-[8px] border-0 bg-surface shadow-2xs"
+                      onLoad={() => setIsLoaded(true)}
+                      onError={handleMediaError}
                     >
-                      <ExternalLink className="size-3.5" />
-                      <span>Open document</span>
-                    </a>
-                  )}
-                  {tabNavigationUrl && (
-                    <a
-                      href={tabNavigationUrl}
-                      download={resolvedFilename}
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-[8px] border border-line bg-surface px-4 py-2 text-xs font-medium text-fg hover:bg-hover transition-colors cursor-pointer"
-                    >
-                      <Download className="size-3.5 text-fg-3" />
-                      <span>Download PDF</span>
-                    </a>
-                  )}
+                      <p className="p-4 text-xs text-fg-3">
+                        Your browser does not support inline PDFs.{' '}
+                        <a
+                          href={tabNavigationUrl}
+                          download={resolvedFilename}
+                          className="text-accent underline font-medium"
+                        >
+                          Download PDF
+                        </a>
+                      </p>
+                    </iframe>
+                  </object>
                 </div>
               </div>
-            ) : isPdf ? (
-              <object
-                data={pdfViewUrl}
-                type="application/pdf"
-                className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs overflow-hidden"
-                onLoad={() => setIsLoaded(true)}
-                onError={handleMediaError}
-              >
-                <iframe
-                  src={pdfViewUrl}
-                  title={resolvedFilename}
-                  scrolling="no"
-                  className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs overflow-hidden"
-                  onLoad={() => setIsLoaded(true)}
-                  onError={handleMediaError}
-                >
-                  <p className="p-4 text-xs text-fg-3">
-                    Your browser does not support inline PDFs.{' '}
-                    <a
-                      href={tabNavigationUrl}
-                      download={resolvedFilename}
-                      className="text-accent underline font-medium"
-                    >
-                      Download PDF
-                    </a>
-                  </p>
-                </iframe>
-              </object>
             ) : (
               <m.div
                 drag={currentScale > 1}
