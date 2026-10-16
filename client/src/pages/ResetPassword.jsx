@@ -12,6 +12,22 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
+import * as m from 'motion/react-m';
+import { ease } from '@/lib/motion';
+import { cn } from '../lib/utils';
+
+const formContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: ease.out } },
+};
 
 const resetPasswordSchema = z
   .object({
@@ -32,11 +48,13 @@ export function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [shake, setShake] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(resetPasswordSchema),
@@ -75,11 +93,22 @@ export function ResetPassword() {
               err.response?.data?.message ||
               'Unable to update password. Please try again.';
             setServerError(msg);
+            setShake(true);
+            setTimeout(() => setShake(false), 260);
             setFocus('password');
           }
         },
       }
     );
+  };
+
+  const onInvalid = (fieldErrors) => {
+    setShake(true);
+    setTimeout(() => setShake(false), 260);
+    const firstField = Object.keys(fieldErrors)[0];
+    if (firstField) {
+      setFocus(firstField);
+    }
   };
 
   return (
@@ -88,55 +117,66 @@ export function ResetPassword() {
         {isExpired ? (
           /* Invalid or expired token: replace the form with an error state,
              "This link has expired", button "Request a new link" (to /forgot-password) */
-          <div className="space-y-6">
-            <div className="w-10 h-10 rounded-lg bg-bad-bg border border-bad-line flex items-center justify-center text-bad-fg">
+          <m.div
+            variants={formContainerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
+            <m.div variants={fieldVariants} className="w-10 h-10 rounded-lg bg-bad-bg border border-bad-line flex items-center justify-center text-bad-fg">
               <AlertCircle className="w-5 h-5 text-bad-solid" />
-            </div>
+            </m.div>
 
-            <div className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1.5">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 This link has expired
               </h1>
               <p className="text-sm text-fg-2 font-sans leading-relaxed">
                 Password reset links are single-use and expire after a short period. Please request a new link to reset your password.
               </p>
-            </div>
+            </m.div>
 
-            <div className="pt-2">
+            <m.div variants={fieldVariants} className="pt-2">
               <Link to="/forgot-password" className="block w-full">
                 <Button variant="primary" size="lg" className="w-full h-12 text-sm font-medium">
                   Request a new link
                 </Button>
               </Link>
-            </div>
-          </div>
+            </m.div>
+          </m.div>
         ) : (
-          <>
+          <m.div
+            variants={formContainerVariants}
+            initial="hidden"
+            animate="show"
+            className={cn('space-y-6', shake && 'shake')}
+          >
             {/* Header */}
-            <div className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1.5">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Set a new password
               </h1>
               <p className="text-sm text-fg-2 font-sans">
                 {"Choose a password you haven't used before."}
               </p>
-            </div>
+            </m.div>
 
             {/* Server Error Alert Banner */}
             {serverError && (
-              <div
+              <m.div
+                variants={fieldVariants}
                 role="alert"
                 className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
                 <p className="flex-1">{serverError}</p>
-              </div>
+              </m.div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
               {/* New Password */}
-              <div className="space-y-1.5">
+              <m.div variants={fieldVariants} className="space-y-1.5">
                 <Label htmlFor="reset-password">New password</Label>
                 <div className="relative">
                   <Input
@@ -178,10 +218,10 @@ export function ResetPassword() {
                     <span>{errors.password.message}</span>
                   </p>
                 )}
-              </div>
+              </m.div>
 
               {/* Confirm New Password */}
-              <div className="space-y-1.5">
+              <m.div variants={fieldVariants} className="space-y-1.5">
                 <Label htmlFor="reset-confirm-password">Confirm password</Label>
                 <div className="relative">
                   <Input
@@ -222,9 +262,9 @@ export function ResetPassword() {
                     <span>{errors.confirmPassword.message}</span>
                   </p>
                 )}
-              </div>
+              </m.div>
 
-              <div className="pt-2">
+              <m.div variants={fieldVariants} className="pt-2">
                 <Button
                   type="submit"
                   variant="primary"
@@ -234,18 +274,18 @@ export function ResetPassword() {
                 >
                   Update password
                 </Button>
-              </div>
+              </m.div>
             </form>
 
-            <p className="text-center text-sm text-fg-2">
+            <m.p variants={fieldVariants} className="text-center text-sm text-fg-2">
               <Link
                 to="/login"
                 className="font-medium text-fg-link hover:underline transition-colors"
               >
                 Back to sign in
               </Link>
-            </p>
-          </>
+            </m.p>
+          </m.div>
         )}
       </div>
     </AuthLayout>

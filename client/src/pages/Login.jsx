@@ -11,6 +11,22 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
 import { toast } from 'sonner';
+import * as m from 'motion/react-m';
+import { ease } from '@/lib/motion';
+import { cn } from '../lib/utils';
+
+const formContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: ease.out } },
+};
 
 const loginSchema = z.object({
   email: z.string().trim().email('Enter a valid email address.'),
@@ -23,6 +39,8 @@ export function Login() {
   const loginMutation = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [shake, setShake] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -46,7 +64,10 @@ export function Login() {
       onSuccess: (data) => {
         loginUser(data.token, data.user);
         toast.success('Signed in');
-        navigate('/');
+        setIsSuccess(true);
+        setTimeout(() => {
+          navigate('/');
+        }, 120);
       },
       onError: (err) => {
         const status = err.response?.status;
@@ -56,39 +77,56 @@ export function Login() {
           ? 'Incorrect email or password.'
           : err.response?.data?.message || 'Incorrect email or password.';
         setServerError(msg);
+        setShake(true);
+        setTimeout(() => setShake(false), 260);
         setFocus('email');
       },
     });
   };
 
+  const onInvalid = (fieldErrors) => {
+    setShake(true);
+    setTimeout(() => setShake(false), 260);
+    const firstField = Object.keys(fieldErrors)[0];
+    if (firstField) {
+      setFocus(firstField);
+    }
+  };
+
   return (
     <AuthLayout>
-      <div className="space-y-6">
+      <m.div
+        variants={formContainerVariants}
+        initial="hidden"
+        animate={isSuccess ? { opacity: 0, transition: { duration: 0.12 } } : 'show'}
+        className={cn('space-y-6', shake && 'shake')}
+      >
         {/* Header */}
-        <div className="space-y-1.5">
+        <m.div variants={fieldVariants} className="space-y-1.5">
           <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
             Sign in
           </h1>
           <p className="text-sm text-fg-2 font-sans">
             Welcome back to BillBox.
           </p>
-        </div>
+        </m.div>
 
         {/* Server Error Alert Banner */}
         {serverError && (
-          <div
+          <m.div
+            variants={fieldVariants}
             role="alert"
             className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
           >
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
             <p className="flex-1">{serverError}</p>
-          </div>
+          </m.div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
           {/* Email field */}
-          <div className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1.5">
             <Label htmlFor="login-email">Email</Label>
             <Input
               id="login-email"
@@ -110,10 +148,10 @@ export function Login() {
                 <span>{errors.email.message}</span>
               </p>
             )}
-          </div>
+          </m.div>
 
           {/* Password field with show/hide toggle */}
-          <div className="space-y-1.5">
+          <m.div variants={fieldVariants} className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="login-password">Password</Label>
               <Link
@@ -158,10 +196,10 @@ export function Login() {
                 <span>{errors.password.message}</span>
               </p>
             )}
-          </div>
+          </m.div>
 
           {/* Submit button: 48px, full width, primary */}
-          <div className="pt-2">
+          <m.div variants={fieldVariants} className="pt-2">
             <Button
               type="submit"
               variant="primary"
@@ -171,11 +209,11 @@ export function Login() {
             >
               Sign in
             </Button>
-          </div>
+          </m.div>
         </form>
 
         {/* Secondary link */}
-        <p className="text-center text-sm text-fg-2">
+        <m.p variants={fieldVariants} className="text-center text-sm text-fg-2">
           Don&apos;t have an account?{' '}
           <Link
             to="/register"
@@ -183,8 +221,8 @@ export function Login() {
           >
             Create one
           </Link>
-        </p>
-      </div>
+        </m.p>
+      </m.div>
     </AuthLayout>
   );
 }

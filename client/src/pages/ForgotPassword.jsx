@@ -10,6 +10,22 @@ import { AuthLayout } from '../components/auth/AuthLayout';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
+import * as m from 'motion/react-m';
+import { ease } from '@/lib/motion';
+import { cn } from '../lib/utils';
+
+const formContainerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const fieldVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.22, ease: ease.out } },
+};
 
 const forgotPasswordSchema = z.object({
   email: z.string().trim().email('Enter a valid email address.'),
@@ -20,6 +36,7 @@ export function ForgotPassword() {
   const forgotMutation = useForgotPassword();
   const [isSuccess, setIsSuccess] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [shake, setShake] = useState(false);
 
   const {
     register,
@@ -48,9 +65,17 @@ export function ForgotPassword() {
           err.response?.data?.message ||
           'Something went wrong. Please check your email and try again.';
         setServerError(msg);
+        setShake(true);
+        setTimeout(() => setShake(false), 260);
         setFocus('email');
       },
     });
+  };
+
+  const onInvalid = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 260);
+    setFocus('email');
   };
 
   return (
@@ -62,54 +87,65 @@ export function ForgotPassword() {
              "Check your email",
              text "If an account exists for that email, a reset link is on its way.",
              button "Back to sign in". Never reveal whether the email exists. */
-          <div className="space-y-6">
-            <div className="w-10 h-10 rounded-lg bg-subtle border border-line flex items-center justify-center text-fg">
+          <m.div
+            variants={formContainerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-6"
+          >
+            <m.div variants={fieldVariants} className="w-10 h-10 rounded-lg bg-subtle border border-line flex items-center justify-center text-fg">
               <MailCheck className="w-5 h-5 text-fg" />
-            </div>
+            </m.div>
 
-            <div className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1.5">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Check your email
               </h1>
               <p className="text-sm text-fg-2 font-sans leading-relaxed">
                 If an account exists for that email, a reset link is on its way.
               </p>
-            </div>
+            </m.div>
 
-            <div className="pt-2">
+            <m.div variants={fieldVariants} className="pt-2">
               <Link to="/login" className="block w-full">
                 <Button variant="primary" size="lg" className="w-full h-12 text-sm font-medium">
                   Back to sign in
                 </Button>
               </Link>
-            </div>
-          </div>
+            </m.div>
+          </m.div>
         ) : (
-          <>
+          <m.div
+            variants={formContainerVariants}
+            initial="hidden"
+            animate="show"
+            className={cn('space-y-6', shake && 'shake')}
+          >
             {/* Header */}
-            <div className="space-y-1.5">
+            <m.div variants={fieldVariants} className="space-y-1.5">
               <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
                 Reset your password
               </h1>
               <p className="text-sm text-fg-2 font-sans">
                 {"Enter your email and we'll send a reset link."}
               </p>
-            </div>
+            </m.div>
 
             {/* Server Error Alert Banner */}
             {serverError && (
-              <div
+              <m.div
+                variants={fieldVariants}
                 role="alert"
                 className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
                 <p className="flex-1">{serverError}</p>
-              </div>
+              </m.div>
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-              <div className="space-y-1.5">
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-4" noValidate>
+              <m.div variants={fieldVariants} className="space-y-1.5">
                 <Label htmlFor="forgot-email">Email</Label>
                 <Input
                   id="forgot-email"
@@ -131,9 +167,9 @@ export function ForgotPassword() {
                     <span>{errors.email.message}</span>
                   </p>
                 )}
-              </div>
+              </m.div>
 
-              <div className="pt-2">
+              <m.div variants={fieldVariants} className="pt-2">
                 <Button
                   type="submit"
                   variant="primary"
@@ -143,10 +179,10 @@ export function ForgotPassword() {
                 >
                   Send reset link
                 </Button>
-              </div>
+              </m.div>
             </form>
 
-            <p className="text-center text-sm text-fg-2">
+            <m.p variants={fieldVariants} className="text-center text-sm text-fg-2">
               <Link
                 to="/login"
                 className="inline-flex items-center gap-1.5 font-medium text-fg-link hover:underline transition-colors"
@@ -154,8 +190,8 @@ export function ForgotPassword() {
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to sign in</span>
               </Link>
-            </p>
-          </>
+            </m.p>
+          </m.div>
         )}
       </div>
     </AuthLayout>
