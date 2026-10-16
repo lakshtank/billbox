@@ -79,7 +79,7 @@ export function Toaster({ ...props }) {
         classNames: {
           toast:
             "toast group relative flex w-full items-start gap-3 rounded-lg border border-line bg-surface p-3 pr-9 shadow-[var(--elevation-2)] text-sm text-fg",
-          title: "font-medium leading-5 text-fg",
+          title: "font-semibold leading-5 text-current",
           description: "mt-0.5 text-[13px] leading-[18px] text-fg-2",
           actionButton:
             "ml-auto shrink-0 rounded-md px-2.5 h-7 text-[13px] font-medium text-accent hover:bg-accent-tint transition-colors cursor-pointer",
@@ -87,10 +87,11 @@ export function Toaster({ ...props }) {
             "rounded-md px-2.5 h-7 text-[13px] text-fg-2 hover:bg-hover transition-colors cursor-pointer",
           closeButton:
             "absolute right-2 top-2 size-6 rounded-md text-fg-3 hover:text-fg hover:bg-hover flex items-center justify-center transition-colors cursor-pointer",
-          success: "toast-ok border-l-[3px] border-l-ok-solid",
-          error: "toast-bad border-l-[3px] border-l-bad-solid",
-          warning: "toast-warn border-l-[3px] border-l-warn-solid",
-          info: "toast-info border-l-[3px] border-l-accent",
+          /* border-l-[3px] removed per user request: status font colors used instead */
+          success: "toast-ok text-ok-fg",
+          error: "toast-bad text-bad-fg",
+          warning: "toast-warn text-warn-fg",
+          info: "toast-info text-accent",
         },
       }}
       icons={{

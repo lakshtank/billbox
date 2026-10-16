@@ -125,20 +125,26 @@
   --color-ring: var(--line-focus);
 }
 
-/* Step 12: Toast status rail + countdown timer */
+/* Step 12: Toast status colors (vertical line removed per user request) */
 .toast::before {
-  content: "";
-  position: absolute;
-  inset-block: 8px;
-  left: 0;
-  width: 3px;
-  border-radius: 3px;
-  background: var(--line-strong);
+  display: none !important;
 }
-.toast-ok::before   { background: var(--ok-solid); }
-.toast-bad::before  { background: var(--bad-solid); }
-.toast-warn::before { background: var(--warn-solid); }
-.toast-info::before { background: var(--accent); }
+.toast-ok [data-title],
+.toast-ok .title {
+  color: var(--ok-fg);
+}
+.toast-bad [data-title],
+.toast-bad .title {
+  color: var(--bad-fg);
+}
+.toast-warn [data-title],
+.toast-warn .title {
+  color: var(--warn-fg);
+}
+.toast-info [data-title],
+.toast-info .title {
+  color: var(--accent);
+}
 
 /* Toast countdown bar (transform only) */
 .toast .countdown {
