@@ -1,6 +1,18 @@
-import { toast } from 'sonner';
+import { toast as sonnerToast } from 'sonner';
 import { notify } from './notify.jsx';
 
-// Default export is the standard toast proxy augmented with Step 12 notify methods
-export { toast, notify };
-export default Object.assign(toast, notify);
+// Function proxy so toast(...) works as callable AND toast.error / toast.success use notify without mutating sonnerToast in place
+const toastProxy = new Proxy(sonnerToast, {
+  apply(target, thisArg, argArray) {
+    return Reflect.apply(target, thisArg, argArray);
+  },
+  get(target, prop, receiver) {
+    if (Object.prototype.hasOwnProperty.call(notify, prop)) {
+      return notify[prop];
+    }
+    return Reflect.get(target, prop, receiver);
+  },
+});
+
+export { toastProxy as toast, notify };
+export default toastProxy;

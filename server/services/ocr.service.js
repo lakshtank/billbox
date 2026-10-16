@@ -142,6 +142,9 @@ const handleImageOCR = async (filePathOrBuffer) => {
     const initWorkerPromise = createWorker('eng', 1, {
       langPath: hasLocalModel ? localDir : undefined,
       cachePath: hasLocalModel ? localDir : os.tmpdir(),
+      errorHandler: (err) => {
+        console.warn('[OCR Pipeline] Tesseract worker handled error:', err?.message || err);
+      },
     });
 
     // 4.5s timeout watchdog for OCR worker initialization

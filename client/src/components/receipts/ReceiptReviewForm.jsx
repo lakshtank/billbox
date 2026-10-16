@@ -650,9 +650,9 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
                   </Button>
                 </div>
 
-                {/* High-density Table */}
-                <div className="w-full">
-                  <table className="w-full text-left border-collapse table-fixed">
+                {/* High-density Table with touch horizontal scrolling on mobile */}
+                <div className="w-full overflow-x-auto no-scrollbar touch-pan-x overscroll-x-contain pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
+                  <table className="w-full text-left border-collapse table-fixed min-w-[540px]">
                     <thead>
                       <tr className="border-b border-line-subtle text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
                         <th className="py-2 px-1 w-6 text-center">#</th>

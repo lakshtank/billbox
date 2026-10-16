@@ -33,6 +33,14 @@ if (typeof global.DOMMatrix === 'undefined') {
   global.DOMMatrix = globalThis.DOMMatrix;
 }
 
+process.on('uncaughtException', (err) => {
+  console.error('[Process] Uncaught Exception:', err?.message || err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Process] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
