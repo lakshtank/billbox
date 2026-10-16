@@ -179,10 +179,24 @@ body {
     opacity: 0;
   }
 }
+/* Step 13.5 Input & Control Error Shake */
+@keyframes shake {
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+.shake {
+  animation: shake 240ms var(--ease-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .shake {
     animation: none !important;
   }
 }

@@ -2,13 +2,20 @@ import * as React from "react";
 import { cn } from "cn";
 import { Switch as SwitchPrimitive } from "radix-ui";
 
-function Switch({ className, ...props }) {
+function Switch({ className, shake = false, onAnimationEnd, ...props }) {
   return (
-    <div className="inline-flex items-center justify-center p-0.5 cursor-pointer min-h-[24px] min-w-[24px]">
+    <div
+      className={cn(
+        "inline-flex items-center justify-center p-0.5 cursor-pointer min-h-[24px] min-w-[24px]",
+        shake && "shake"
+      )}
+      onAnimationEnd={onAnimationEnd}
+    >
       <SwitchPrimitive.Root
         data-slot="switch"
         className={cn(
-          "peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-transparent transition-colors duration-fast outline-none cursor-pointer",
+          "peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-transparent outline-none cursor-pointer",
+          "transition-colors duration-[120ms] ease-out",
           "bg-line-strong",
           "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -20,7 +27,8 @@ function Switch({ className, ...props }) {
         <SwitchPrimitive.Thumb
           data-slot="switch-thumb"
           className={cn(
-            "pointer-events-none block size-4 rounded-full bg-white shadow-xs transition-transform duration-fast",
+            "pointer-events-none block size-4 rounded-full bg-white shadow-xs",
+            "transition-transform duration-[180ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
             "data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0.5"
           )}
         />

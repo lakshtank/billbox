@@ -17,6 +17,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '../components/common/EmptyState';
 import { StatusBadge } from '../components/data/StatusBadge';
 import { ConfirmModal } from '../components/common/ConfirmModal';
+import * as m from 'motion/react-m';
+import NumberFlow from '@number-flow/react';
+import { useMotionTier } from '@/hooks/useMotionTier';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -32,6 +35,220 @@ import {
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { DEFAULT_CATEGORIES } from '../constants/category.constants';
 
+function ProductWarrantyTimeline({
+  productId,
+  timelineMetrics,
+  className = '',
+}) {
+  const tier = useMotionTier();
+
+  // "once per visit" guard using sessionStorage
+  const [hasPlayed, setHasPlayed] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return Boolean(sessionStorage.getItem(`billbox_timeline_${productId}`));
+    } catch {
+      return false;
+    }
+  });
+
+  const shouldAnimate = tier !== 'none' && !hasPlayed;
+
+  React.useEffect(() => {
+    if (shouldAnimate && productId) {
+      try {
+        sessionStorage.setItem(`billbox_timeline_${productId}`, '1');
+      } catch {
+        // storage disabled or quota exceeded
+      }
+      setHasPlayed(true);
+    }
+  }, [shouldAnimate, productId]);
+
+  const {
+    daysLeft,
+    daysText,
+    statusKey,
+    elapsedPercent = 0,
+    textColor = 'text-ok-fg',
+    purchaseFormatted,
+    expiryFormatted,
+  } = timelineMetrics;
+
+  const markerColor = useMemo(() => {
+    if (statusKey === 'expired') return 'border-bad text-bad-fg';
+    if (statusKey === 'expiring') return 'border-warn text-warn-fg';
+    return 'border-accent text-accent';
+  }, [statusKey]);
+
+  const dotBg = useMemo(() => {
+    if (statusKey === 'expired') return 'bg-bad';
+    if (statusKey === 'expiring') return 'bg-warn';
+    return 'bg-accent';
+  }, [statusKey]);
+
+  const targetDays = daysLeft != null ? Math.abs(daysLeft) : 0;
+  const initialRoll = shouldAnimate && targetDays > 0 ? Math.ceil(targetDays * 1.25) + 3 : targetDays;
+  const [animatedDays, setAnimatedDays] = useState(initialRoll);
+
+  React.useEffect(() => {
+    if (shouldAnimate) {
+      const raf = requestAnimationFrame(() => setAnimatedDays(targetDays));
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setAnimatedDays(targetDays);
+    }
+  }, [shouldAnimate, targetDays]);
+
+  const clampedElapsed = Math.min(100, Math.max(0, elapsedPercent));
+
+  return (
+    <div className={`p-5 rounded-[12px] bg-surface border border-line space-y-4 shadow-2xs font-sans select-none ${className}`}>
+      {/* Header: Days Left and Elapsed Percentage */}
+      <div className="flex items-baseline justify-between gap-4">
+        <div>
+          <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
+            Warranty status
+          </span>
+          <div className={`text-3xl font-bold font-mono tnum tracking-tight mt-0.5 ${textColor}`}>
+            {tier === 'none' || daysLeft == null ? (
+              daysText
+            ) : daysLeft < 0 ? (
+              <span className="inline-flex items-center gap-1">
+                <span>Expired</span>
+                <NumberFlow
+                  value={animatedDays}
+                  transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                  spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                />
+                <span>days ago</span>
+              </span>
+            ) : daysLeft === 0 ? (
+              <span>Expires today</span>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <NumberFlow
+                  value={animatedDays}
+                  transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                  spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                />
+                <span>{daysLeft === 1 ? 'day left' : 'days left'}</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="text-right">
+          <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
+            Coverage elapsed
+          </span>
+          <span className="font-mono text-sm font-semibold text-fg tnum">
+            {tier !== 'none' ? (
+              <NumberFlow
+                value={clampedElapsed}
+                suffix="%"
+                transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+              />
+            ) : (
+              `${clampedElapsed}%`
+            )}
+          </span>
+        </div>
+      </div>
+
+      {/* Interactive Timeline Bar */}
+      <div className="space-y-2 pt-3">
+        <div className="relative w-full h-8 flex items-center">
+          {/* Base track line */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-subtle" />
+
+          {/* SVG line draws left -> right with pathLength */}
+          <svg
+            className="absolute inset-0 w-full h-full overflow-visible pointer-events-none"
+            viewBox="0 0 100 32"
+            preserveAspectRatio="none"
+          >
+            <m.line
+              x1="0"
+              y1="16"
+              x2={clampedElapsed}
+              y2="16"
+              stroke="currentColor"
+              className={
+                statusKey === 'expired'
+                  ? 'text-bad'
+                  : statusKey === 'expiring'
+                  ? 'text-warn'
+                  : 'text-accent'
+              }
+              strokeWidth="6"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              initial={shouldAnimate ? { pathLength: 0 } : { pathLength: 1 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            />
+          </svg>
+
+          {/* Start Point (Purchased) */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 size-3 rounded-full bg-surface border-2 border-accent" />
+
+          {/* Today Marker (drops in from top with spring) */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-10"
+            style={{ left: `${clampedElapsed}%` }}
+          >
+            <m.div
+              className="flex flex-col items-center"
+              initial={shouldAnimate ? { y: -24, opacity: 0 } : { y: 0, opacity: 1 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{
+                delay: shouldAnimate ? 0.25 : 0,
+                type: 'spring',
+                stiffness: 420,
+                damping: 28,
+              }}
+            >
+              <div
+                className={`size-4 rounded-full bg-surface border-2 ${markerColor} shadow-xs flex items-center justify-center ring-2 ring-surface`}
+              >
+                <div className={`size-1.5 rounded-full ${dotBg}`} />
+              </div>
+              <m.span
+                initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: shouldAnimate ? 0.35 : 0, duration: 0.18 }}
+                className="absolute -top-5 text-[10px] font-semibold text-fg bg-surface/90 border border-line-subtle px-1.5 py-0.2 rounded-full shadow-2xs whitespace-nowrap"
+              >
+                Today
+              </m.span>
+            </m.div>
+          </div>
+
+          {/* End Point (Expires) */}
+          <div
+            className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 size-3 rounded-full bg-surface border-2 ${
+              clampedElapsed >= 100 ? markerColor : 'border-line-strong'
+            }`}
+          />
+        </div>
+
+        {/* Milestone Labels with 140ms fade-in */}
+        <m.div
+          initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.14, delay: shouldAnimate ? 0.25 : 0 }}
+          className="flex items-center justify-between text-[11px] font-mono text-fg-3 pt-1"
+        >
+          <span>Purchased: {purchaseFormatted}</span>
+          <span>Expires: {expiryFormatted}</span>
+        </m.div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,8 +259,16 @@ export function ProductDetail() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reminderChecked, setReminderChecked] = useState(false);
+  const [reminderShaking, setReminderShaking] = useState(false);
 
   const product = data?.product || data;
+
+  React.useEffect(() => {
+    if (product) {
+      setReminderChecked(Boolean(product.reminderEnabled));
+    }
+  }, [product]);
 
   const [editForm, setEditForm] = useState({
     productName: '',
@@ -137,18 +362,17 @@ export function ProductDetail() {
     );
   };
 
-  const handleToggleReminder = (enabled) => {
-    updateMutation.mutate(
-      { id, updates: { reminderEnabled: enabled } },
-      {
-        onSuccess: () => {
-          toast.success(`Warranty reminders ${enabled ? 'enabled' : 'disabled'}.`);
-        },
-        onError: () => {
-          toast.error('Failed to update reminder.');
-        },
-      }
-    );
+  const handleToggleReminder = async (enabled) => {
+    const previous = reminderChecked;
+    setReminderChecked(enabled);
+    try {
+      await updateMutation.mutateAsync({ id, updates: { reminderEnabled: enabled } });
+      toast.success(`Warranty reminders ${enabled ? 'enabled' : 'disabled'}.`);
+    } catch {
+      setReminderChecked(previous);
+      setReminderShaking(true);
+      toast.error('Failed to update reminder.');
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -354,44 +578,10 @@ export function ProductDetail() {
 
       {/* 2. Warranty Timeline Banner */}
       {timelineMetrics?.hasWarranty && (
-        <div className="p-5 rounded-[12px] bg-surface border border-line space-y-4 shadow-2xs">
-          <div className="flex items-baseline justify-between gap-4">
-            <div>
-              <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
-                Warranty status
-              </span>
-              <div
-                className={`text-3xl font-bold font-mono tnum tracking-tight mt-0.5 ${timelineMetrics.textColor}`}
-              >
-                {timelineMetrics.daysText}
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
-                Coverage elapsed
-              </span>
-              <span className="font-mono text-sm font-semibold text-fg tnum">
-                {timelineMetrics.elapsedPercent}%
-              </span>
-            </div>
-          </div>
-
-          {/* Timeline Bar & Nodes */}
-          <div className="space-y-2 pt-2">
-            <div className="relative w-full h-2 rounded-full bg-subtle overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${timelineMetrics.timelineColor}`}
-                style={{ width: `${timelineMetrics.elapsedPercent}%` }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] font-mono text-fg-3 pt-1">
-              <span>Purchased: {timelineMetrics.purchaseFormatted}</span>
-              <span className="font-sans font-medium text-fg-2">Today</span>
-              <span>Expires: {timelineMetrics.expiryFormatted}</span>
-            </div>
-          </div>
-        </div>
+        <ProductWarrantyTimeline
+          productId={id}
+          timelineMetrics={timelineMetrics}
+        />
       )}
 
       {/* 3. Detail Cards Grid */}
@@ -494,7 +684,9 @@ export function ProductDetail() {
               <span className="text-[11px] text-fg-3 block">Notify before coverage ends</span>
             </div>
             <Switch
-              checked={Boolean(product.reminderEnabled)}
+              checked={reminderChecked}
+              shake={reminderShaking}
+              onAnimationEnd={() => setReminderShaking(false)}
               onCheckedChange={handleToggleReminder}
               aria-label="Toggle warranty reminder"
             />

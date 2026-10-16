@@ -9,3 +9,4 @@ export { SpendingChart } from './SpendingChart';
 export { Timeline } from './Timeline';
 export { DocumentViewer } from './DocumentViewer';
 export { ErrorState } from './ErrorState';
+export { ProductWarrantyTimeline } from './ProductWarrantyTimeline';

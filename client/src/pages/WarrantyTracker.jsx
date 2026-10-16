@@ -30,8 +30,10 @@ import { PageHeader } from '../components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import * as m from 'motion/react-m';
-import { LayoutGroup, AnimatePresence } from 'motion/react';
-import { variants } from '@/lib/motion';
+import { LayoutGroup, AnimatePresence, useInView } from 'motion/react';
+import NumberFlow from '@number-flow/react';
+import { useMotionTier } from '@/hooks/useMotionTier';
+import { spring, variants } from '@/lib/motion';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,8 +139,140 @@ const calculateWarrantyMetrics = (product) => {
   };
 };
 
+function DaysLeftCell({ metrics }) {
+  const tier = useMotionTier();
+  const { daysLeft, status, statusColor, daysText } = metrics;
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '60px' });
+
+  const targetDays = daysLeft != null ? Math.abs(daysLeft) : null;
+  const initialRoll =
+    targetDays != null && targetDays > 0
+      ? Math.ceil(targetDays * 1.25) + 3
+      : targetDays;
+  const [animatedDays, setAnimatedDays] = useState(
+    tier === 'none' ? targetDays : initialRoll
+  );
+
+  React.useEffect(() => {
+    if (tier === 'none' || targetDays == null) {
+      setAnimatedDays(targetDays);
+      return;
+    }
+    if (isInView) {
+      setAnimatedDays(targetDays);
+    }
+  }, [isInView, targetDays, tier]);
+
+  if (status === 'none' || daysLeft == null) {
+    return <span className="font-mono text-xs text-fg-3">—</span>;
+  }
+
+  if (tier === 'none') {
+    return (
+      <span className={`font-mono font-bold text-xs tnum ${statusColor}`}>
+        {daysText}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      ref={ref}
+      className={`inline-flex items-center gap-0.5 font-mono font-bold text-xs tnum ${statusColor}`}
+      aria-label={daysText}
+    >
+      {daysLeft < 0 ? (
+        <>
+          <span>Expired </span>
+          <NumberFlow
+            value={animatedDays ?? targetDays}
+            transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+            spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+          />
+          <span>d ago</span>
+        </>
+      ) : daysLeft === 0 ? (
+        <span>Expires today</span>
+      ) : (
+        <>
+          <NumberFlow
+            value={animatedDays ?? targetDays}
+            transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+            spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+          />
+          <span>d left</span>
+        </>
+      )}
+    </span>
+  );
+}
+
+function WarrantyCoverBar({ metrics }) {
+  const tier = useMotionTier();
+  if (metrics.status === 'none') {
+    return <span className="text-xs text-fg-3">—</span>;
+  }
+
+  const fraction = Math.min(1, Math.max(0, metrics.elapsedPercent / 100));
+  const barColor = metrics.isExpired
+    ? 'bg-bad'
+    : metrics.isExpiringSoon
+    ? 'bg-warn'
+    : 'bg-accent';
+
+  return (
+    <div className="space-y-1">
+      <div className="w-24 h-1 rounded-full bg-subtle overflow-hidden">
+        <m.div
+          className={`h-full rounded-full ${barColor}`}
+          style={{ transformOrigin: 'left', width: '100%', willChange: 'transform' }}
+          initial={tier !== 'none' ? { scaleX: 0 } : { scaleX: fraction }}
+          whileInView={tier !== 'none' ? { scaleX: fraction } : undefined}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        />
+      </div>
+      <span className="text-[10px] text-fg-3 font-mono tnum block">
+        {metrics.elapsedPercent}% elapsed
+      </span>
+    </div>
+  );
+}
+
+function WarrantyRowReminderSwitch({ product, onToggle }) {
+  const [checked, setChecked] = useState(Boolean(product.reminderEnabled));
+  const [shaking, setShaking] = useState(false);
+
+  React.useEffect(() => {
+    setChecked(Boolean(product.reminderEnabled));
+  }, [product.reminderEnabled]);
+
+  const handleChange = async (next) => {
+    const previous = checked;
+    setChecked(next);
+    try {
+      await onToggle(product._id, next);
+    } catch {
+      setChecked(previous);
+      setShaking(true);
+    }
+  };
+
+  return (
+    <Switch
+      checked={checked}
+      shake={shaking}
+      onAnimationEnd={() => setShaking(false)}
+      onCheckedChange={handleChange}
+      aria-label={`Toggle reminder for ${product.productName}`}
+    />
+  );
+}
+
 export function WarrantyTracker() {
   const navigate = useNavigate();
+  const tier = useMotionTier();
   const [activeTab, setActiveTab] = useState('expiring_soon');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -221,20 +355,17 @@ export function WarrantyTracker() {
     );
   };
 
-  // Toggle reminder for individual product
-  const handleToggleReminder = (productId, enabled, e) => {
-    if (e) e.stopPropagation();
-    updateProductMutation.mutate(
-      { id: productId, updates: { reminderEnabled: enabled } },
-      {
-        onSuccess: () => {
-          toast.success(`Warranty reminder ${enabled ? 'enabled' : 'disabled'}.`);
-        },
-        onError: () => {
-          toast.error('Failed to update reminder status.');
-        },
-      }
-    );
+  // Toggle reminder for individual product with promise return
+  const handleToggleReminder = (productId, enabled) => {
+    return updateProductMutation
+      .mutateAsync({ id: productId, updates: { reminderEnabled: enabled } })
+      .then(() => {
+        toast.success(`Warranty reminder ${enabled ? 'enabled' : 'disabled'}.`);
+      })
+      .catch((err) => {
+        toast.error('Failed to update reminder status.');
+        throw err;
+      });
   };
 
   // Row selection handlers
@@ -316,7 +447,9 @@ export function WarrantyTracker() {
           >
             <ShieldCheck className="size-3.5 text-ok-fg" />
             <span>Covered</span>
-            <span className="font-mono font-semibold tnum">({counts.active})</span>
+            <span className="font-mono font-semibold tnum">
+              ({tier !== 'none' ? <NumberFlow value={counts.active} /> : counts.active})
+            </span>
           </button>
 
           <button
@@ -330,7 +463,9 @@ export function WarrantyTracker() {
           >
             <Clock className="size-3.5 text-warn-fg" />
             <span>Expiring</span>
-            <span className="font-mono font-semibold tnum">({counts.expiring_soon})</span>
+            <span className="font-mono font-semibold tnum">
+              ({tier !== 'none' ? <NumberFlow value={counts.expiring_soon} /> : counts.expiring_soon})
+            </span>
           </button>
 
           <button
@@ -344,7 +479,9 @@ export function WarrantyTracker() {
           >
             <AlertTriangle className="size-3.5 text-bad-fg" />
             <span>Expired</span>
-            <span className="font-mono font-semibold tnum">({counts.expired})</span>
+            <span className="font-mono font-semibold tnum">
+              ({tier !== 'none' ? <NumberFlow value={counts.expired} /> : counts.expired})
+            </span>
           </button>
 
           <button
@@ -358,15 +495,17 @@ export function WarrantyTracker() {
           >
             <FileText className="size-3.5 text-fg-3" />
             <span>No cover</span>
-            <span className="font-mono font-semibold tnum">({counts.none})</span>
+            <span className="font-mono font-semibold tnum">
+              ({tier !== 'none' ? <NumberFlow value={counts.none} /> : counts.none})
+            </span>
           </button>
         </div>
       </div>
 
       {/* 2. Filter Bar & Quick Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
-        {/* Segmented Quick Tabs */}
-        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar">
+        {/* Segmented Quick Tabs with layoutId gliding active indicator */}
+        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar relative">
           {STATUS_TABS.map((tab) => {
             const isSelected = activeTab === tab.id;
             const tabCount = counts[tab.id] ?? counts.all;
@@ -377,16 +516,33 @@ export function WarrantyTracker() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] font-medium transition-colors cursor-pointer whitespace-nowrap z-10 ${
                   isSelected
-                    ? 'bg-surface text-fg font-semibold shadow-xs border border-line-subtle'
+                    ? 'text-fg font-semibold'
                     : 'text-fg-3 hover:text-fg'
                 }`}
               >
+                {isSelected && (
+                  <m.div
+                    layoutId="warranty-tab"
+                    className="absolute inset-0 bg-surface rounded-[7px] border border-line-subtle shadow-xs z-[-1]"
+                    transition={spring.snappy}
+                  >
+                    <div className="absolute bottom-0 inset-x-2.5 h-[2px] bg-accent rounded-full" />
+                  </m.div>
+                )}
                 <Icon className={`size-3.5 ${isSelected ? 'text-accent' : 'text-fg-3'}`} />
                 <span>{tab.label}</span>
                 <span className="font-mono text-[11px] tnum px-1.5 py-0.2 rounded-full bg-subtle/80 text-fg-3">
-                  {tabCount}
+                  {tier !== 'none' ? (
+                    <NumberFlow
+                      value={tabCount}
+                      transformTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                      spinTiming={{ duration: 300, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
+                    />
+                  ) : (
+                    tabCount
+                  )}
                 </span>
               </button>
             );
@@ -535,217 +691,203 @@ export function WarrantyTracker() {
         )}
       </AnimatePresence>
 
-      {/* 4. Warranties Table */}
-      {filteredProducts.length === 0 ? (
-        <div className="p-8 rounded-[12px] border border-line bg-surface">
-          <EmptyState
-            title="No warranties found"
-            description={
-              searchTerm || selectedCategory !== 'All'
-                ? 'Try clearing your filters or search keywords.'
-                : 'No registered products match this warranty lifecycle stage.'
-            }
-            actionLabel="Add receipt"
-            onAction={() => navigate('/receipts/new')}
-          />
-        </div>
-      ) : (
-        <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
-          <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-            <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
-              <thead>
-                <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                  <th className="py-2.5 px-3 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      checked={
-                        filteredProducts.length > 0 &&
-                        selectedIds.size === filteredProducts.length
-                      }
-                      onChange={handleToggleSelectAll}
-                      className="rounded border-line size-3.5 cursor-pointer accent-accent"
-                    />
-                  </th>
-                  <th className="py-2.5 px-3 w-[260px]">Product</th>
-                  <th className="py-2.5 px-3 w-[150px]">Merchant</th>
-                  <th className="py-2.5 px-3 w-[110px]">Purchased</th>
-                  <th className="py-2.5 px-3 w-[110px]">Expires</th>
-                  <th className="py-2.5 px-3 w-[120px]">Days left</th>
-                  <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
-                  <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
-                  <th className="py-2.5 px-2 w-[40px] text-center"></th>
-                </tr>
-              </thead>
-              <m.tbody
-                variants={variants.stagger(0.015)}
-                initial={shouldStagger ? 'hidden' : false}
-                animate="show"
-                className="divide-y divide-line-subtle"
-              >
-                <LayoutGroup id="billbox-warranty-rows">
-                  {filteredProducts.map((product, index) => {
-                      if (!product) return null;
-                      const { metrics } = product;
-                      const isChecked = selectedIds.has(product._id);
-                      const isStaggered = index < 12;
-                      const enableLayout = filteredProducts.length <= 50;
-                      const receipt =
-                        product.receiptId && typeof product.receiptId === 'object'
-                          ? product.receiptId
-                          : null;
-                      const merchantName = receipt?.storeName || 'Merchant';
-                      const purchaseDate =
-                        product.purchaseDate || receipt?.purchaseDate;
-                      const receiptId =
-                        receipt?._id ||
-                        (typeof product.receiptId === 'string' ? product.receiptId : null);
+      {/* 4. Warranties Table with 140ms list crossfade on activeTab */}
+      <AnimatePresence mode="wait">
+        <m.div
+          key={activeTab}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.14, ease: [0.2, 0, 0, 1] }}
+          className="w-full"
+        >
+          {filteredProducts.length === 0 ? (
+            <div className="p-8 rounded-[12px] border border-line bg-surface">
+              <EmptyState
+                title="No warranties found"
+                description={
+                  searchTerm || selectedCategories.length > 0
+                    ? 'Try clearing your filters or search keywords.'
+                    : 'No registered products match this warranty lifecycle stage.'
+                }
+                actionLabel="Add receipt"
+                onAction={() => navigate('/receipts/new')}
+              />
+            </div>
+          ) : (
+            <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+              <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+                <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+                  <thead>
+                    <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                      <th className="py-2.5 px-3 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            filteredProducts.length > 0 &&
+                            selectedIds.size === filteredProducts.length
+                          }
+                          onChange={handleToggleSelectAll}
+                          className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                        />
+                      </th>
+                      <th className="py-2.5 px-3 w-[260px]">Product</th>
+                      <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                      <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                      <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                      <th className="py-2.5 px-3 w-[120px]">Days left</th>
+                      <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
+                      <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
+                      <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                    </tr>
+                  </thead>
+                  <m.tbody
+                    variants={variants.stagger(0.015)}
+                    initial={shouldStagger ? 'hidden' : false}
+                    animate="show"
+                    className="divide-y divide-line-subtle"
+                  >
+                    <LayoutGroup id="billbox-warranty-rows">
+                      {filteredProducts.map((product, index) => {
+                          if (!product) return null;
+                          const { metrics } = product;
+                          const isChecked = selectedIds.has(product._id);
+                          const isStaggered = index < 12;
+                          const enableLayout = filteredProducts.length <= 50;
+                          const receipt =
+                            product.receiptId && typeof product.receiptId === 'object'
+                              ? product.receiptId
+                              : null;
+                          const merchantName = receipt?.storeName || 'Merchant';
+                          const purchaseDate =
+                            product.purchaseDate || receipt?.purchaseDate;
+                          const receiptId =
+                            receipt?._id ||
+                            (typeof product.receiptId === 'string' ? product.receiptId : null);
 
-                      return (
-                        <m.tr
-                          key={product._id}
-                          layout={enableLayout ? 'position' : false}
-                          transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                          variants={shouldStagger && isStaggered ? variants.fade : undefined}
-                          onClick={() => navigate(`/products/${product._id}`)}
-                          className={`hover:bg-subtle/40 transition-colors cursor-pointer group ${metrics.railClass}`}
-                        >
-                          {/* Checkbox */}
-                          <td
-                            className="py-3 px-3 text-center align-middle"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={(e) => handleToggleSelectRow(product._id, e)}
-                              className="rounded border-line size-3.5 cursor-pointer accent-accent"
-                            />
-                          </td>
+                          return (
+                            <m.tr
+                              key={product._id}
+                              layout={enableLayout ? 'position' : false}
+                              transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                              variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                              onClick={() => navigate(`/products/${product._id}`)}
+                              className={`hover:bg-subtle/40 transition-colors cursor-pointer group ${metrics.railClass}`}
+                            >
+                              {/* Checkbox */}
+                              <td
+                                className="py-3 px-3 text-center align-middle"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => handleToggleSelectRow(product._id, e)}
+                                  className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                                />
+                              </td>
 
-                          {/* Product Name + Brand */}
-                          <td className="py-3 px-3 align-middle">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <div className="size-8 rounded-[8px] bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-3 group-hover:text-accent group-hover:border-accent-line transition-colors">
-                                <Package className="size-4" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-semibold text-fg group-hover:text-accent transition-colors truncate">
-                                  {product.productName}
+                              {/* Product Name + Brand */}
+                              <td className="py-3 px-3 align-middle">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="size-8 rounded-[8px] bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-3 group-hover:text-accent group-hover:border-accent-line transition-colors">
+                                    <Package className="size-4" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="font-semibold text-fg group-hover:text-accent transition-colors truncate">
+                                      {product.productName}
+                                    </div>
+                                    <div className="text-[11px] text-fg-3 truncate">
+                                      {product.brand ? product.brand : product.category || 'General'}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-[11px] text-fg-3 truncate">
-                                  {product.brand ? product.brand : product.category || 'General'}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
+                              </td>
 
-                          {/* Merchant */}
-                          <td className="py-3 px-3 text-fg-2 truncate align-middle">
-                            {merchantName}
-                          </td>
+                              {/* Merchant */}
+                              <td className="py-3 px-3 text-fg-2 truncate align-middle">
+                                {merchantName}
+                              </td>
 
-                          {/* Purchased */}
-                          <td className="py-3 px-3 text-fg-3 font-mono tnum align-middle">
-                            {purchaseDate ? formatDate(purchaseDate) : '—'}
-                          </td>
+                              {/* Purchased */}
+                              <td className="py-3 px-3 text-fg-3 font-mono tnum align-middle">
+                                {purchaseDate ? formatDate(purchaseDate) : '—'}
+                              </td>
 
-                          {/* Expires */}
-                          <td className="py-3 px-3 text-fg-2 font-mono tnum align-middle">
-                            {product.warrantyExpiryDate
-                              ? formatDate(product.warrantyExpiryDate)
-                              : '—'}
-                          </td>
+                              {/* Expires */}
+                              <td className="py-3 px-3 text-fg-2 font-mono tnum align-middle">
+                                {product.warrantyExpiryDate
+                                  ? formatDate(product.warrantyExpiryDate)
+                                  : '—'}
+                              </td>
 
-                          {/* Days Left (tnum, bold, status-coloured) */}
-                          <td className="py-3 px-3 align-middle">
-                            <span className={`font-mono font-bold text-xs tnum ${metrics.statusColor}`}>
-                              {metrics.daysText}
-                            </span>
-                          </td>
+                              {/* Days Left (NumberFlow countdown from rounded-up start) */}
+                              <td className="py-3 px-3 align-middle">
+                                <DaysLeftCell metrics={metrics} />
+                              </td>
 
-                          {/* Coverage Progress Bar (4px tall, width 96px, elapsed %) */}
-                          <td className="py-3 px-3 align-middle">
-                            {metrics.status !== 'none' ? (
-                              <div className="space-y-1">
-                                <div className="w-24 h-1 rounded-full bg-subtle overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full transition-all duration-300 ${
-                                      metrics.isExpired
-                                        ? 'bg-bad'
-                                        : metrics.isExpiringSoon
-                                        ? 'bg-warn'
-                                        : 'bg-accent'
-                                    }`}
-                                    style={{ width: `${metrics.elapsedPercent}%` }}
-                                  />
-                                </div>
-                                <span className="text-[10px] text-fg-3 font-mono tnum block">
-                                  {metrics.elapsedPercent}% elapsed
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-fg-3">—</span>
-                            )}
-                          </td>
+                              {/* Coverage Progress Bar (scaleX from 0 to fraction, 500ms ease.emph, whileInView once) */}
+                              <td className="py-3 px-3 align-middle">
+                                <WarrantyCoverBar metrics={metrics} />
+                              </td>
 
-                          {/* Reminder Switch */}
-                          <td
-                            className="py-3 px-3 text-center align-middle"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Switch
-                              checked={Boolean(product.reminderEnabled)}
-                              onCheckedChange={(checked) =>
-                                handleToggleReminder(product._id, checked)
-                              }
-                              aria-label={`Toggle reminder for ${product.productName}`}
-                            />
-                          </td>
+                              {/* Reminder Switch (optimistic with rollback shake) */}
+                              <td
+                                className="py-3 px-3 text-center align-middle"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <WarrantyRowReminderSwitch
+                                  product={product}
+                                  onToggle={handleToggleReminder}
+                                />
+                              </td>
 
-                          {/* Action Menu */}
-                          <td
-                            className="py-3 px-2 text-center align-middle"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="size-7 p-0 text-fg-3 hover:text-fg cursor-pointer"
-                                >
-                                  <MoreHorizontal className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="text-xs">
-                                <DropdownMenuItem
-                                  onClick={() => navigate(`/products/${product._id}`)}
-                                  className="cursor-pointer"
-                                >
-                                  View product details
-                                </DropdownMenuItem>
-                                {receiptId && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      navigate(`/receipts/${receiptId}`)
-                                    }
-                                    className="cursor-pointer"
-                                  >
-                                    View source receipt
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </m.tr>
-                      );
-                    })}
-                </LayoutGroup>
-              </m.tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                              {/* Action Menu */}
+                              <td
+                                className="py-3 px-2 text-center align-middle"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="size-7 p-0 text-fg-3 hover:text-fg cursor-pointer"
+                                    >
+                                      <MoreHorizontal className="size-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="text-xs">
+                                    <DropdownMenuItem
+                                      onClick={() => navigate(`/products/${product._id}`)}
+                                      className="cursor-pointer"
+                                    >
+                                      View product details
+                                    </DropdownMenuItem>
+                                    {receiptId && (
+                                      <DropdownMenuItem
+                                        onClick={() =>
+                                          navigate(`/receipts/${receiptId}`)
+                                        }
+                                        className="cursor-pointer"
+                                      >
+                                        View source receipt
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </m.tr>
+                          );
+                        })}
+                    </LayoutGroup>
+                  </m.tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </m.div>
+      </AnimatePresence>
     </PageContentTransition>
   );
 }
