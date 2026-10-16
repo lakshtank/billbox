@@ -33,14 +33,8 @@ import { variants, spring } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/ui/responsive-modal';
+import { DialogFooter } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -756,139 +750,137 @@ export function Products() {
       )}
 
       {/* 5. Add Product Modal */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent size="md" className="p-6">
-          <DialogHeader>
-            <DialogTitle>Add product</DialogTitle>
-            <DialogDescription>
-              Register merchandise directly to track coverage and purchase history.
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title="Add product"
+        description="Register merchandise directly to track coverage and purchase history."
+        size="md"
+        className="p-6"
+      >
+        <form onSubmit={handleCreateProduct} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="add-prod-name" className="text-xs">
+              Product name *
+            </Label>
+            <Input
+              id="add-prod-name"
+              value={newProduct.productName}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, productName: e.target.value })
+              }
+              placeholder="e.g. MacBook Pro 16, Sony WH-1000XM5"
+              required
+            />
+          </div>
 
-          <form onSubmit={handleCreateProduct} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="add-prod-name" className="text-xs">
-                Product name *
+              <Label htmlFor="add-prod-brand" className="text-xs">
+                Brand (optional)
               </Label>
               <Input
-                id="add-prod-name"
-                value={newProduct.productName}
+                id="add-prod-brand"
+                value={newProduct.brand}
                 onChange={(e) =>
-                  setNewProduct({ ...newProduct, productName: e.target.value })
+                  setNewProduct({ ...newProduct, brand: e.target.value })
                 }
-                placeholder="e.g. MacBook Pro 16, Sony WH-1000XM5"
-                required
+                placeholder="e.g. Apple, Sony"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="add-prod-brand" className="text-xs">
-                  Brand (optional)
-                </Label>
-                <Input
-                  id="add-prod-brand"
-                  value={newProduct.brand}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, brand: e.target.value })
-                  }
-                  placeholder="e.g. Apple, Sony"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="add-prod-cat" className="text-xs">
-                  Category
-                </Label>
-                <select
-                  id="add-prod-cat"
-                  value={newProduct.category}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, category: e.target.value })
-                  }
-                  className="w-full text-xs h-9 px-2.5 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent"
-                >
-                  {categoryOptions.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="add-prod-price" className="text-xs">
-                  Purchase price (₹)
-                </Label>
-                <Input
-                  id="add-prod-price"
-                  type="number"
-                  step="0.01"
-                  value={newProduct.unitPrice}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, unitPrice: e.target.value })
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="add-prod-date" className="text-xs">
-                  Purchase date
-                </Label>
-                <Input
-                  id="add-prod-date"
-                  type="date"
-                  value={newProduct.purchaseDate}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, purchaseDate: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
             <div className="space-y-1.5">
-              <Label htmlFor="add-prod-warranty" className="text-xs">
-                Warranty duration (months)
+              <Label htmlFor="add-prod-cat" className="text-xs">
+                Category
+              </Label>
+              <select
+                id="add-prod-cat"
+                value={newProduct.category}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, category: e.target.value })
+                }
+                className="w-full text-xs h-9 px-2.5 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent"
+              >
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-prod-price" className="text-xs">
+                Purchase price (₹)
               </Label>
               <Input
-                id="add-prod-warranty"
+                id="add-prod-price"
                 type="number"
-                min="0"
-                value={newProduct.warrantyPeriodMonths}
+                step="0.01"
+                value={newProduct.unitPrice}
                 onChange={(e) =>
-                  setNewProduct({
-                    ...newProduct,
-                    warrantyPeriodMonths: e.target.value,
-                  })
+                  setNewProduct({ ...newProduct, unitPrice: e.target.value })
                 }
-                placeholder="12"
+                placeholder="0.00"
               />
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsAddModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="default"
-                size="sm"
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? 'Saving...' : 'Add product'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-prod-date" className="text-xs">
+                Purchase date
+              </Label>
+              <Input
+                id="add-prod-date"
+                type="date"
+                value={newProduct.purchaseDate}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, purchaseDate: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="add-prod-warranty" className="text-xs">
+              Warranty duration (months)
+            </Label>
+            <Input
+              id="add-prod-warranty"
+              type="number"
+              min="0"
+              value={newProduct.warrantyPeriodMonths}
+              onChange={(e) =>
+                setNewProduct({
+                  ...newProduct,
+                  warrantyPeriodMonths: e.target.value,
+                })
+              }
+              placeholder="12"
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="default"
+              size="sm"
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Saving...' : 'Add product'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </ResponsiveModal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

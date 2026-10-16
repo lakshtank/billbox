@@ -34,7 +34,7 @@ function DialogOverlay({ className, ...props }) {
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 z-scrim bg-scrim data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 duration-180",
+        "fixed inset-0 z-scrim bg-scrim data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-150",
         className
       )}
       {...props}
@@ -56,8 +56,8 @@ function DialogContent({
         data-slot="dialog-content"
         data-size={size}
         className={cn(
-          "fixed top-[50%] left-[50%] z-modal grid w-full translate-x-[-50%] translate-y-[-50%] gap-6 rounded-[16px] border border-line bg-surface p-6 shadow-[var(--elevation-3)] outline-none duration-180",
-          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "fixed top-[50%] left-[50%] z-modal grid w-full translate-x-[-50%] translate-y-[-50%] gap-6 rounded-[16px] border border-line bg-surface p-6 shadow-[var(--elevation-3)] outline-none duration-200",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-[0.97] data-[state=closed]:zoom-out-[0.98] data-[state=open]:slide-in-from-bottom-2",
           // Default 480, sm 400, lg 640
           (size === "default" || size === "md") && "max-w-[480px]",
           size === "sm" && "max-w-[400px]",

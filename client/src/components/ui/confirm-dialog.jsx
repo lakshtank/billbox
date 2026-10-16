@@ -7,17 +7,22 @@ import {
   DialogDescription,
   DialogFooter,
 } from "./dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+} from "./drawer";
 import { Button } from "./button";
 import { Input } from "./input";
 import { AlertTriangle } from "lucide-react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /**
  * ConfirmDialog component (replaces window.confirm)
- * Step 8.9:
- * - Title states action ("Delete 3 receipts?")
- * - Body states consequence ("Their documents and linked products are removed. This can't be undone.")
- * - Buttons: "Cancel" (secondary left) / "Delete" (danger right)
- * - Optional confirmKeyword for account-level destruction
+ * Responsive modal (Vaul Drawer on mobile, Dialog on desktop)
  */
 function ConfirmDialog({
   open,
@@ -32,6 +37,7 @@ function ConfirmDialog({
   onCancel,
   loading = false,
 }) {
+  const isMobile = useMediaQuery("(max-width: 639px)");
   const [typedKeyword, setTypedKeyword] = React.useState("");
   const isKeywordMatching = !confirmKeyword || typedKeyword.trim().toLowerCase() === confirmKeyword.trim().toLowerCase();
 
@@ -54,6 +60,70 @@ function ConfirmDialog({
     onCancel?.();
   };
 
+  const keywordInput = confirmKeyword && (
+    <div className="flex flex-col gap-2 py-2">
+      <p className="text-xs text-fg-2">
+        Type <strong className="font-mono text-fg select-all bg-subtle px-1 py-0.5 rounded border border-line">{confirmKeyword}</strong> to confirm:
+      </p>
+      <Input
+        type="text"
+        value={typedKeyword}
+        onChange={(e) => setTypedKeyword(e.target.value)}
+        placeholder={confirmKeyword}
+        disabled={loading}
+        autoFocus
+      />
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={open}
+        onOpenChange={onOpenChange}
+        shouldScaleBackground
+      >
+        <DrawerContent className="px-5 pt-2 pb-[calc(20px+env(safe-area-inset-bottom))] gap-3">
+          <DrawerHeader className="gap-2 px-0 pt-1 pb-1">
+            <div className="flex items-center gap-2.5">
+              {variant === "danger" && (
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-bad-bg text-bad-solid">
+                  <AlertTriangle className="size-4.5" />
+                </div>
+              )}
+              <DrawerTitle className="text-base font-semibold">{title}</DrawerTitle>
+            </div>
+            {description && <DrawerDescription className="text-xs text-fg-2">{description}</DrawerDescription>}
+          </DrawerHeader>
+
+          {keywordInput}
+
+          <DrawerFooter className="flex-col gap-2 p-0 pt-3 border-t border-line-subtle">
+            <Button
+              type="button"
+              variant={variant === "danger" ? "danger" : "primary"}
+              onClick={handleConfirm}
+              loading={loading}
+              disabled={!isKeywordMatching || loading}
+              className="w-full"
+            >
+              {confirmText}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+              disabled={loading}
+              className="w-full"
+            >
+              {cancelText}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm" showCloseButton={!loading}>
@@ -69,21 +139,7 @@ function ConfirmDialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
-        {confirmKeyword && (
-          <div className="flex flex-col gap-2 py-2">
-            <p className="text-xs text-fg-2">
-              Type <strong className="font-mono text-fg select-all bg-subtle px-1 py-0.5 rounded border border-line">{confirmKeyword}</strong> to confirm:
-            </p>
-            <Input
-              type="text"
-              value={typedKeyword}
-              onChange={(e) => setTypedKeyword(e.target.value)}
-              placeholder={confirmKeyword}
-              disabled={loading}
-              autoFocus
-            />
-          </div>
-        )}
+        {keywordInput}
 
         <DialogFooter>
           <Button

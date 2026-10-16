@@ -24,14 +24,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { ResponsiveModal } from '@/components/ui/responsive-modal';
+import { DialogFooter } from '@/components/ui/dialog';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { DEFAULT_CATEGORIES } from '../constants/category.constants';
 
@@ -706,14 +700,14 @@ export function ProductDetail() {
       </div>
 
       {/* 4. Edit Product Modal */}
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent size="md" className="p-6">
-          <DialogHeader>
-            <DialogTitle>Edit product</DialogTitle>
-            <DialogDescription>
-              Update product details, purchase date, and warranty coverage period.
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveModal
+        open={isEditing}
+        onOpenChange={setIsEditing}
+        title="Edit product"
+        description="Update product details, purchase date, and warranty coverage period."
+        size="md"
+        className="p-6"
+      >
 
           <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
@@ -844,8 +838,7 @@ export function ProductDetail() {
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+      </ResponsiveModal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal

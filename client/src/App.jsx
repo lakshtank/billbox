@@ -114,7 +114,7 @@ const AppLayout = () => {
 
   return (
     <ScrollContainerContext.Provider value={mainRef}>
-      <div className="fixed inset-0 overflow-hidden flex bg-bg-app font-sans">
+      <div data-vaul-drawer-wrapper className="fixed inset-0 overflow-hidden flex bg-bg-app font-sans">
         {/* Step 10.1 Desktop/Tablet Sidebar (Full Height Left Frame) */}
         {showSidebar && <Sidebar />}
 
