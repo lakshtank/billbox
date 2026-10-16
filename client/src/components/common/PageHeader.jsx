@@ -19,25 +19,25 @@ export function PageHeader({
   ...props
 }) {
   return (
-    <header className={cn('mb-6 font-sans', className)} {...props}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-1 min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-fg truncate">
+    <header className={cn('mb-4 sm:mb-6 font-sans', className)} {...props}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="space-y-0.5 sm:space-y-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold sm:font-semibold tracking-tight text-fg truncate">
             {title}
           </h1>
           {description && (
-            <p className="text-sm text-fg-2 line-clamp-2">
+            <p className="text-xs sm:text-sm text-fg-3 sm:text-fg-2 line-clamp-1 sm:line-clamp-2">
               {description}
             </p>
           )}
         </div>
         {actions && (
-          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start sm:self-auto flex-wrap">
             {actions}
           </div>
         )}
       </div>
-      {tabs && <div className="mt-4">{tabs}</div>}
+      {tabs && <div className="mt-3 sm:mt-4">{tabs}</div>}
     </header>
   );
 }

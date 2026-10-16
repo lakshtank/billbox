@@ -511,13 +511,71 @@ export function Products() {
           />
         </div>
       ) : viewMode === 'table' ? (
-        <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
-          <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-            <LayoutGroup id="billbox-products-rows">
-              <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
-                <thead>
-                  <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                    <th className="py-2.5 px-3 w-[260px]">Product</th>
+        <div className="w-full">
+          {/* Mobile Native App Cards View (<768px) */}
+          <div className="md:hidden space-y-3">
+            {products.map((prod) => {
+              if (!prod) return null;
+              const receipt =
+                prod.receiptId && typeof prod.receiptId === 'object' ? prod.receiptId : null;
+              const merchantName = receipt?.storeName || 'Merchant';
+              const statusKey =
+                prod.warrantyStatus ||
+                (prod.warrantyExpiryDate && new Date(prod.warrantyExpiryDate) > new Date()
+                  ? 'active'
+                  : 'none');
+
+              return (
+                <div
+                  key={`mobile-prod-${prod._id}`}
+                  onClick={() => navigate(`/products/${prod._id}`)}
+                  className="rounded-[12px] border border-line bg-surface p-4 shadow-2xs hover:border-line-strong transition-all cursor-pointer text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="size-10 rounded-[10px] bg-subtle border border-line flex items-center justify-center shrink-0 text-fg-3">
+                        <Package className="size-4 text-accent" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm text-fg truncate">
+                          {prod.productName}
+                        </h3>
+                        <p className="text-xs text-fg-3 truncate">
+                          {prod.brand ? `${prod.brand} • ` : ''}{merchantName}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-bold text-sm text-fg tnum">
+                        {formatCurrency(prod.unitPrice || 0, prod.currency || 'INR')}
+                      </div>
+                      <span className="text-[11px] text-fg-3 capitalize">
+                        {prod.category || 'General'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-line-subtle flex items-center justify-between text-xs text-fg-3">
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={statusKey} />
+                    </div>
+                    <span>
+                      {prod.warrantyExpiryDate ? `Exp: ${formatDate(prod.warrantyExpiryDate)}` : 'No warranty'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (>=768px) */}
+          <div className="hidden md:block w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+            <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+              <LayoutGroup id="billbox-products-rows">
+                <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+                  <thead>
+                    <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                      <th className="py-2.5 px-3 w-[260px]">Product</th>
                     <th className="py-2.5 px-3 w-[120px]">Brand</th>
                     <th className="py-2.5 px-3 w-[120px]">Category</th>
                     <th className="py-2.5 px-3 w-[150px]">Merchant</th>
@@ -654,6 +712,7 @@ export function Products() {
             </LayoutGroup>
           </div>
         </div>
+      </div>
       ) : (
         /* Grid View with Step 6 Stagger & Card Micro-interactions */
         <LayoutGroup id="billbox-products-grid">

@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatDate } from '../utils/formatters';
 import { DEFAULT_CATEGORIES } from '../constants/category.constants';
+import { cn } from '@/lib/utils';
 
 const STATUS_TABS = [
   { id: 'expiring_soon', label: 'Expiring', icon: Clock },
@@ -506,7 +507,7 @@ export function WarrantyTracker() {
       {/* 2. Filter Bar & Quick Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
         {/* Segmented Quick Tabs with layoutId gliding active indicator */}
-        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar relative">
+        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar relative w-full sm:w-auto">
           {STATUS_TABS.map((tab) => {
             const isSelected = activeTab === tab.id;
             const tabCount = counts[tab.id] ?? counts.all;
@@ -717,33 +718,134 @@ export function WarrantyTracker() {
               />
             </div>
           ) : (
-            <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
-              <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
-                <LayoutGroup id="billbox-warranty-rows">
-                  <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
-                    <thead>
-                      <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
-                        <th className="py-2.5 px-3 w-10 text-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              filteredProducts.length > 0 &&
-                              selectedIds.size === filteredProducts.length
-                            }
-                            onChange={handleToggleSelectAll}
-                            className="rounded border-line size-3.5 cursor-pointer accent-accent"
+            <div className="w-full">
+              {/* Mobile Native App Cards View (<768px) */}
+              <div className="md:hidden space-y-3">
+                {filteredProducts.map((product) => {
+                  if (!product) return null;
+                  const { metrics } = product;
+                  const isChecked = selectedIds.has(product._id);
+                  const receipt =
+                    product.receiptId && typeof product.receiptId === 'object'
+                      ? product.receiptId
+                      : null;
+                  const merchantName = receipt?.storeName || 'Merchant';
+
+                  return (
+                    <div
+                      key={`mobile-warranty-${product._id}`}
+                      onClick={() => navigate(`/products/${product._id}`)}
+                      className={cn(
+                        'relative rounded-[12px] border border-line bg-surface p-4 shadow-2xs hover:border-line-strong transition-all cursor-pointer select-none',
+                        metrics.railClass
+                      )}
+                    >
+                      {/* Top: Checkbox + Product Name + Status Badge */}
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleSelectRow(product._id, e);
+                            }}
+                            className="p-1 -ml-1 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => handleToggleSelectRow(product._id, e)}
+                              className="rounded border-line size-4 cursor-pointer accent-accent"
+                            />
+                          </div>
+                          <div className="size-9 rounded-lg bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-3">
+                            <Package className="size-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-sm text-fg truncate">
+                              {product.productName}
+                            </h3>
+                            <p className="text-xs text-fg-3 truncate">
+                              {product.brand ? `${product.brand} • ` : ''}{merchantName}
+                            </p>
+                          </div>
+                        </div>
+                        <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full border shrink-0', metrics.badgeBg)}>
+                          {metrics.badgeLabel}
+                        </span>
+                      </div>
+
+                      {/* Coverage Progress Bar */}
+                      <div className="mt-3.5 pt-2.5 border-t border-line-subtle">
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span className="text-fg-3">Coverage horizon</span>
+                          <span className={cn('font-medium', metrics.statusColor)}>
+                            {metrics.daysText}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-subtle overflow-hidden border border-line-subtle">
+                          <div
+                            className={cn(
+                              'h-full rounded-full transition-all duration-500',
+                              metrics.status === 'expired'
+                                ? 'bg-bad-line'
+                                : metrics.status === 'expiring_soon'
+                                ? 'bg-warn-solid'
+                                : 'bg-ok-line'
+                            )}
+                            style={{ width: `${Math.min(100, Math.max(5, 100 - metrics.elapsedPercent))}%` }}
                           />
-                        </th>
-                        <th className="py-2.5 px-3 w-[260px]">Product</th>
-                        <th className="py-2.5 px-3 w-[150px]">Merchant</th>
-                        <th className="py-2.5 px-3 w-[110px]">Purchased</th>
-                        <th className="py-2.5 px-3 w-[110px]">Expires</th>
-                        <th className="py-2.5 px-3 w-[120px]">Days left</th>
-                        <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
-                        <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
-                        <th className="py-2.5 px-2 w-[40px] text-center"></th>
-                      </tr>
-                    </thead>
+                        </div>
+                      </div>
+
+                      {/* Footer: Expiry Date + Reminder Switch */}
+                      <div className="mt-3 flex items-center justify-between text-xs text-fg-3 pt-2 border-t border-line-subtle">
+                        <span>
+                          {product.warrantyExpiryDate ? `Expires: ${formatDate(product.warrantyExpiryDate)}` : 'No expiry date'}
+                        </span>
+                        <div
+                          className="flex items-center gap-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="text-[11px]">Reminder</span>
+                          <WarrantyRowReminderSwitch
+                            product={product}
+                            onToggle={handleToggleReminder}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table View (>=768px) */}
+              <div className="hidden md:block w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+                <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+                  <LayoutGroup id="billbox-warranty-rows">
+                    <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+                      <thead>
+                        <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                          <th className="py-2.5 px-3 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              checked={
+                                filteredProducts.length > 0 &&
+                                selectedIds.size === filteredProducts.length
+                              }
+                              onChange={handleToggleSelectAll}
+                              className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                            />
+                          </th>
+                          <th className="py-2.5 px-3 w-[260px]">Product</th>
+                          <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                          <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                          <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                          <th className="py-2.5 px-3 w-[120px]">Days left</th>
+                          <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
+                          <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
+                          <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                        </tr>
+                      </thead>
                     <m.tbody
                       variants={variants.stagger(0.015)}
                       initial={shouldStagger ? 'hidden' : false}
@@ -889,6 +991,7 @@ export function WarrantyTracker() {
                 </LayoutGroup>
               </div>
             </div>
+          </div>
           )}
         </m.div>
       </AnimatePresence>

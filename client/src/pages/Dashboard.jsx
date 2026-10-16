@@ -327,14 +327,14 @@ export function Dashboard() {
   ];
 
   const headerActions = (
-    <div className="relative inline-flex items-center p-1 bg-subtle border border-line rounded-[8px] text-xs font-medium">
+    <div className="relative inline-flex items-center p-1 bg-subtle border border-line rounded-[8px] text-xs font-medium w-full sm:w-auto justify-between sm:justify-start">
       {rangeButtons.map((r) => (
         <button
           key={r.id}
           type="button"
           onClick={() => handleRangeChange(r.id)}
           className={cn(
-            'relative px-2.5 py-1 rounded-[6px] transition-colors cursor-pointer font-medium z-1',
+            'relative flex-1 sm:flex-initial px-2.5 py-1.5 sm:py-1 rounded-[6px] transition-colors cursor-pointer font-medium z-1 text-center',
             range === r.id
               ? 'text-fg font-semibold'
               : 'text-fg-3 hover:text-fg hover:bg-hover/40'
@@ -392,9 +392,9 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* 3. Four KPI Tiles (grid-cols-4 >=1024, 2 on tablet, 1 on mobile) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-          {/* KPI 1: Total spend */}
+        {/* 3. Four KPI Tiles (grid-cols-2 on mobile, 4 on desktop) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-stretch">
+          {/* KPI 1: Total spend - hero card on mobile */}
           <KpiTile
             data-intro="kpi"
             label="Total spend"
@@ -404,7 +404,7 @@ export function Dashboard() {
             deltaLabel={deltaLabel}
             hint={range === 'all' ? 'All time' : `${range} period`}
             to="/receipts"
-            className="h-full"
+            className="h-full col-span-2 sm:col-span-1"
           />
 
           {/* KPI 2: Receipts */}
@@ -414,10 +414,10 @@ export function Dashboard() {
             numericValue={totalReceipts}
             unit={totalReceipts === 1 ? 'receipt' : 'receipts'}
             delta={stats?.receiptsDiff !== undefined && stats.receiptsDiff !== 0 ? (stats.receiptsDiff > 0 ? `+${stats.receiptsDiff}` : stats.receiptsDiff) : undefined}
-            deltaLabel="vs previous period"
+            deltaLabel="vs prev"
             hint="All time"
             to="/receipts"
-            className="h-full"
+            className="h-full col-span-1"
           />
 
           {/* KPI 3: Under warranty */}
@@ -425,10 +425,10 @@ export function Dashboard() {
             data-intro="kpi"
             label="Under warranty"
             numericValue={activeWarranties}
-            unit={stats?.totalProducts ? `of ${stats.totalProducts} products` : 'products'}
+            unit={stats?.totalProducts ? `of ${stats.totalProducts}` : 'products'}
             hint="Active protection"
             to="/warranties"
-            className="h-full"
+            className="h-full col-span-1"
           />
 
           {/* KPI 4: Expiring in 30d */}
@@ -437,9 +437,9 @@ export function Dashboard() {
             label="Expiring in 30d"
             numericValue={expiringCount}
             footerLinkText="View →"
-            hint="Safe horizon"
+            hint={expiringCount > 0 ? 'Action needed' : 'Safe horizon'}
             to="/warranties?status=expiring_soon"
-            className="h-full"
+            className={cn("h-full col-span-2 sm:col-span-1", expiringCount > 0 && "border-warn-line/70 bg-warn-bg/20")}
           />
         </div>
 

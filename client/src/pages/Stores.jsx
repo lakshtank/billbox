@@ -224,9 +224,77 @@ export default function Stores() {
             />
           </div>
         ) : (
-          <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
-            <LayoutGroup id="billbox-stores-rows">
-              <table className="w-full text-left border-collapse table-fixed text-sm">
+          <div>
+            {/* Mobile Native Merchant Cards View (<768px) */}
+            <div className="md:hidden space-y-3 p-3">
+              {stores.map((store) => {
+                const initial = (store.storeName || '?').charAt(0).toUpperCase();
+                const encodedName = encodeURIComponent(store.storeName);
+
+                return (
+                  <div
+                    key={`mobile-store-${store.storeKey || store.storeName}`}
+                    onClick={() => navigate(`/stores/${encodedName}`)}
+                    className="flex flex-col rounded-[12px] border border-line bg-surface p-4 shadow-2xs hover:border-line-strong transition-all cursor-pointer text-left select-none"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="size-11 rounded-xl bg-accent-tint border border-accent/20 flex items-center justify-center font-bold text-base text-accent shrink-0 shadow-xs">
+                          {initial}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-[15px] text-fg truncate">
+                            {store.storeName}
+                          </h3>
+                          {store.categories && store.categories.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                              {store.categories.slice(0, 2).map((cat) => (
+                                <span
+                                  key={cat}
+                                  className="text-[10px] text-fg-3 bg-subtle px-1.5 py-0.2 rounded border border-line-subtle capitalize"
+                                >
+                                  {cat}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-base text-fg tnum">
+                          <Money value={store.totalSpend || 0} currency={store.currency || 'INR'} />
+                        </div>
+                        <span className="text-[11px] text-fg-3">
+                          Total spend
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-line-subtle flex items-center justify-between text-xs text-fg-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 font-medium text-fg-2">
+                          <FileText className="size-3.5 text-fg-3" />
+                          {store.receiptCount} {store.receiptCount === 1 ? 'receipt' : 'receipts'}
+                        </span>
+                        <span className="flex items-center gap-1 font-medium text-fg-2">
+                          <Package className="size-3.5 text-fg-3" />
+                          {store.productCount || 0} items
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-accent font-medium">
+                        <span>View</span>
+                        <ChevronRight className="size-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (>=768px) */}
+            <div className="hidden md:block overflow-x-auto overflow-y-hidden no-scrollbar">
+              <LayoutGroup id="billbox-stores-rows">
+                <table className="w-full text-left border-collapse table-fixed text-sm">
                 <colgroup>
                   <col className="w-[35%] min-w-[220px]" />
                   <col className="w-[15%] min-w-[110px]" />
@@ -337,6 +405,7 @@ export default function Stores() {
               </table>
             </LayoutGroup>
           </div>
+        </div>
         )}
 
         {/* 4. Table Pagination Footer */}

@@ -63,9 +63,9 @@ export function FilterBar({
       {/* Top Controls Row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left: Search & Filter Chips */}
-        <div className="flex flex-1 flex-wrap items-center gap-2 min-w-[280px]">
+        <div className="flex flex-1 items-center gap-2 w-full sm:w-auto">
           {/* Search Input */}
-          <div className="w-full sm:w-64">
+          <div className="flex-1 min-w-0 sm:w-64 sm:flex-initial">
             <SearchInput
               size="sm"
               value={searchValue}
@@ -82,7 +82,7 @@ export function FilterBar({
             size="sm"
             onClick={() => setMobileFilterOpen(true)}
             className={cn(
-              'sm:hidden h-9 text-xs gap-1.5 cursor-pointer',
+              'sm:hidden h-9 text-xs gap-1.5 cursor-pointer shrink-0',
               hasActiveFilters && 'bg-accent text-on-accent'
             )}
           >

@@ -118,22 +118,6 @@ export function Navbar() {
                   <span>New receipt</span>
                 </Button>
               </div>
-
-              {/* Icon-only button on <640px */}
-              <div className="sm:hidden">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onMouseEnter={() => prefetchRoute('addReceipt')}
-                  onTouchStart={() => prefetchRoute('addReceipt')}
-                  onFocus={() => prefetchRoute('addReceipt')}
-                  onClick={() => navigate('/receipts/new')}
-                  className="w-8 h-8 p-0"
-                  aria-label="New receipt"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
             </>
           )}
 

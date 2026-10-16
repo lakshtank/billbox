@@ -177,7 +177,7 @@ export function AddReceipt() {
       {/* 2. Segmented Mode Switcher (Upload · Batch · Manual) with Sliding Bubble Pill */}
       {mode !== 'review' && (
         <div className="flex items-center justify-between flex-wrap gap-4 border-b border-line pb-4">
-          <div className="relative inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs select-none">
+          <div className="relative inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs select-none w-full sm:w-auto justify-between sm:justify-start">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = mode === tab.id;
@@ -188,7 +188,7 @@ export function AddReceipt() {
                   whileTap={{ scale: 0.96 }}
                   onClick={() => handleModeSwitch(tab.id)}
                   className={cn(
-                    'relative z-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-[7px] font-medium transition-colors cursor-pointer',
+                    'relative z-1 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-[7px] font-medium transition-colors cursor-pointer text-center',
                     isActive ? 'text-fg font-semibold' : 'text-fg-3 hover:text-fg'
                   )}
                 >
