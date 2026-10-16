@@ -454,6 +454,7 @@ export function Dashboard() {
                 description="Upload a receipt to start tracking your spending and warranties."
                 actionLabel="Upload receipt"
                 onAction={() => navigate('/receipts/new')}
+                useShimmer={true}
               />
             </div>
           ) : (

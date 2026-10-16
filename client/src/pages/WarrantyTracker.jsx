@@ -29,6 +29,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { PageHeader } from '../components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { PullToRefresh } from '@/components/common/PullToRefresh';
 import * as m from 'motion/react-m';
 import { LayoutGroup, AnimatePresence, useInView } from 'motion/react';
 import NumberFlow from '@number-flow/react';
@@ -279,7 +280,7 @@ export function WarrantyTracker() {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Query all products with high limit to compute live tab counts and metrics
-  const { data, isLoading } = useProductsQuery({ limit: 5000 });
+  const { data, isLoading, refetch } = useProductsQuery({ limit: 5000 });
   const updateProductMutation = useUpdateProduct();
 
   const allProducts = useMemo(() => {
@@ -692,7 +693,8 @@ export function WarrantyTracker() {
       </AnimatePresence>
 
       {/* 4. Warranties Table with 140ms list crossfade on activeTab */}
-      <AnimatePresence mode="wait">
+      <PullToRefresh onRefresh={refetch}>
+        <AnimatePresence mode="wait">
         <m.div
           key={activeTab}
           initial={{ opacity: 0 }}
@@ -890,6 +892,7 @@ export function WarrantyTracker() {
           )}
         </m.div>
       </AnimatePresence>
+      </PullToRefresh>
     </PageContentTransition>
   );
 }

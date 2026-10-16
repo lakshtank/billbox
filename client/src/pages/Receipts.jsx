@@ -47,6 +47,7 @@ import {
 import { getAuthenticatedFileUrl } from '@/utils/fileUrl';
 import toast from '@/lib/toast';
 import { DEFAULT_CATEGORIES } from '../constants/category.constants';
+import { PullToRefresh } from '@/components/common/PullToRefresh';
 import * as m from 'motion/react-m';
 import { LayoutGroup } from 'motion/react';
 import { variants } from '@/lib/motion';
@@ -300,7 +301,7 @@ export function Receipts() {
     return filters;
   }, [pageParam, limitParam, sortByParam, categoryParam, statusParam, searchParam]);
 
-  const { data, isLoading, isError } = useReceiptsQuery(queryFilters);
+  const { data, isLoading, isError, refetch } = useReceiptsQuery(queryFilters);
 
   const receipts = useMemo(() => {
     if (Array.isArray(data)) return data.filter(Boolean);
@@ -756,7 +757,8 @@ export function Receipts() {
       />
 
       {/* 3. Receipts View: Empty State / Table View / Grid View */}
-      {receipts.length === 0 ? (
+      <PullToRefresh onRefresh={refetch}>
+        {receipts.length === 0 ? (
         <div className="rounded-[12px] border border-line bg-surface p-12 text-center shadow-2xs">
           {hasActiveFilters ? (
             <EmptyState
@@ -771,6 +773,7 @@ export function Receipts() {
               description="Upload your first receipt to start tracking purchases and warranties."
               actionLabel="Upload receipt"
               onAction={() => navigate('/receipts/new')}
+              useShimmer={true}
             />
           )}
         </div>
@@ -861,6 +864,7 @@ export function Receipts() {
           }
         />
       )}
+      </PullToRefresh>
 
       {/* 4. Single Delete Confirmation Modal */}
       {deletingReceipt && (

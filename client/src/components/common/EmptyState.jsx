@@ -1,11 +1,13 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
 
 /**
  * Step 6: EmptyState
  * - No stock imagery, illustrations, blobs or mascots.
  * - Empty states use a 20-24px Lucide icon in a 40px bg-subtle rounded square (radius 8).
  * - Typography: title-3 for heading, body for helper text, centered.
+ * - Step 1: Optional ShimmerButton on first-run CTA.
  */
 const EmptyState = ({
   title = 'No items found',
@@ -13,6 +15,7 @@ const EmptyState = ({
   actionLabel,
   onAction,
   icon: CustomIcon,
+  useShimmer = false,
 }) => {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center border border-line bg-surface rounded-lg">
@@ -33,13 +36,24 @@ const EmptyState = ({
       </p>
 
       {actionLabel && onAction && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="btn-primary inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer"
-        >
-          {actionLabel}
-        </button>
+        useShimmer ? (
+          <ShimmerButton
+            onClick={onAction}
+            className="h-9 px-4 text-xs font-semibold rounded-[8px]"
+            background="var(--accent)"
+            shimmerColor="#ffffff"
+          >
+            {actionLabel}
+          </ShimmerButton>
+        ) : (
+          <button
+            type="button"
+            onClick={onAction}
+            className="btn-primary inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer"
+          >
+            {actionLabel}
+          </button>
+        )
       )}
     </div>
   );

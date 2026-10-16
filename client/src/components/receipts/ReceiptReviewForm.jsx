@@ -18,6 +18,8 @@ import { useCreateReceipt } from '../../queries/useReceiptMutations';
 import { useCategoriesQuery } from '../../queries/useCategoryQueries';
 import { formatDateForInput, getCurrencySymbol } from '../../utils/formatters';
 import { DocumentViewer } from '@/components/data/DocumentViewer';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,8 +69,18 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
     : [];
   const categoryOptions = Array.from(new Set([...DEFAULT_CATEGORIES, ...userCatNames]));
 
-  // Mobile tab state: 'details' | 'document'
+  // Mobile tab state: 'document' | 'details' (order: Document = 0, Details = 1)
+  const isMobile = useMediaQuery('(max-width: 1023px)');
   const [mobileTab, setMobileTab] = useState('details');
+  const [tabDirection, setTabDirection] = useState(0);
+
+  const handleMobileTabChange = (nextTab) => {
+    if (nextTab === mobileTab) return;
+    const tabOrder = { document: 0, details: 1 };
+    const dir = tabOrder[nextTab] > tabOrder[mobileTab] ? 1 : -1;
+    setTabDirection(dir);
+    setMobileTab(nextTab);
+  };
 
   // Receipt Fields
   const [storeName, setStoreName] = useState(extracted.storeName?.value || '');
@@ -381,7 +393,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
         });
         setTimeout(() => {
           if (onSuccess) onSuccess(data);
-        }, 360);
+        }, 650);
       },
       onError: (err) => {
         setIsSaved(false);
@@ -393,40 +405,58 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
 
   return (
     <div className="font-sans">
-      {/* Mobile Tab Toggle */}
+      {/* Mobile Tab Toggle with Step 13.7 gliding pill and Step 16.3 Document | Details order */}
       <div className="flex lg:hidden items-center justify-between border-b border-line pb-3 mb-4">
-        <div className="inline-flex items-center p-1 bg-subtle rounded-[8px] border border-line-subtle gap-1 text-xs">
+        <div className="inline-flex items-center p-1 bg-subtle rounded-[8px] border border-line-subtle gap-1 text-xs relative">
           <button
             type="button"
-            onClick={() => setMobileTab('details')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] font-medium transition-all ${
-              mobileTab === 'details'
-                ? 'bg-surface text-fg font-semibold shadow-xs'
+            onClick={() => handleMobileTabChange('document')}
+            className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] font-medium transition-colors ${
+              mobileTab === 'document'
+                ? 'text-fg font-semibold'
                 : 'text-fg-3 hover:text-fg'
             }`}
           >
-            <Edit3 className="size-3.5" />
-            <span>Details & items</span>
+            {mobileTab === 'document' && (
+              <m.span
+                layoutId="review-mobile-tab-pill"
+                className="absolute inset-0 rounded-[6px] bg-surface shadow-xs"
+                transition={spring.snappy}
+              />
+            )}
+            <Eye className="relative size-3.5" />
+            <span className="relative">Document</span>
           </button>
           <button
             type="button"
-            onClick={() => setMobileTab('document')}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] font-medium transition-all ${
-              mobileTab === 'document'
-                ? 'bg-surface text-fg font-semibold shadow-xs'
+            onClick={() => handleMobileTabChange('details')}
+            className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] font-medium transition-colors ${
+              mobileTab === 'details'
+                ? 'text-fg font-semibold'
                 : 'text-fg-3 hover:text-fg'
             }`}
           >
-            <Eye className="size-3.5" />
-            <span>View document</span>
+            {mobileTab === 'details' && (
+              <m.span
+                layoutId="review-mobile-tab-pill"
+                className="absolute inset-0 rounded-[6px] bg-surface shadow-xs"
+                transition={spring.snappy}
+              />
+            )}
+            <Edit3 className="relative size-3.5" />
+            <span className="relative">Details</span>
           </button>
         </div>
       </div>
 
       {/* Two-Pane Review Container: Viewport-filling grid with no outer vertical dead space */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[calc(100vh-215px)] lg:min-h-[580px] items-stretch">
-        {/* LEFT PANE: Full-Height Document Viewer */}
-        <div
+        {/* LEFT PANE: Full-Height Document Viewer with Step 16.3 Directional Slide */}
+        <m.div
+          key={`doc-pane-${mobileTab}`}
+          initial={isMobile ? { x: tabDirection * 16, opacity: 0 } : false}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.18, ease: ease.out }}
           className={`lg:col-span-5 flex flex-col h-full min-h-[460px] ${
             mobileTab === 'details' ? 'hidden lg:flex' : 'flex'
           }`}
@@ -459,10 +489,14 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
               </div>
             )}
           </m.div>
-        </div>
+        </m.div>
 
         {/* RIGHT PANE: Extracted Details, Line Items Table, Financials & Docked Action Bar */}
-        <div
+        <m.div
+          key={`details-pane-${mobileTab}`}
+          initial={isMobile ? { x: tabDirection * 16, opacity: 0 } : false}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.18, ease: ease.out }}
           className={`lg:col-span-7 flex flex-col h-full min-h-0 ${
             mobileTab === 'document' ? 'hidden lg:flex' : 'flex'
           }`}
@@ -474,7 +508,19 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
               <div className="space-y-4">
                 <div className="border-b border-line pb-2 flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-fg">Receipt details</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-fg">Receipt details</h3>
+                      {isSaved && (
+                        <div className="size-5 shrink-0 flex items-center justify-center">
+                          <DotLottieReact
+                            src="/lottie/success.lottie"
+                            autoplay
+                            loop={false}
+                            className="size-5"
+                          />
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-fg-3">Verify extracted merchant and invoice data</p>
                   </div>
                   <span className="text-[11px] font-mono text-fg-3">Currency: {currency}</span>
@@ -973,7 +1019,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
               </Button>
             </div>
           </form>
-        </div>
+        </m.div>
       </div>
     </div>
   );
