@@ -482,19 +482,19 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
         </div>
       </div>
 
-      {/* Two-Pane Review Container: Viewport-filling grid with no outer vertical dead space */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:h-[calc(100vh-215px)] lg:min-h-[580px] items-stretch">
+      {/* Two-Pane Review Container: Natural page flow with sticky document viewer on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT PANE: Full-Height Document Viewer with Step 16.3 Directional Slide */}
         <m.div
           key={`doc-pane-${mobileTab}`}
           initial={isMobile ? { x: tabDirection * 16, opacity: 0 } : false}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.18, ease: ease.out }}
-          className={`lg:col-span-5 flex flex-col h-full min-h-[460px] ${
+          className={`lg:col-span-5 flex flex-col min-h-[480px] lg:sticky lg:top-4 lg:self-start lg:h-[calc(100vh-140px)] ${
             mobileTab === 'details' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          <div className="flex items-center justify-between pb-2">
+          <div className="flex items-center justify-between pb-2 shrink-0">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-fg-3 flex items-center gap-1.5">
               <FileText className="size-3.5 text-accent" />
               <span>Original document</span>
@@ -506,7 +506,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
             )}
           </div>
 
-          <m.div layoutId="doc-thumb" className="flex-1 min-h-0 rounded-[12px] overflow-hidden">
+          <m.div layoutId="doc-thumb" className="flex-1 min-h-[420px] rounded-[12px] overflow-hidden">
             {documentSrc || fileUrl || fileData ? (
               <DocumentViewer
                 url={documentSrc}
@@ -518,7 +518,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
                 className="h-full w-full shadow-xs"
               />
             ) : (
-              <div className="h-full rounded-[12px] border border-line-dashed bg-subtle/50 flex flex-col items-center justify-center p-6 text-center text-fg-3">
+              <div className="h-full min-h-[380px] rounded-[12px] border border-line-dashed bg-subtle/50 flex flex-col items-center justify-center p-6 text-center text-fg-3">
                 <FileText className="size-10 text-fg-3 mb-2" />
                 <p className="text-xs font-medium text-fg">No document preview available</p>
                 <p className="text-[11px] text-fg-3 mt-1">Details were extracted from text entry.</p>
@@ -527,19 +527,19 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
           </m.div>
         </m.div>
 
-        {/* RIGHT PANE: Extracted Details, Line Items Table, Financials & Docked Action Bar */}
+        {/* RIGHT PANE: Extracted Details, Line Items Table, Financials & Action Buttons */}
         <m.div
           key={`details-pane-${mobileTab}`}
           initial={isMobile ? { x: tabDirection * 16, opacity: 0 } : false}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.18, ease: ease.out }}
-          className={`lg:col-span-7 flex flex-col h-full min-h-0 ${
+          className={`lg:col-span-7 flex flex-col ${
             mobileTab === 'document' ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
-            {/* Scrollable Form Content */}
-            <div className="flex-1 overflow-y-auto pr-1 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Form Content */}
+            <div className="space-y-5">
               {/* 1. Key Receipt Header Fields */}
               <div className="space-y-4">
                 <div className="border-b border-line pb-2 flex items-center justify-between">
@@ -981,8 +981,8 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
               </div>
             </div>
 
-            {/* DOCKED Action Row: Cleanly anchored at the bottom with zero dead whitespace */}
-            <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-line shrink-0 bg-surface">
+            {/* Action Row: Naturally placed below all form content with zero overlap */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
               <Button
                 type="button"
                 variant="outline"

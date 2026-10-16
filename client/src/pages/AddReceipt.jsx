@@ -219,7 +219,7 @@ export function AddReceipt() {
       )}
 
       {/* 3. Main Ingestion Body with Bubble Slide Animation */}
-      <div className="relative w-full overflow-hidden min-h-[460px]">
+      <div className={cn('relative w-full min-h-[460px]', mode === 'review' ? 'overflow-visible' : 'overflow-hidden')}>
         <AnimatePresence mode="wait" custom={direction} initial={false}>
           {mode === 'scan' && (
             <m.div
