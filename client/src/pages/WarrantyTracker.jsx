@@ -216,22 +216,27 @@ function WarrantyCoverBar({ metrics }) {
     return <span className="text-xs text-fg-3">—</span>;
   }
 
-  const fraction = Math.min(1, Math.max(0, metrics.elapsedPercent / 100));
+  const fraction = Math.min(1, Math.max(0, (metrics.elapsedPercent ?? 0) / 100));
+  const widthPercent = Math.min(100, Math.max(fraction > 0 ? 4 : 0, Math.round(fraction * 100)));
   const barColor = metrics.isExpired
-    ? 'bg-bad'
+    ? 'bg-bad-solid'
     : metrics.isExpiringSoon
-    ? 'bg-warn'
+    ? 'bg-warn-solid'
     : 'bg-accent';
 
   return (
     <div className="space-y-1">
-      <div className="w-24 h-1 rounded-full bg-subtle overflow-hidden">
+      <div className="w-24 h-1.5 rounded-full bg-subtle overflow-hidden border border-line-subtle/50">
         <m.div
+          key={`bar-${metrics.status}-${widthPercent}`}
           className={`h-full rounded-full ${barColor}`}
-          style={{ transformOrigin: 'left', width: '100%', willChange: 'transform' }}
-          initial={tier !== 'none' ? { scaleX: 0 } : { scaleX: fraction }}
-          whileInView={tier !== 'none' ? { scaleX: fraction } : undefined}
-          viewport={{ once: true }}
+          style={{
+            transformOrigin: 'left',
+            width: `${widthPercent}%`,
+            willChange: 'transform',
+          }}
+          initial={tier !== 'none' ? { scaleX: 0 } : { scaleX: 1 }}
+          animate={{ scaleX: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         />
       </div>
