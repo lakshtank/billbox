@@ -41,6 +41,7 @@ export default function BatchReview() {
 
   const [viewingFile, setViewingFile] = useState(null);
   const [reviewingIndex, setReviewingIndex] = useState(null);
+  const [modalTab, setModalTab] = useState('details'); // 'details' | 'document'
   const [isSavingAll, setIsSavingAll] = useState(false);
 
   // Local state map for file edits indexed by fileIndex
@@ -406,7 +407,7 @@ export default function BatchReview() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* 1. Page Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4 pb-2 border-b border-line">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-line">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-fg-muted mb-1">
             <Link to="/receipts/new" className="hover:text-fg no-underline text-fg-muted">
@@ -423,13 +424,14 @@ export default function BatchReview() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {pendingCount > 0 && (
             <Button
               type="button"
               size="sm"
               onClick={handleSaveAll}
               disabled={isSavingAll}
+              className="flex-1 sm:flex-none cursor-pointer"
             >
               {isSavingAll ? 'Saving all...' : `Save all (${pendingCount})`}
             </Button>
@@ -440,6 +442,7 @@ export default function BatchReview() {
             variant="outline"
             size="sm"
             onClick={() => navigate('/receipts')}
+            className="flex-1 sm:flex-none cursor-pointer"
           >
             <span>Go to receipts</span>
             <ArrowRight className="size-3.5" />
@@ -448,7 +451,7 @@ export default function BatchReview() {
       </div>
 
       {/* 2. Status Summary Strip */}
-      <div className="flex items-center justify-between gap-4 flex-wrap text-xs bg-surface border border-line rounded-[12px] p-4 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-surface border border-line rounded-[12px] p-3.5 sm:p-4 shadow-2xs">
         <div className="flex items-center gap-2">
           <FileCheck className="size-4 text-accent" />
           <span className="font-semibold text-fg">
@@ -457,7 +460,7 @@ export default function BatchReview() {
               : `${pendingCount} receipts pending review and save`}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-fg-muted font-tabular">
+        <div className="flex items-center gap-2.5 flex-wrap text-fg-muted font-tabular">
           <span>{totalCount} total</span>
           <span className="text-line">•</span>
           <span className="text-ok-text font-medium">{savedCount} saved</span>
@@ -472,8 +475,121 @@ export default function BatchReview() {
         </div>
       </div>
 
-      {/* 3. Status Table (Step 14.2) */}
-      <div className="bg-surface border border-line rounded-[12px] overflow-hidden shadow-2xs">
+      {/* 3. Status Section (Step 14.2) */}
+      {/* Mobile Native App Cards View (<768px) */}
+      <div className="md:hidden space-y-3">
+        {files.map((fileItem, idx) => {
+          const edit = fileEdits[idx] || {};
+          const isSaved = fileItem.status === 'saved' || edit.isSaved;
+          const isFailed = fileItem.status === 'failed';
+          const statusKey = isSaved
+            ? 'saved'
+            : isFailed
+            ? 'failed'
+            : 'needs_review';
+
+          const totalVal =
+            edit.grandTotal != null && edit.grandTotal !== ''
+              ? Number(edit.grandTotal)
+              : null;
+
+          return (
+            <div
+              key={fileItem._id || idx}
+              className="rounded-[12px] border border-line bg-surface p-4 shadow-2xs space-y-3 transition-all"
+            >
+              {/* Header: File info + Status Badge */}
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="size-9 rounded-lg bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-muted font-mono text-xs font-semibold">
+                    #{idx + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-sm text-fg truncate">
+                      {fileItem.originalName || `Receipt #${idx + 1}`}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-xs text-fg-muted mt-0.5">
+                      <span className="uppercase text-[10px] font-mono px-1.5 py-0.2 rounded bg-surface-subtle border border-line">
+                        {fileItem.fileType || 'file'}
+                      </span>
+                      <span>•</span>
+                      <span className="truncate">
+                        {edit.storeName || 'Merchant pending'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <StatusBadge status={statusKey} />
+              </div>
+
+              {/* Middle: Details (Date + Total) */}
+              <div className="flex items-center justify-between text-xs pt-2.5 border-t border-line-subtle">
+                <span className="text-fg-muted">
+                  {edit.purchaseDate ? edit.purchaseDate : 'Date pending'}
+                </span>
+                <div className="text-right">
+                  {totalVal != null && !isNaN(totalVal) ? (
+                    <span className="font-semibold text-sm text-fg">
+                      <Money amount={totalVal} currency={edit.currency || 'INR'} />
+                    </span>
+                  ) : (
+                    <span className="text-fg-muted italic text-xs">Total pending</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 pt-2 border-t border-line-subtle">
+                {fileItem.fileUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewingFile(fileItem)}
+                    className="h-9 px-3 text-xs gap-1.5 shrink-0 cursor-pointer"
+                    title="View document"
+                  >
+                    <Eye className="size-3.5" />
+                    <span>View</span>
+                  </Button>
+                )}
+                {!isSaved && !isFailed ? (
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      setModalTab('details');
+                      setReviewingIndex(idx);
+                    }}
+                    className="h-9 text-xs gap-1.5 flex-1 cursor-pointer"
+                  >
+                    <Edit2 className="size-3.5" />
+                    <span>Review & Edit</span>
+                  </Button>
+                ) : isSaved ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setModalTab('details');
+                      setReviewingIndex(idx);
+                    }}
+                    className="h-9 text-xs gap-1.5 flex-1 text-ok-text border-ok-border hover:bg-ok-bg/30 cursor-pointer"
+                  >
+                    <CheckCircle2 className="size-3.5" />
+                    <span>Saved (Edit)</span>
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Table View (>=768px) */}
+      <div className="hidden md:block bg-surface border border-line rounded-[12px] overflow-hidden shadow-2xs">
         <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -555,7 +671,10 @@ export default function BatchReview() {
                             type="button"
                             variant="default"
                             size="sm"
-                            onClick={() => setReviewingIndex(idx)}
+                            onClick={() => {
+                              setModalTab('details');
+                              setReviewingIndex(idx);
+                            }}
                             className="h-8 text-xs gap-1.5 cursor-pointer"
                           >
                             <Edit2 className="size-3" />
@@ -566,7 +685,10 @@ export default function BatchReview() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setReviewingIndex(idx)}
+                            onClick={() => {
+                              setModalTab('details');
+                              setReviewingIndex(idx);
+                            }}
                             className="h-8 text-xs gap-1.5 text-ok-text border-ok-border"
                           >
                             <CheckCircle2 className="size-3.5" />
@@ -586,23 +708,23 @@ export default function BatchReview() {
       {/* 4. Spacious Two-Pane Review Modal */}
       {reviewingIndex !== null && reviewingEdit && reviewingFileItem && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 md:p-6 animate-in fade-in-0 duration-200"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4 md:p-6 animate-in fade-in-0 duration-200"
           role="dialog"
           aria-modal="true"
           data-lenis-prevent
         >
           <div
-            className="bg-surface border border-line rounded-[16px] shadow-2xl w-full max-w-6xl h-[92vh] max-h-[900px] flex flex-col overflow-hidden text-fg font-sans"
+            className="bg-surface border-0 sm:border border-line rounded-none sm:rounded-[16px] shadow-2xl w-full max-w-6xl h-full sm:h-[92vh] max-h-none sm:max-h-[900px] flex flex-col overflow-hidden text-fg font-sans"
             onClick={(e) => e.stopPropagation()}
             data-lenis-prevent
           >
             {/* Modal Header */}
-            <div className="h-14 px-5 border-b border-line flex items-center justify-between gap-3 bg-surface shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
+            <div className="h-14 px-4 sm:px-5 border-b border-line flex items-center justify-between gap-2.5 sm:gap-3 bg-surface shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-surface-subtle border border-line text-accent shrink-0">
                   #{reviewingIndex + 1} of {files.length}
                 </span>
-                <span className="text-sm font-semibold text-fg truncate">
+                <span className="text-xs sm:text-sm font-semibold text-fg truncate">
                   {reviewingFileItem.originalName || `Receipt #${reviewingIndex + 1}`}
                 </span>
                 <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-surface-subtle border border-line text-fg-muted shrink-0 hidden sm:inline">
@@ -610,7 +732,7 @@ export default function BatchReview() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 {/* Stepping controls */}
                 <div className="flex items-center border border-line rounded-[8px] overflow-hidden bg-surface-subtle">
                   <button
@@ -639,7 +761,7 @@ export default function BatchReview() {
                   size="sm"
                   onClick={() => handleSaveSingle(reviewingIndex)}
                   disabled={saveBatchFileMutation.isPending}
-                  className="gap-1.5 text-xs h-8"
+                  className="gap-1.5 text-xs h-8 hidden sm:inline-flex cursor-pointer"
                 >
                   <CheckCircle2 className="size-3.5" />
                   <span>{saveBatchFileMutation.isPending ? 'Saving...' : 'Save receipt'}</span>
@@ -656,10 +778,44 @@ export default function BatchReview() {
               </div>
             </div>
 
+            {/* Mobile Segmented Toggle (<1024px) */}
+            <div className="lg:hidden flex items-center p-1.5 bg-subtle border-b border-line px-3 shrink-0">
+              <div className="flex items-center w-full bg-surface p-0.5 rounded-[8px] border border-line shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setModalTab('details')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-[6px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    modalTab === 'details'
+                      ? 'bg-subtle text-fg shadow-2xs font-semibold'
+                      : 'text-fg-muted hover:text-fg'
+                  }`}
+                >
+                  <Edit2 className="size-3.5" />
+                  <span>Receipt fields</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab('document')}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-[6px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    modalTab === 'document'
+                      ? 'bg-subtle text-fg shadow-2xs font-semibold'
+                      : 'text-fg-muted hover:text-fg'
+                  }`}
+                >
+                  <Eye className="size-3.5" />
+                  <span>Original document</span>
+                </button>
+              </div>
+            </div>
+
             {/* Modal Body: Two-Pane Split */}
             <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
               {/* Left Pane: Document Viewer */}
-              <div className="w-full lg:w-1/2 h-64 lg:h-full border-b lg:border-b-0 lg:border-r border-line bg-subtle flex flex-col overflow-hidden shrink-0">
+              <div
+                className={`w-full lg:w-1/2 h-full border-b lg:border-b-0 lg:border-r border-line bg-subtle flex flex-col overflow-hidden shrink-0 ${
+                  modalTab === 'document' ? 'flex flex-1' : 'hidden lg:flex'
+                }`}
+              >
                 <div className="h-9 px-4 border-b border-line flex items-center justify-between text-xs text-fg-muted bg-surface/50">
                   <span className="font-medium">Original scanned document</span>
                   {reviewingFileItem.fileUrl && (
@@ -687,7 +843,9 @@ export default function BatchReview() {
 
               {/* Right Pane: Editable Fields & Line Items */}
               <div
-                className="w-full lg:w-1/2 h-full min-h-0 flex flex-col overflow-hidden bg-surface"
+                className={`w-full lg:w-1/2 h-full min-h-0 flex flex-col overflow-hidden bg-surface ${
+                  modalTab === 'details' ? 'flex flex-1' : 'hidden lg:flex'
+                }`}
                 data-lenis-prevent
               >
                 {/* Scrollable Form Content */}
@@ -1077,11 +1235,11 @@ export default function BatchReview() {
       {/* 5. Standalone Document Viewer Modal */}
       {viewingFile && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-0 sm:p-4"
           data-lenis-prevent
         >
           <div
-            className="bg-surface rounded-[16px] max-w-4xl w-full h-[85vh] border border-line shadow-2xl flex flex-col overflow-hidden"
+            className="bg-surface rounded-none sm:rounded-[16px] max-w-4xl w-full h-full sm:h-[85vh] border-0 sm:border border-line shadow-2xl flex flex-col overflow-hidden"
             data-lenis-prevent
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-subtle">
