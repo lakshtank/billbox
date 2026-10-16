@@ -159,3 +159,28 @@
   to { transform: scaleX(0); }
 }
 
+/* Step 14.3: Sticky table header bottom shadow via pseudo-element */
+thead[data-stuck="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.08), transparent);
+  opacity: 1;
+  transition: opacity 180ms cubic-bezier(.2, 0, 0, 1);
+}
+thead::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms cubic-bezier(.2, 0, 0, 1);
+}
+

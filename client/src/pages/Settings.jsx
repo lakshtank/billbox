@@ -25,6 +25,9 @@ import { PageHeader } from '../components/common/PageHeader';
 import { Switch } from '../components/ui/switch';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import * as m from 'motion/react-m';
+import { useScroll, useSpring } from 'motion/react';
+import { variants } from '@/lib/motion';
 
 const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
@@ -65,6 +68,14 @@ export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState('profile');
+
+  // Step 14.2: Scroll-linked progress line for long pages
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
 
   const { theme, setTheme, density, setDensity } = usePreferences();
   const { data: profileData, isLoading: loadingProfile } = useUserProfileQuery();
@@ -367,7 +378,13 @@ export default function Settings() {
   const userInitial = (user?.name || user?.email || '?').charAt(0).toUpperCase();
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans relative">
+      {/* Step 14.2: 2px accent scroll-linked progress line */}
+      <m.div
+        style={{ scaleX: smoothProgress, transformOrigin: 'left' }}
+        className="fixed top-0 left-0 right-0 h-[2px] bg-accent z-50 pointer-events-none"
+      />
+
       {/* Page Header */}
       <PageHeader
         title="Settings"
@@ -489,8 +506,14 @@ export default function Settings() {
                 </form>
               </div>
 
-              {/* Card 2: Change Password */}
-              <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-5">
+              {/* Card 2: Change Password (Step 14.4 Reveal on scroll) */}
+              <m.div
+                variants={variants.fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, margin: '-10% 0px' }}
+                className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-5"
+              >
                 <div className="border-b border-line-subtle pb-3">
                   <h2 className="text-base font-semibold text-fg">Change password</h2>
                   <p className="text-xs text-fg-3 mt-0.5">
@@ -591,7 +614,7 @@ export default function Settings() {
                     </Button>
                   </div>
                 </form>
-              </div>
+              </m.div>
             </div>
           )}
 

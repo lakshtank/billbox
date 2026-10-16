@@ -92,6 +92,24 @@ export function DataTable({
   const selectedRows = table.getSelectedRowModel().rows;
   const selectedCount = selectedRows.length;
 
+  // Step 14.3: Sticky table header shadow sentinel & observer
+  const [isHeaderStuck, setIsHeaderStuck] = React.useState(false);
+  const headerSentinelRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const el = headerSentinelRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsHeaderStuck(!entry.isIntersecting && entry.boundingClientRect.top <= 0);
+      },
+      { threshold: [0, 1] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleRowClick = (row, e) => {
     // Prevent navigation if user clicked checkbox, link, or action button
     if (
@@ -190,10 +208,12 @@ export function DataTable({
         )}
       >
         <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+          {/* Step 14.3: 1px sentinel above sticky header */}
+          <div ref={headerSentinelRef} className="h-px -mt-px pointer-events-none w-full" aria-hidden="true" />
           <LayoutGroup id="billbox-datatable-rows">
             <table className="w-full border-collapse text-left text-sm table-fixed">
             {/* Table Header: clean divider line, no heavy card box fill */}
-            <thead>
+            <thead data-stuck={isHeaderStuck ? "true" : undefined} className={cn("relative", isHeaderStuck && "data-stuck")}>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
                   key={headerGroup.id}

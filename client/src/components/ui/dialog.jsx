@@ -54,6 +54,7 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        data-lenis-prevent
         data-size={size}
         className={cn(
           "fixed top-[50%] left-[50%] z-modal grid w-full translate-x-[-50%] translate-y-[-50%] gap-6 rounded-[16px] border border-line bg-surface p-6 shadow-[var(--elevation-3)] outline-none duration-200",

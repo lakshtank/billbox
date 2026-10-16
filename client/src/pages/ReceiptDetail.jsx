@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import * as m from 'motion/react-m';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, useScroll, useSpring } from 'motion/react';
 import {
   ArrowLeft,
   Edit3,
@@ -65,6 +65,14 @@ export function ReceiptDetail() {
   const navigate = useViewTransitionNavigate();
   const [searchParams] = useSearchParams();
   const isEditParam = searchParams.get('edit') === 'true';
+
+  // Step 14.2: Scroll-linked progress line for long pages
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001,
+  });
 
   const [isEditing, setIsEditing] = useState(isEditParam);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -530,7 +538,13 @@ export function ReceiptDetail() {
   const isTrueMismatch = receipt.needsReview && products.length > 0 && !matchesGrand && !matchesSub && !matchesReconciled;
 
   return (
-    <div className="space-y-4 w-full font-sans pb-16">
+    <div className="space-y-4 w-full font-sans pb-16 relative">
+      {/* Step 14.2: 2px accent scroll-linked progress line */}
+      <m.div
+        style={{ scaleX: smoothProgress, transformOrigin: 'left' }}
+        className="fixed top-0 left-0 right-0 h-[2px] bg-accent z-50 pointer-events-none"
+      />
+
       {/* 1. Compact Header Row with Step 3.2 View Transition Morph & Step 13.4 Copy Action */}
       <div className="space-y-1.5 pb-2 border-b border-line">
         <div className="flex items-center gap-2">

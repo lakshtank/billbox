@@ -28,7 +28,7 @@ import EmptyState from '../components/common/EmptyState';
 import { Skeleton } from '../components/ui/skeleton';
 import PageContentTransition from '@/components/common/PageContentTransition';
 import * as m from 'motion/react-m';
-import { spring } from '@/lib/motion';
+import { spring, variants } from '@/lib/motion';
 import { useOverviewIntro } from '@/hooks/useOverviewIntro';
 import { cn } from '../lib/utils';
 
@@ -540,8 +540,14 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* 5. Bottom Row: 8/4 split — Recent receipts table & Activity feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      {/* 5. Bottom Row: 8/4 split — Recent receipts table & Activity feed (Step 14.4 Reveal on scroll) */}
+      <m.div
+        variants={variants.fadeUp}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-10% 0px' }}
+        className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch"
+      >
         {/* Left (8 cols): Recent receipts 5-row table */}
         <div data-intro="panel" className="lg:col-span-8 rounded-[12px] border border-line bg-surface p-4 shadow-2xs text-left h-full min-h-[350px] flex flex-col justify-between">
           <div className="flex-1 flex flex-col">
@@ -681,7 +687,7 @@ export function Dashboard() {
             </Link>
           </div>
         </div>
-      </div>
+      </m.div>
       </div>
     </PageContentTransition>
   );

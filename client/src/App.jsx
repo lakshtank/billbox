@@ -14,6 +14,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import RouteTitle from './components/common/RouteTitle';
 import AnimatedOutlet from './components/common/AnimatedOutlet';
 import { ViewTransitionProvider } from './context/ViewTransitionContext';
+import SmoothScroll from './components/common/SmoothScroll';
 import useAuth from './hooks/useAuth';
 import useGlobalShortcuts from './hooks/useGlobalShortcuts';
 import { preloadAllRoutes } from './lib/routePreloader';
@@ -311,7 +312,9 @@ const App = () => {
           <CommandPalette />
           <ShortcutModal />
           <ErrorBoundary>
-            <AppLayout />
+            <SmoothScroll>
+              <AppLayout />
+            </SmoothScroll>
           </ErrorBoundary>
         </AuthProvider>
       </ViewTransitionProvider>

@@ -15,6 +15,8 @@ import { StatusBadge } from '../components/data/StatusBadge';
 import { BarList } from '../components/data/BarList';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
+import * as m from 'motion/react-m';
+import { variants } from '@/lib/motion';
 
 export default function StoreDetail() {
   const params = useParams();
@@ -242,8 +244,14 @@ export default function StoreDetail() {
         </div>
       </div>
 
-      {/* 5. Receipts & Products Tabs */}
-      <div className="space-y-4">
+      {/* 5. Receipts & Products Tabs (Step 14.4 Reveal on scroll) */}
+      <m.div
+        variants={variants.fadeUp}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-10% 0px' }}
+        className="space-y-4"
+      >
         <div className="flex items-center gap-3 border-b border-line text-sm">
           <button
             type="button"
@@ -460,7 +468,7 @@ export default function StoreDetail() {
             </div>
           </div>
         )}
-      </div>
+      </m.div>
     </div>
   );
 }
