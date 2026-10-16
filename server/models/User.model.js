@@ -40,6 +40,12 @@ const userSchema = new mongoose.Schema({
     expiryDaysNotice: { type: Number, default: 30 },
     monthlyDigest: { type: Boolean, default: true },
   },
+  uiPreferences: {
+    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+    density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
+    viewMode: { type: String, enum: ['table', 'grid'], default: 'table' },
+    sidebarCollapsed: { type: Boolean, default: false },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

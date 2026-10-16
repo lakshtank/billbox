@@ -3,30 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="BillBox — Track invoices, receipts, and warranty expiries with ease." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <title>BillBox</title>
+    <meta name="description" content="Keep every receipt and know which warranties expire next." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#124E66" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#182026" />
     <script>
-      window.addEventListener('error', function (e) {
-        var el = document.getElementById('root-error') || document.createElement('div');
-        el.id = 'root-error';
-        el.style = 'padding: 24px; color: #991b1b; background: #fef2f2; font-family: monospace; z-index: 999999; position: fixed; inset: 0; overflow: auto;';
-        el.innerHTML = '<h2 style="font-weight:bold;margin-bottom:8px;">🚨 JavaScript Error:</h2><pre style="white-space:pre-wrap;">' + (e.error ? e.error.stack || e.error.message : e.message) + '</pre>';
-        document.body.appendChild(el);
-      });
-      window.addEventListener('unhandledrejection', function (e) {
-        var el = document.getElementById('root-error') || document.createElement('div');
-        el.id = 'root-error';
-        el.style = 'padding: 24px; color: #991b1b; background: #fef2f2; font-family: monospace; z-index: 999999; position: fixed; inset: 0; overflow: auto;';
-        el.innerHTML = '<h2 style="font-weight:bold;margin-bottom:8px;">🚨 Unhandled Rejection:</h2><pre style="white-space:pre-wrap;">' + (e.reason ? e.reason.stack || e.reason : 'Unknown rejection') + '</pre>';
-        document.body.appendChild(el);
-      });
+      (function () {
+        try {
+          var t = localStorage.getItem('billbox.theme') || 'system';
+          var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        } catch (e) { document.documentElement.dataset.theme = 'light'; }
+      })();
     </script>
+    <style>
+      :root {
+        --bg-app-initial: #F8FAFC;
+        --fg-app-initial: #0F172A;
+      }
+      [data-theme="dark"] {
+        --bg-app-initial: #0B0F17;
+        --fg-app-initial: #F1F5F9;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-app-initial);
+        color: var(--fg-app-initial);
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        background-color: var(--bg-app-initial);
+      }
+      @keyframes bootpulse {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+    </style>
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/geist-latin-wght-normal.woff2" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="billbox-boot" style="position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#124E66,transparent);animation:bootpulse 1.2s ease-in-out infinite;pointer-events:none;z-index:9999;"></div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

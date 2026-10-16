@@ -170,9 +170,16 @@ const runGeminiLLMExtraction = async (rawText, userCategories = [], options = {}
     ? userCategories
     : defaultCategories;
 
-  const prompt = `You are an expert receipt & invoice data parser. Analyze the following raw OCR text extracted from a purchase document:
+  const prompt = `You are a world-class forensic receipt, invoice, and cash memo parser. You can analyze ANY purchase document across the globe with mathematical precision, including:
+- Handwritten cash memos, parchi, estimation slips, Kaccha/Pakka bills, and medical slips (in English, Hindi, Hinglish, regional Indian scripts, and global languages).
+- Restaurant, cafe, bar, and food delivery bills (dine-in cash memos, KOT, Zomato, Swiggy, UberEats, DoorDash).
+- Supermarket, grocery, and retail receipts (DMart, Reliance, Walmart, Costco, Target, Carrefour, Tesco, etc.).
+- Tax invoices, GST invoices, VAT invoices, utility bills, and e-commerce receipts (Amazon, Flipkart, etc.).
 
-"${(rawText || '').substring(0, 4000)}"
+RAW OCR DOCUMENT TEXT TO ANALYZE:
+"""
+${(rawText || '').substring(0, 4500)}
+"""
 
 UNIVERSAL EXTRACTION PHILOSOPHY:
 For EVERY field (receipt-level and each item line), follow this exact order:
@@ -180,24 +187,51 @@ For EVERY field (receipt-level and each item line), follow this exact order:
 2. INFERRED: Infer value from surrounding context and real-world knowledge (e.g. infer brand from item description like "Godrej Fab..." -> "Godrej", infer category from product type like "Liquid Detergent" -> "Groceries").
 3. NOT MENTIONED: If value cannot be determined by explicit label or inference, return the literal string "Not mentioned". Never return null, empty string, or ungrounded guess. Never default silently.
 
-RULES FOR MULTI-ITEM RECEIPTS:
-- Extract all purchased line items into an "items" array.
-- ONLY include actual tangible or digital merchandise/products (e.g. "ZEBRONICS Gaming Mouse", "MacBook Pro", "Godrej Detergent").
-- DO NOT extract transaction fees, service fees, delivery/shipping charges, convenience charges, handling fees, protect promise fees, or packaging charges as items in the "items" array (e.g. "Handling Fee", "Protect Promise Fee", "Delivery Fee", "Platform Fee", "Shipping Fee", "Packaging Fee" must NOT be in "items"; include their total in "shippingAmount" instead).
-- Each row is extracted independently. If one row is ambiguous, garbled, or a junk row, extract what is determinable for that row without blocking other valid rows.
-- Do NOT attribute the full receipt total to any individual product line item.
-- "grandTotal" is the final bottom-line amount paid by the customer for the entire transaction (post-tax/post-shipping). Do NOT confuse subtotal or tax breakdown base with grandTotal.
+STRICT ARITHMETIC CALCULATION & RECONCILIATION POLICY:
+1. "items" array:
+   - ONLY include actual purchased tangible or digital merchandise/products (e.g. "HANDI PANEER", "TAVA ROTI BUTTER", "MacBook Pro", "Basmati Rice").
+   - DO NOT extract transaction fees, service fees, service charges, delivery/shipping charges, convenience charges, handling fees, protect promise fees, carry bag charges, or packaging charges as items in the "items" array. Sum all these non-merchandise fees into "shippingAmount".
+   - Each item row must satisfy: lineTotal = quantity * unitPrice. If item discount is given: lineTotal = quantity * originalUnitPrice - discountAmount.
+   - Do NOT attribute the full receipt total to any individual product line item.
+
+2. "subtotal":
+   - The base amount of all purchased goods/merchandise BEFORE taxes, fees, shipping, or service charges.
+   - If explicitly stated (e.g. "Sub Total", "Food Total", "Item Total", "Taxable Value"), use that exact number.
+   - If not explicitly printed, calculate as the sum of all item lineTotals.
+
+3. "taxAmount":
+   - The total sum of ALL applicable taxes on the document.
+   - Indian GST: Sum ALL tax breakdown lines: CGST + SGST + IGST + UTGST + Cess (e.g., if CGST @ 9% is 142.20 and SGST @ 9% is 142.20, taxAmount is 284.40).
+   - Global Taxes: Sum Sales Tax, VAT, State/County/City Tax, Consumption Tax.
+   - If prices are tax-inclusive (MRP or "Inclusive of all taxes"), extract the tax amount breakdown into "taxAmount" for bookkeeping without double-adding it to grandTotal.
+
+4. "shippingAmount":
+   - The sum of ALL non-merchandise logistics, delivery, service, and convenience charges:
+     * Restaurant Service Charge (e.g., 5% or 10% service charge) -> include in shippingAmount.
+     * Packaging Charges, Container Charges, Carry Bag Fees -> include in shippingAmount.
+     * Delivery Fees, Platform Fees, Convenience Fees, Handling Fees, Surge Fees, Tips -> include in shippingAmount.
+
+5. "discountAmount":
+   - Total bill-level coupon discount, promo savings, loyalty points, or cash discount subtracted from the bill.
+
+6. "grandTotal":
+   - The final bottom-line amount paid or payable by the customer (e.g. "Total", "Grand Total", "Invoice Total", "Net Amount", "Net Payable", "Amount Due", "Kul Yog", "कुल योग").
+   - Mathematical check:
+     * For tax-exclusive receipts: grandTotal = subtotal + taxAmount + shippingAmount - discountAmount (allowing for standard round-off).
+     * For tax-inclusive receipts: grandTotal = subtotal (or sum of items) + shippingAmount - discountAmount.
+   - Do NOT confuse subtotal or tax breakdown base with grandTotal.
 
 Extract the structured details and return ONLY a valid JSON object matching this schema (no markdown formatting, no explanations):
 {
   "storeName": "Merchant/vendor name issuing receipt ('Sold By', letterhead name). If unknown, 'Not mentioned'.",
+  "invoiceNumber": "Invoice, bill, memo, or order number. If unknown, 'Not mentioned'.",
   "purchaseDate": "Transaction date as YYYY-MM-DD. If unknown, 'Not mentioned'.",
   "dueDate": "Payment due date as YYYY-MM-DD if present, else 'Not mentioned'.",
-  "subtotal": "subtotal before tax/shipping as a number (e.g. 214.40) or 'Not mentioned'",
+  "subtotal": "subtotal before tax/shipping as a number (e.g. 1580.00) or 'Not mentioned'",
   "discountAmount": "Overall subtotal or receipt-level coupon discount amount as a number (e.g. 50.00) or 0",
-  "shippingAmount": "shipping/handling fee as a number (e.g. 0.00) or 'Not mentioned'",
-  "taxAmount": "total tax (GST/VAT) as a number (e.g. 38.60) or 'Not mentioned'",
-  "grandTotal": "final bottom-line total amount paid for entire receipt as a number (e.g. 253.00) or 'Not mentioned'",
+  "shippingAmount": "Sum of all shipping, delivery, packaging, service charges, platform fees as a number (e.g. 40.00) or 0",
+  "taxAmount": "total tax (sum of all CGST, SGST, IGST, VAT, Sales Tax) as a number (e.g. 284.40) or 'Not mentioned'",
+  "grandTotal": "final bottom-line total amount paid for entire receipt as a number (e.g. 1864.40) or 'Not mentioned'",
   "currency": "Currency code detected from document (e.g. 'USD', 'INR', 'EUR', 'GBP', 'CAD', 'AUD'). Detect from explicit symbols ($, ₹, Rs., Rs, €, £, C$, A$), ISO codes (USD, INR, EUR, GBP), or words ('Dollars', 'Rupees', 'Euros', 'Pounds'). Normalize '₹', 'Rs.', 'Rs', 'Rupees', 'INR' to 'INR'; '$', 'USD', 'Dollars' to 'USD'; '€', 'EUR' to 'EUR'; '£', 'GBP' to 'GBP'. If unknown or no currency symbol present, return 'INR'.",
   "items": [
     {
@@ -205,11 +239,11 @@ Extract the structured details and return ONLY a valid JSON object matching this
       "brand": "Brand or manufacturer. Explicit 'Brand:' label if present, or inferred from product description. If unknown, 'Not mentioned'.",
       "category": "Classify product into a category. Check user categories first: ${JSON.stringify(categoriesToPass)}. Reuse exact existing name if matching, or invent concise category. If unknown, 'Not mentioned'.",
       "quantity": 1,
-      "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 425.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
-      "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 253.00) or 'Not mentioned'",
-      "discountAmount": "Total discount or savings amount for this line item as a number (e.g. 172.00) or 0",
-      "discountPercent": "Percentage discount if explicitly stated (e.g. 40) or 0",
-      "lineTotal": "Final total amount paid for this line item as a number (e.g. 253.00) or 'Not mentioned'",
+      "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 200.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
+      "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 200.00) or 'Not mentioned'",
+      "discountAmount": "Total discount or savings amount for this line item as a number (e.g. 0.00) or 0",
+      "discountPercent": "Percentage discount if explicitly stated (e.g. 10) or 0",
+      "lineTotal": "Final total amount paid for this line item as a number (e.g. 400.00) or 'Not mentioned'",
       "warrantyPeriodValue": "numeric warranty duration (number, e.g. 12) or 'Not mentioned'",
       "warrantyPeriodUnit": "days | weeks | months | years. If warranty is 'Not mentioned', return 'months'."
     }
@@ -296,12 +330,13 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
   const grandTotalVal = parseNumericValue(llmResult.grandTotal, null);
   const grandTotalConf = grandTotalVal != null ? 90 : 0;
 
-  // Filter out non-merchandise fee line items
-  const FEE_ITEM_REGEX = /^(?:protect\s*promise|handling|convenience|platform|delivery|shipping|packaging|service|installation)\s*(?:fee|charges?|amount)?$/i;
+  // Filter out non-merchandise fee line items (service charges, delivery, packaging, carry bag, platform fees, tips)
+  const FEE_ITEM_REGEX = /^(?:protect\s*promise|handling|convenience|platform|delivery|shipping|packaging|container|carry\s*bag|bag|service|installation|surge|tip|gratuity)\s*(?:fee|charges?|amount)?$/i;
   const isFeeItem = (name) => {
     if (!name) return false;
-    if (FEE_ITEM_REGEX.test(name.trim())) return true;
-    if (/protect\s*promise\s*fee|handling\s*fee|delivery\s*(?:fee|charge)|platform\s*fee|packaging\s*fee/i.test(name)) return true;
+    const trimmed = name.trim();
+    if (FEE_ITEM_REGEX.test(trimmed)) return true;
+    if (/(?:protect\s*promise\s*fee|handling\s*(?:fee|charge)|delivery\s*(?:fee|charge)|platform\s*fee|packaging\s*(?:fee|charge)|container\s*charge|service\s*charge|convenience\s*fee|surge\s*fee)/i.test(trimmed)) return true;
     return false;
   };
 
@@ -386,11 +421,20 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
   }
 
   const sumLineTotals = extractedItems.reduce((acc, item) => acc + (item.lineTotal || 0), 0);
-  const matchesGrandTotal = grandTotalVal != null && Math.abs(sumLineTotals - grandTotalVal) <= 1.00;
-  const matchesSubtotal = subtotalVal != null && Math.abs(sumLineTotals - subtotalVal) <= 1.00;
-  const matchesReconciled = grandTotalVal != null && Math.abs((sumLineTotals - discountVal + taxVal + shippingVal) - grandTotalVal) <= 1.00;
+  const effectiveSubtotal = subtotalVal != null ? subtotalVal : (sumLineTotals > 0 ? Number(sumLineTotals.toFixed(2)) : null);
+  let effectiveGrandTotal = grandTotalVal;
+  if (effectiveGrandTotal == null && sumLineTotals > 0) {
+    effectiveGrandTotal = Number(Math.max(0, (effectiveSubtotal || sumLineTotals) + taxVal + shippingVal - discountVal).toFixed(2));
+  }
 
-  const lineTotalMismatch = extractedItems.length > 0 && grandTotalVal != null && !matchesGrandTotal && !matchesSubtotal && !matchesReconciled;
+  // Multi-tier mathematical reconciliation
+  const TOLERANCE = 1.00;
+  const matchesGrandTotal = effectiveGrandTotal != null && Math.abs(sumLineTotals - effectiveGrandTotal) <= TOLERANCE;
+  const matchesSubtotal = effectiveSubtotal != null && Math.abs(sumLineTotals - effectiveSubtotal) <= TOLERANCE;
+  const matchesReconciled = effectiveGrandTotal != null && Math.abs((sumLineTotals - discountVal + taxVal + shippingVal) - effectiveGrandTotal) <= TOLERANCE;
+  const matchesSubtotalReconciled = effectiveGrandTotal != null && effectiveSubtotal != null && Math.abs((effectiveSubtotal - discountVal + taxVal + shippingVal) - effectiveGrandTotal) <= TOLERANCE;
+
+  const lineTotalMismatch = extractedItems.length > 0 && effectiveGrandTotal != null && !matchesGrandTotal && !matchesSubtotal && !matchesReconciled && !matchesSubtotalReconciled;
 
   return {
     extracted: {
@@ -413,7 +457,13 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
         value: dueDateVal,
       },
       subtotal: {
-        value: subtotalVal,
+        value: effectiveSubtotal,
+      },
+      discountAmount: {
+        value: discountVal,
+      },
+      discountPercent: {
+        value: discountPercentVal,
       },
       shippingAmount: {
         value: shippingVal,
@@ -422,23 +472,23 @@ const mapLlmResultToExtracted = (llmResult, rawText = '', wordData = []) => {
         value: taxVal,
       },
       grandTotal: {
-        value: grandTotalVal,
+        value: effectiveGrandTotal,
         confidence: grandTotalConf,
-        needsReview: grandTotalVal == null,
+        needsReview: effectiveGrandTotal == null,
       },
       totalAmount: {
-        value: grandTotalVal,
+        value: effectiveGrandTotal,
         confidence: grandTotalConf,
-        needsReview: grandTotalVal == null,
+        needsReview: effectiveGrandTotal == null,
       },
       currency: {
         value: detectedCurrency,
       },
       items: extractedItems,
       subtotalMismatch: lineTotalMismatch,
-      needsReview: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some((i) => i.qtyNeedsReview),
+      needsReview: lineTotalMismatch || storeConf < 60 || effectiveGrandTotal == null || extractedItems.some((i) => i.qtyNeedsReview),
     },
-    hasAnyLowConfidence: lineTotalMismatch || storeConf < 60 || grandTotalVal == null || extractedItems.some((i) => i.qtyNeedsReview),
+    hasAnyLowConfidence: lineTotalMismatch || storeConf < 60 || effectiveGrandTotal == null || extractedItems.some((i) => i.qtyNeedsReview),
   };
 };
 
@@ -489,7 +539,19 @@ const extractFieldsDirectFromDocument = async (fileBuffer, mimeType, userCategor
 
     const base64Data = finalBuffer.toString('base64');
 
-    const prompt = `You are an expert receipt & invoice data parser. Analyze the attached purchase document (${effectiveMimeType}):
+    const prompt = `You are a world-class forensic receipt, invoice, and cash memo parser with unmatched visual recognition capabilities. Analyze the attached purchase document image/PDF (${effectiveMimeType}) with mathematical precision:
+
+DOCUMENT TYPES YOU MUST MASTER:
+1. Handwritten Documents & Slips:
+   - Handwritten cash memos, parchi, estimation slips, Kaccha/Pakka bills, medical slips, hardware slips (in English, Hindi, Hinglish, regional Indian scripts like Gujarati, Marathi, Tamil, and international languages).
+   - Accurately parse hand-filled columns ("Particulars/विवरण", "Qty/नग", "Rate/दर/भाव", "Amount/रकम/योग").
+   - Decipher handwritten digits and handwriting variations, disregarding paper folds, creases, table lines, smudges, rubber stamps ("PAID", "RECEIVED", "CHECKED"), or handwritten scribbles in margins.
+2. Restaurant, Cafe, Bar, and Food Delivery Bills:
+   - Dine-in cash memos, KOT, and delivery apps (Zomato, Swiggy, UberEats, DoorDash).
+   - Itemized food items, Sub Total / Food Total, CGST, SGST, IGST, Service Charges, Container/Packaging charges, and Grand Total.
+3. Supermarket, Retail, and Grocery Receipts:
+   - DMart, Reliance, Walmart, Costco, Target, Carrefour, Tesco, etc.
+4. Commercial Tax Invoices, Utility Bills, Fuel Slips, and E-Commerce receipts (Amazon, Flipkart, etc.).
 
 UNIVERSAL EXTRACTION PHILOSOPHY:
 For EVERY field (receipt-level and each item line), follow this exact order:
@@ -497,25 +559,51 @@ For EVERY field (receipt-level and each item line), follow this exact order:
 2. INFERRED: Infer value from surrounding context and real-world knowledge (e.g. infer brand from item description like "Godrej Fab..." -> "Godrej", infer category from product type like "Liquid Detergent" -> "Groceries").
 3. NOT MENTIONED: If value cannot be determined by explicit label or inference, return the literal string "Not mentioned". Never return null, empty string, or ungrounded guess. Never default silently.
 
-RULES FOR MULTI-ITEM RECEIPTS:
-- Extract all purchased line items into an "items" array.
-- ONLY include actual tangible or digital merchandise/products (e.g. "ZEBRONICS Gaming Mouse", "MacBook Pro", "Godrej Detergent").
-- DO NOT extract transaction fees, service fees, delivery/shipping charges, convenience charges, handling fees, protect promise fees, or packaging charges as items in the "items" array (e.g. "Handling Fee", "Protect Promise Fee", "Delivery Fee", "Platform Fee", "Shipping Fee", "Packaging Fee" must NOT be in "items"; include their total in "shippingAmount" instead).
-- Each row is extracted independently. If one row is ambiguous, garbled, or a junk row, extract what is determinable for that row without blocking other valid rows.
-- Do NOT attribute the full receipt total to any individual product line item.
-- "grandTotal" is the final bottom-line amount paid by the customer for the entire transaction (post-tax/post-shipping). Do NOT confuse subtotal or tax breakdown base with grandTotal.
+STRICT ARITHMETIC CALCULATION & RECONCILIATION POLICY:
+1. "items" array:
+   - ONLY include actual purchased tangible or digital merchandise/products (e.g. "HANDI PANEER", "TAVA ROTI BUTTER", "MacBook Pro", "Basmati Rice").
+   - DO NOT extract transaction fees, service fees, service charges, delivery/shipping charges, convenience charges, handling fees, protect promise fees, carry bag charges, or packaging charges as items in the "items" array. Sum all these non-merchandise fees into "shippingAmount".
+   - Each item row must satisfy: lineTotal = quantity * unitPrice. If item discount is given: lineTotal = quantity * originalUnitPrice - discountAmount.
+   - Do NOT attribute the full receipt total to any individual product line item.
+
+2. "subtotal":
+   - The base amount of all purchased goods/merchandise BEFORE taxes, fees, shipping, or service charges.
+   - If explicitly stated (e.g. "Sub Total", "Food Total", "Item Total", "Taxable Value"), use that exact number.
+   - If not explicitly printed, calculate as the sum of all item lineTotals.
+
+3. "taxAmount":
+   - The total sum of ALL applicable taxes on the document.
+   - Indian GST: Sum ALL tax breakdown lines: CGST + SGST + IGST + UTGST + Cess (e.g., if CGST @ 9% is 142.20 and SGST @ 9% is 142.20, taxAmount is 284.40).
+   - Global Taxes: Sum Sales Tax, VAT, State/County/City Tax, Consumption Tax.
+   - If prices are tax-inclusive (MRP or "Inclusive of all taxes"), extract the tax amount breakdown into "taxAmount" for bookkeeping without double-adding it to grandTotal.
+
+4. "shippingAmount":
+   - The sum of ALL non-merchandise logistics, delivery, service, and convenience charges:
+     * Restaurant Service Charge (e.g., 5% or 10% service charge) -> include in shippingAmount.
+     * Packaging Charges, Container Charges, Carry Bag Fees -> include in shippingAmount.
+     * Delivery Fees, Platform Fees, Convenience Fees, Handling Fees, Surge Fees, Tips -> include in shippingAmount.
+
+5. "discountAmount":
+   - Total bill-level coupon discount, promo savings, loyalty points, or cash discount subtracted from the bill.
+
+6. "grandTotal":
+   - The final bottom-line amount paid or payable by the customer (e.g. "Total", "Grand Total", "Invoice Total", "Net Amount", "Net Payable", "Amount Due", "Kul Yog", "कुल योग").
+   - Mathematical check:
+     * For tax-exclusive receipts: grandTotal = subtotal + taxAmount + shippingAmount - discountAmount (allowing for standard round-off).
+     * For tax-inclusive receipts: grandTotal = subtotal (or sum of items) + shippingAmount - discountAmount.
+   - Do NOT confuse subtotal or tax breakdown base with grandTotal.
 
 Extract the structured details and return ONLY a valid JSON object matching this schema (no markdown formatting, no explanations):
 {
   "storeName": "Merchant/vendor name issuing receipt ('Sold By', letterhead name). If unknown, 'Not mentioned'.",
-  "invoiceNumber": "Invoice or order number. If unknown, 'Not mentioned'.",
+  "invoiceNumber": "Invoice, bill, memo, or order number. If unknown, 'Not mentioned'.",
   "purchaseDate": "Transaction date as YYYY-MM-DD. If unknown, 'Not mentioned'.",
   "dueDate": "Payment due date as YYYY-MM-DD if present, else 'Not mentioned'.",
-  "subtotal": "subtotal before tax/shipping as a number (e.g. 214.40) or 'Not mentioned'",
+  "subtotal": "subtotal before tax/shipping as a number (e.g. 1580.00) or 'Not mentioned'",
   "discountAmount": "Overall subtotal or receipt-level coupon discount amount as a number (e.g. 50.00) or 0",
-  "shippingAmount": "shipping/handling fee as a number (e.g. 0.00) or 'Not mentioned'",
-  "taxAmount": "total tax (GST/VAT) as a number (e.g. 38.60) or 'Not mentioned'",
-  "grandTotal": "final bottom-line total amount paid for entire receipt as a number (e.g. 253.00) or 'Not mentioned'",
+  "shippingAmount": "Sum of all shipping, delivery, packaging, service charges, platform fees as a number (e.g. 40.00) or 0",
+  "taxAmount": "total tax (sum of all CGST, SGST, IGST, VAT, Sales Tax) as a number (e.g. 284.40) or 'Not mentioned'",
+  "grandTotal": "final bottom-line total amount paid for entire receipt as a number (e.g. 1864.40) or 'Not mentioned'",
   "currency": "Currency code detected from document (e.g. 'USD', 'INR', 'EUR', 'GBP', 'CAD', 'AUD'). Detect from explicit symbols ($, ₹, Rs., Rs, €, £, C$, A$), ISO codes (USD, INR, EUR, GBP), or words ('Dollars', 'Rupees', 'Euros', 'Pounds'). Normalize '₹', 'Rs.', 'Rs', 'Rupees', 'INR' to 'INR'; '$', 'USD', 'Dollars' to 'USD'; '€', 'EUR' to 'EUR'; '£', 'GBP' to 'GBP'. If unknown or no currency symbol present, return 'INR'.",
   "rawText": "Full text transcript read from the document",
   "items": [
@@ -524,11 +612,11 @@ Extract the structured details and return ONLY a valid JSON object matching this
       "brand": "Brand or manufacturer. Explicit 'Brand:' label if present, or inferred from product description. If unknown, 'Not mentioned'.",
       "category": "Classify product into a category. Check user categories first: ${JSON.stringify(categoriesToPass)}. Reuse exact existing name if matching, or invent concise category. If unknown, 'Not mentioned'.",
       "quantity": 1,
-      "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 425.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
-      "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 253.00) or 'Not mentioned'",
-      "discountAmount": "Total discount or savings amount for this line item as a number (e.g. 172.00) or 0",
-      "discountPercent": "Percentage discount if explicitly stated (e.g. 40) or 0",
-      "lineTotal": "Final total amount paid for this line item as a number (e.g. 253.00) or 'Not mentioned'",
+      "originalUnitPrice": "Original pre-discount unit price or list/MRP price per item before any savings (e.g. 200.00). If no discount is present, equal to unitPrice or 'Not mentioned'",
+      "unitPrice": "Actual final price paid per unit after discount as a number (e.g. 200.00) or 'Not mentioned'",
+      "discountAmount": "Total discount or savings amount for this line item as a number (e.g. 0.00) or 0",
+      "discountPercent": "Percentage discount if explicitly stated (e.g. 10) or 0",
+      "lineTotal": "Final total amount paid for this line item as a number (e.g. 400.00) or 'Not mentioned'",
       "warrantyPeriodValue": "numeric warranty duration (number, e.g. 12) or 'Not mentioned'",
       "warrantyPeriodUnit": "days | weeks | months | years. If warranty is 'Not mentioned', return 'months'."
     }
@@ -601,7 +689,7 @@ const extractFields = async (rawText, wordData = [], userCategories = [], option
 
 const extractAllProductsRegex = (lines, rawText, storeNameVal, wordData, totalAmountVal, warrantyPeriod) => {
   const extracted = [];
-  const SKIP_PRODUCT_ROW = /^(?:no\.?|sl\.?|item|description|particulars|qty|quantity|rate|price|amount|tax|gst|sgst|cgst|igst|vat|total|subtotal|discount|round|balance|paid|change|cash|card|upi|invoice|date|time|store|thank|welcome|visit|terms|conditions|authorized|signature|seller|client|buyer|summary|gross|worth|um|pcs|nos)\b/i;
+  const SKIP_PRODUCT_ROW = /^(?:no\.?|sl\.?|item|description|particulars|qty|quantity|rate|price|amount|tax|gst|sgst|cgst|igst|vat|total|sub\s*total|subtotal|food\s*total|grand\s*total|discount|round|balance|paid|change|cash|card|upi|invoice|date|time|store|thank|welcome|visit|terms|conditions|authorized|signature|seller|client|buyer|summary|gross|worth|um|pcs|nos)\b/i;
 
   // Strategy 1: Look for numbered product rows (e.g. "1. Realme GT 5...", "2. JBL Flip 6...", "01. ...")
   for (let i = 0; i < lines.length; i++) {
@@ -652,7 +740,7 @@ const extractAllProductsRegex = (lines, rawText, storeNameVal, wordData, totalAm
         continue;
       }
       if (inTable) {
-        if (/^(?:total|subtotal|grand\s*total|summary|vat|gst|tax|authorized|thank)/i.test(l)) {
+        if (/^(?:total|sub\s*total|subtotal|food\s*total|grand\s*total|summary|vat|gst|cgst|sgst|igst|tax|authorized|thank)/i.test(l)) {
           break;
         }
         if (l.length > 3 && !SKIP_PRODUCT_ROW.test(l) && !NON_PRODUCT_LINE.test(l)) {
@@ -748,6 +836,35 @@ const extractFieldsRegex = (rawText, wordData = []) => {
           ]
         : []);
 
+  // Extract tax, shipping, discount, and subtotal in offline regex fallback
+  let taxSum = 0;
+  let shipSum = 0;
+  let discSum = 0;
+  let subtotalCandidate = null;
+
+  for (const l of lines) {
+    const amtMatch = l.match(/[\d,]+(?:\.\d{2})/g);
+    if (!amtMatch) continue;
+    const lastAmt = parseFloat(amtMatch[amtMatch.length - 1].replace(/,/g, ''));
+    if (isNaN(lastAmt) || lastAmt <= 0) continue;
+
+    if (/\b(?:cgst|sgst|igst|utgst|cess|vat|sales\s*tax|tax)\b/i.test(l) && !/taxable|invoice|with\s*tax/i.test(l)) {
+      taxSum += lastAmt;
+    } else if (/\b(?:shipping|delivery|service\s*charge|packaging|container|carry\s*bag|platform\s*fee|convenience\s*fee)\b/i.test(l)) {
+      shipSum += lastAmt;
+    } else if (/\b(?:discount|coupon|promo|savings?|less)\b/i.test(l)) {
+      discSum += lastAmt;
+    } else if (/\b(?:sub\s*total|food\s*total|item\s*total|taxable\s*value|base\s*amount)\b/i.test(l) && subtotalCandidate == null) {
+      subtotalCandidate = lastAmt;
+    }
+  }
+
+  const itemsSum = items.reduce((acc, it) => acc + (it.lineTotal || 0), 0);
+  const regexSubtotal = subtotalCandidate != null ? subtotalCandidate : (itemsSum > 0 ? Number(itemsSum.toFixed(2)) : totalAmount.value);
+  const finalGrandTotal = totalAmount.value != null
+    ? totalAmount.value
+    : (regexSubtotal != null ? Number(Math.max(0, regexSubtotal + taxSum + shipSum - discSum).toFixed(2)) : null);
+
   const extracted = {
     storeName: {
       value: storeVal,
@@ -768,18 +885,19 @@ const extractFieldsRegex = (rawText, wordData = []) => {
       needsReview: dateStatus !== 'confident',
     },
     dueDate: { value: null },
-    subtotal: { value: totalAmount.value },
-    shippingAmount: { value: 0 },
-    taxAmount: { value: 0 },
+    subtotal: { value: regexSubtotal },
+    shippingAmount: { value: Number(shipSum.toFixed(2)) },
+    taxAmount: { value: Number(taxSum.toFixed(2)) },
+    discountAmount: { value: Number(discSum.toFixed(2)) },
     grandTotal: {
-      value: totalAmount.value,
+      value: finalGrandTotal,
       confidence: totalStatus === 'not_found' ? 0 : totalAmount.confidence,
-      needsReview: totalStatus !== 'confident',
+      needsReview: totalStatus !== 'confident' || finalGrandTotal == null,
     },
     totalAmount: {
-      value: totalAmount.value,
+      value: finalGrandTotal,
       confidence: totalStatus === 'not_found' ? 0 : totalAmount.confidence,
-      needsReview: totalStatus !== 'confident',
+      needsReview: totalStatus !== 'confident' || finalGrandTotal == null,
     },
     items,
     subtotalMismatch: false,

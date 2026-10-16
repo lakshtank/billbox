@@ -1,130 +1,192 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { useLogin } from '../queries/useAuthMutations';
-import { validateEmail, validatePassword } from '../utils/validators';
+import { AuthLayout } from '../components/auth/AuthLayout';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Button } from '../components/ui/button';
+import { toast } from 'sonner';
 
-const Login = () => {
+const loginSchema = z.object({
+  email: z.string().trim().email('Enter a valid email address.'),
+  password: z.string().min(1, 'Password is required.'),
+});
+
+export function Login() {
   const navigate = useNavigate();
-  const { loginUser } = useAuth();
+  const { isAuthenticated, loginUser } = useAuth();
   const loginMutation = useLogin();
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
 
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({});
+  const {
+    register,
+    handleSubmit,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
+    defaultValues: { email: '', password: '' },
+  });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: null });
-  };
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const newErrors = {};
-    const emailErr = validateEmail(form.email);
-    const passErr = validatePassword(form.password);
-    if (emailErr) newErrors.email = emailErr;
-    if (passErr) newErrors.password = passErr;
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    loginMutation.mutate(form, {
+  const onSubmit = (values) => {
+    setServerError('');
+    loginMutation.mutate(values, {
       onSuccess: (data) => {
         loginUser(data.token, data.user);
-        toast.success('Welcome back!');
+        toast.success('Signed in');
         navigate('/');
       },
       onError: (err) => {
-        const message =
-          err.response?.data?.message || 'Login failed. Please check your details.';
-        toast.error(message);
+        const status = err.response?.status;
+        const msg = !err.response
+          ? 'Unable to connect to the server. Please check your connection.'
+          : status === 401
+          ? 'Incorrect email or password.'
+          : err.response?.data?.message || 'Incorrect email or password.';
+        setServerError(msg);
+        setFocus('email');
       },
     });
   };
 
   return (
-    <div className="h-full w-full flex items-center justify-center bg-brand-canvas p-4 font-sans">
-      <div className="w-full max-w-sm">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-navy to-brand-primary flex items-center justify-center mx-auto mb-3 text-white shadow-xs">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="3" />
-              <line x1="2" y1="10" x2="22" y2="10" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-brand-navy tracking-tight">
-            Welcome back
+    <AuthLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight text-fg font-sans">
+            Sign in
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Sign in to manage your receipts and warranties
+          <p className="text-sm text-fg-2 font-sans">
+            Welcome back to BillBox.
           </p>
         </div>
 
-        {/* Auth Surface Card */}
-        <div className="surface-card p-6 md:p-8 bg-brand-surface border border-brand-border rounded-2xl shadow-xs">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="login-email" className="text-xs font-semibold text-brand-navy">
-                Email
-              </label>
-              <input
-                id="login-email"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="name@example.com"
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="login-password" className="text-xs font-semibold text-brand-navy">
-                Password
-              </label>
-              <input
-                id="login-password"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
-              {errors.password && (
-                <p className="text-xs text-brand-navy font-medium mt-0.5">{errors.password}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={loginMutation.isPending}
-              className="btn btn-primary w-full py-2.5 mt-2 bg-brand-primary hover:bg-brand-primary-hover text-white"
-            >
-              {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-4 border-t border-brand-border text-center">
-            <p className="text-xs text-slate-500">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-brand-primary font-bold hover:underline">
-                Create an account
-              </Link>
-            </p>
+        {/* Server Error Alert Banner */}
+        {serverError && (
+          <div
+            role="alert"
+            className="flex items-start gap-2.5 p-3 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-sm"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-bad-solid" />
+            <p className="flex-1">{serverError}</p>
           </div>
-        </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          {/* Email field */}
+          <div className="space-y-1.5">
+            <Label htmlFor="login-email">Email</Label>
+            <Input
+              id="login-email"
+              type="email"
+              size="lg"
+              autoComplete="email"
+              placeholder="you@company.com"
+              error={Boolean(errors.email)}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'login-email-error' : undefined}
+              {...register('email')}
+            />
+            {errors.email && (
+              <p
+                id="login-email-error"
+                className="text-xs text-bad-fg flex items-center gap-1.5 mt-1"
+              >
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-bad-solid" />
+                <span>{errors.email.message}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Password field with show/hide toggle */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="login-password">Password</Label>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-fg-link hover:underline transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <div className="relative">
+              <Input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                size="lg"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                error={Boolean(errors.password)}
+                aria-invalid={Boolean(errors.password)}
+                aria-describedby={errors.password ? 'login-password-error' : undefined}
+                className="pr-11"
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-fg-3 hover:text-fg transition-colors cursor-pointer rounded"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <p
+                id="login-password-error"
+                className="text-xs text-bad-fg flex items-center gap-1.5 mt-1"
+              >
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-bad-solid" />
+                <span>{errors.password.message}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Submit button: 48px, full width, primary */}
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              loading={isSubmitting || loginMutation.isPending}
+              className="w-full h-12 text-sm font-medium"
+            >
+              Sign in
+            </Button>
+          </div>
+        </form>
+
+        {/* Secondary link */}
+        <p className="text-center text-sm text-fg-2">
+          Don&apos;t have an account?{' '}
+          <Link
+            to="/register"
+            className="font-medium text-fg-link hover:underline transition-colors"
+          >
+            Create one
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   );
-};
+}
 
 export default Login;

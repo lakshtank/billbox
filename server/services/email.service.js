@@ -1,3 +1,5 @@
+const nodemailer = require('nodemailer');
+
 const createTransporter = () => {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT, 10) || 587;
@@ -36,7 +38,9 @@ const createTransporter = () => {
  * @param {string} options.storeName - Merchant / Store name
  * @param {Date|string} options.warrantyExpiryDate - Expiry date
  * @param {number} options.daysRemaining - Days remaining until expiry
- * @returns {Promise<boolean>} True if email sent successfully, false otherwise
+ * @returns {Promise<{delivered: boolean, reason: 'sent'|'not_configured'|'failed', messageId?: string, error?: string}>}
+ *   `delivered` is true only when an SMTP server accepted the message. Callers
+ *   MUST NOT record a reminder as sent unless `delivered` is true.
  */
 const sendWarrantyReminderEmail = async ({
   to,
@@ -88,9 +92,13 @@ const sendWarrantyReminderEmail = async ({
 
     if (!transporter) {
       console.warn(
-        `[EmailService] SMTP credentials not configured (SMTP_HOST/USER/PASS). [SIMULATED EMAIL] To: ${to} | Subject: "${subject}"`
+        `[EmailService] SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS). Nothing was sent to ${to} | Subject: "${subject}"`
       );
-      return true; // Graceful fallback in dev when SMTP credentials are not set up
+      return {
+        delivered: false,
+        reason: 'not_configured',
+        error: 'SMTP is not configured on this server.',
+      };
     }
 
     const mailOptions = {
@@ -103,10 +111,10 @@ const sendWarrantyReminderEmail = async ({
 
     const info = await transporter.sendMail(mailOptions);
     console.log(`[EmailService] Email delivered to ${to} (MessageID: ${info.messageId})`);
-    return true;
+    return { delivered: true, reason: 'sent', messageId: info.messageId };
   } catch (error) {
     console.error(`[EmailService] Failed to send email to ${to}:`, error.message);
-    return false;
+    return { delivered: false, reason: 'failed', error: error.message };
   }
 };
 

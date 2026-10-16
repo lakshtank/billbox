@@ -3,15 +3,7 @@ const Receipt = require('../models/Receipt.model');
 const Product = require('../models/Product.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
-// Conversion rates to INR for consistent total spend calculation
-const CURRENCY_TO_INR = {
-  INR: 1,
-  USD: 83.5,
-  EUR: 90.0,
-  GBP: 105.0,
-  CAD: 61.0,
-  AUD: 54.5,
-};
+const { EXCHANGE_RATES_TO_INR, convertToINR } = require('../constants/currency.constants');
 
 // GET /api/stores
 // Returns aggregated list of stores for current user
@@ -39,20 +31,23 @@ const getStores = async (req, res) => {
           _id: { $toLower: { $trim: { input: '$storeName' } } },
           storeName: { $first: '$storeName' },
           receiptCount: { $sum: 1 },
-          totalSpent: {
-            $sum: {
-              $cond: [
-                { $gt: ['$grandTotal', null] },
-                '$grandTotal',
-                { $ifNull: ['$totalAmount', 0] },
-              ],
-            },
-          },
-          currency: { $first: '$currency' },
           firstPurchaseDate: { $min: '$purchaseDate' },
           latestPurchaseDate: { $max: '$purchaseDate' },
           receiptIds: { $push: '$_id' },
-          allProductIds: { $push: '$products' },
+          receipts: {
+            $push: {
+              _id: '$_id',
+              amount: {
+                $cond: [
+                  { $gt: ['$grandTotal', null] },
+                  '$grandTotal',
+                  { $ifNull: ['$totalAmount', 0] },
+                ],
+              },
+              currency: '$currency',
+              purchaseDate: '$purchaseDate',
+            },
+          },
         },
       },
       {
@@ -61,32 +56,82 @@ const getStores = async (req, res) => {
           storeKey: '$_id',
           storeName: 1,
           receiptCount: 1,
-          totalSpent: 1,
-          currency: { $ifNull: ['$currency', 'INR'] },
           firstPurchaseDate: 1,
           latestPurchaseDate: 1,
           receiptIds: 1,
+          receipts: 1,
         },
       },
     ];
 
     let stores = await Receipt.aggregate(pipeline);
 
-    // Populate products and distinct categories for each store
-    for (const store of stores) {
-      if (store.receiptIds && store.receiptIds.length > 0) {
-        const products = await Product.find({
-          receiptId: { $in: store.receiptIds },
-        }).select('category');
+    // Collect all receipt IDs across all stores for a single batch Product lookup (DB-02: Eliminate N+1)
+    const allReceiptIds = [];
+    const storeReceiptMap = new Map();
 
-        store.productCount = products.length;
-        store.categories = Array.from(
-          new Set(products.map((p) => p.category).filter(Boolean))
-        );
-      } else {
-        store.productCount = 0;
-        store.categories = [];
+    for (const store of stores) {
+      // Normalize multi-currency spend into store's primary currency (LOGIC-06)
+      let totalSpentInINR = 0;
+      const currencyCounts = {};
+
+      for (const r of store.receipts || []) {
+        const amt = Number(r.amount) || 0;
+        const cur = (r.currency || 'INR').toUpperCase();
+        totalSpentInINR += convertToINR(amt, cur);
+        currencyCounts[cur] = (currencyCounts[cur] || 0) + 1;
       }
+
+      const primaryCurrency =
+        Object.keys(currencyCounts).sort(
+          (a, b) => currencyCounts[b] - currencyCounts[a]
+        )[0] || 'INR';
+
+      const targetRate = EXCHANGE_RATES_TO_INR[primaryCurrency] || 1.0;
+      const totalSpent = Number((totalSpentInINR / targetRate).toFixed(2));
+      const averageSpend =
+        store.receiptCount > 0 ? Number((totalSpent / store.receiptCount).toFixed(2)) : 0;
+
+      store.currency = primaryCurrency;
+      store.totalSpent = totalSpent;
+      store.averageSpend = averageSpend;
+
+      store.productCount = 0;
+      store.categoriesSet = new Set();
+
+      if (store.receiptIds && store.receiptIds.length > 0) {
+        for (const rId of store.receiptIds) {
+          allReceiptIds.push(rId);
+          storeReceiptMap.set(rId.toString(), store);
+        }
+      }
+    }
+
+    // Single batch query for all products across all stores (DB-02)
+    if (allReceiptIds.length > 0) {
+      const products = await Product.find({
+        userId: userObjectId,
+        receiptId: { $in: allReceiptIds },
+      })
+        .select('receiptId category')
+        .lean();
+
+      for (const prod of products) {
+        if (prod.receiptId) {
+          const store = storeReceiptMap.get(prod.receiptId.toString());
+          if (store) {
+            store.productCount++;
+            if (prod.category) store.categoriesSet.add(prod.category);
+          }
+        }
+      }
+    }
+
+    // Clean up temporary sets and internal arrays
+    for (const store of stores) {
+      store.categories = Array.from(store.categoriesSet || []);
+      delete store.categoriesSet;
+      delete store.receipts;
     }
 
     // Sorting
@@ -157,19 +202,19 @@ const getStoreDetail = async (req, res) => {
     const products = await Product.find({
       userId,
       receiptId: { $in: receiptIds },
-    }).populate('receiptId', 'storeName purchaseDate invoiceNumber currency');
+    }).populate('receiptId', 'storeName purchaseDate invoiceNumber currency fileUrl fileData mimeType fileType publicToken');
 
     // Aggregate statistics
-    let totalSpent = 0;
+    let totalSpentInINR = 0;
     let dates = [];
     const categoriesSet = new Set();
     const currencyCounts = {};
 
     receipts.forEach((r) => {
       const amt = r.grandTotal != null ? r.grandTotal : r.totalAmount || 0;
-      totalSpent += amt;
+      const cur = (r.currency || 'INR').toUpperCase();
+      totalSpentInINR += convertToINR(amt, cur);
       if (r.purchaseDate) dates.push(new Date(r.purchaseDate));
-      const cur = r.currency || 'INR';
       currencyCounts[cur] = (currencyCounts[cur] || 0) + 1;
     });
 
@@ -187,12 +232,14 @@ const getStoreDetail = async (req, res) => {
         (a, b) => currencyCounts[b] - currencyCounts[a]
       )[0] || 'INR';
 
+    const targetRate = EXCHANGE_RATES_TO_INR[primaryCurrency] || 1.0;
+    const totalSpent = Number((totalSpentInINR / targetRate).toFixed(2));
     const averageSpend =
       receipts.length > 0 ? Number((totalSpent / receipts.length).toFixed(2)) : 0;
 
     const stats = {
       storeName: receipts[0].storeName || decodedStoreName,
-      totalSpent: Number(totalSpent.toFixed(2)),
+      totalSpent,
       currency: primaryCurrency,
       receiptCount: receipts.length,
       productCount: products.length,

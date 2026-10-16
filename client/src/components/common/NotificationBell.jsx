@@ -5,8 +5,6 @@ import {
   BellOff,
   Clock,
   ShieldCheck,
-  AlertTriangle,
-  CheckCircle2,
   ExternalLink,
   X,
 } from 'lucide-react';
@@ -21,7 +19,7 @@ const NotificationBell = () => {
   const { data, isLoading } = useRemindersQuery();
   const updateMutation = useUpdateReminderMutation();
 
-  const { stats = {}, items = [], logs = [] } = data || {};
+  const { items = [] } = data || {};
 
   // Find items expiring soon (<= 30 days) or active alerts
   const urgentItems = items.filter((i) => i.daysRemaining > 0 && i.daysRemaining <= 30);
@@ -57,13 +55,13 @@ const NotificationBell = () => {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+        className="relative p-2 rounded-lg text-fg-2 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
         aria-label="Notifications and Warranty Reminders"
         title="Notifications & Warranty Reminders"
       >
         <Bell className="w-5 h-5" />
         {activeAlertsCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[10px] font-bold text-white shadow-xs font-tabular">
+          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-on-accent shadow-xs tnum">
             {activeAlertsCount > 9 ? '9+' : activeAlertsCount}
           </span>
         )}
@@ -71,13 +69,13 @@ const NotificationBell = () => {
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-brand-surface rounded-2xl border border-brand-border shadow-2xl z-50 overflow-hidden font-sans text-brand-navy animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface rounded-xl border border-line shadow-lg z-dropdown overflow-hidden font-sans text-fg">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-brand-border flex items-center justify-between bg-brand-canvas">
+          <div className="px-4 py-3 border-b border-line flex items-center justify-between bg-subtle">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-brand-navy">Warranty Reminders</span>
+              <span className="text-xs font-bold text-fg">Warranty Reminders</span>
               {activeAlertsCount > 0 && (
-                <span className="text-[10px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-tabular">
+                <span className="text-[10px] font-semibold text-accent bg-accent-tint border border-accent/25 px-2 py-0.5 rounded-full tnum">
                   {activeAlertsCount} expiring soon
                 </span>
               )}
@@ -85,21 +83,21 @@ const NotificationBell = () => {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+              className="text-fg-3 hover:text-fg p-1 rounded-md cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 text-xs">
+          <div className="max-h-[380px] overflow-y-auto divide-y divide-line-subtle text-xs">
             {isLoading ? (
-              <div className="p-6 text-center text-xs text-slate-400">Loading reminders...</div>
+              <div className="p-6 text-center text-xs text-fg-3">Loading reminders...</div>
             ) : items.length === 0 ? (
               <div className="p-8 text-center space-y-2">
-                <ShieldCheck className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs font-medium text-slate-700">No active warranty items</p>
-                <p className="text-[11px] text-slate-400">
+                <ShieldCheck className="w-8 h-8 text-fg-3 mx-auto" />
+                <p className="text-xs font-medium text-fg">No active warranty items</p>
+                <p className="text-[11px] text-fg-3">
                   Products with warranties will notify you here before expiration.
                 </p>
               </div>
@@ -116,23 +114,23 @@ const NotificationBell = () => {
                       setIsOpen(false);
                       navigate(`/products/${prod._id}`);
                     }}
-                    className={`p-3.5 flex items-start justify-between gap-3 hover:bg-slate-50 transition-colors cursor-pointer group ${
-                      !prod.reminderEnabled ? 'opacity-60 bg-slate-50/30' : ''
+                    className={`p-3.5 flex items-start justify-between gap-3 hover:bg-hover transition-colors cursor-pointer group ${
+                      !prod.reminderEnabled ? 'opacity-60 bg-subtle/30' : ''
                     }`}
                   >
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <strong className="text-xs font-bold text-slate-900 group-hover:text-brand-primary transition-colors truncate">
+                        <strong className="text-xs font-semibold text-fg group-hover:text-accent transition-colors truncate">
                           {prod.productName}
                         </strong>
                         {prod.brand && (
-                          <span className="text-[10px] text-brand-primary font-medium bg-brand-primary/10 border border-brand-primary/20 px-1.5 py-0.2 rounded">
+                          <span className="text-[10px] text-accent font-medium bg-accent-tint border border-accent/20 px-1.5 py-0.2 rounded">
                             {prod.brand}
                           </span>
                         )}
                       </div>
 
-                      <div className="text-[11px] text-slate-400 flex items-center gap-2">
+                      <div className="text-[11px] text-fg-3 flex items-center gap-2">
                         {prod.receipt?.storeName && (
                           <span>{prod.receipt.storeName}</span>
                         )}
@@ -143,16 +141,16 @@ const NotificationBell = () => {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {isExpired ? (
-                        <span className="text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-bad-fg bg-bad-bg border border-bad-border px-2 py-0.5 rounded-full tnum">
                           Expired
                         </span>
                       ) : isUrgent ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full font-tabular">
-                          <Clock className="w-3 h-3 text-amber-600" />
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-warn-fg bg-warn-bg border border-warn-border px-2 py-0.5 rounded-full tnum">
+                          <Clock className="w-3 h-3 text-warn-solid" />
                           <span>{days}d left</span>
                         </span>
                       ) : (
-                        <span className="text-[10px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-tabular">
+                        <span className="text-[10px] font-semibold text-accent bg-accent-tint border border-accent/25 px-2 py-0.5 rounded-full tnum">
                           {days}d left
                         </span>
                       )}
@@ -160,8 +158,8 @@ const NotificationBell = () => {
                       <button
                         type="button"
                         onClick={(e) => handleToggleReminder(e, prod)}
-                        className={`p-1.5 rounded-md hover:bg-slate-200/70 transition-colors cursor-pointer ${
-                          prod.reminderEnabled ? 'text-brand-primary' : 'text-slate-400'
+                        className={`p-1.5 rounded-md hover:bg-subtle transition-colors cursor-pointer ${
+                          prod.reminderEnabled ? 'text-accent' : 'text-fg-3'
                         }`}
                         title={prod.reminderEnabled ? 'Mute alert' : 'Enable alert'}
                       >
@@ -179,11 +177,11 @@ const NotificationBell = () => {
           </div>
 
           {/* Footer link to Warranty Tracker */}
-          <div className="px-4 py-2.5 border-t border-brand-border bg-brand-canvas text-center">
+          <div className="px-4 py-2.5 border-t border-line bg-subtle text-center">
             <Link
               to="/warranties"
               onClick={() => setIsOpen(false)}
-              className="text-xs font-semibold text-brand-primary hover:underline inline-flex items-center gap-1"
+              className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1"
             >
               <span>View all in Warranty Tracker</span>
               <ExternalLink className="w-3 h-3" />

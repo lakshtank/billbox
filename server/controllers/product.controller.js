@@ -21,11 +21,28 @@ const getProducts = async (req, res) => {
     const query = { userId };
 
     if (category && category !== 'All') {
-      query.category = category;
+      const catList = Array.isArray(category)
+        ? category
+        : typeof category === 'string'
+        ? category.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All')
+        : [];
+      if (catList.length === 1) {
+        query.category = catList[0];
+      } else if (catList.length > 1) {
+        query.category = { $in: catList };
+      }
     }
 
     if (warrantyStatus && warrantyStatus !== 'All') {
       query.warrantyStatus = warrantyStatus;
+    }
+
+    if (req.query.hasWarranty === 'true' || req.query.warrantyOnly === 'true') {
+      query.$or = [
+        { warrantyExpiryDate: { $ne: null } },
+        { warrantyPeriodMonths: { $gt: 0 } },
+        { warrantyStatus: { $in: ['active', 'expiring_soon', 'expired'] } },
+      ];
     }
 
     if (search && search.trim()) {
@@ -37,8 +54,9 @@ const getProducts = async (req, res) => {
       ];
     }
 
-    const pageNum = Math.max(1, parseInt(page, 10));
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10)));
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const maxLimitAllowed = req.query.hasWarranty === 'true' || limit === 'all' || parseInt(limit, 10) > 100 ? 5000 : 100;
+    const limitNum = Math.max(1, Math.min(maxLimitAllowed, parseInt(limit, 10) || 20));
     const skip = (pageNum - 1) * limitNum;
 
     const sortOptions = {};
@@ -49,7 +67,7 @@ const getProducts = async (req, res) => {
         .sort(sortOptions)
         .skip(skip)
         .limit(limitNum)
-        .populate('receiptId', 'storeName purchaseDate fileUrl fileType publicToken currency'),
+        .populate('receiptId', 'storeName purchaseDate invoiceNumber fileUrl fileData mimeType fileType publicToken currency'),
       Product.countDocuments(query),
     ]);
 
@@ -75,7 +93,7 @@ const getProductById = async (req, res) => {
 
     const product = await Product.findOne({ _id: id, userId }).populate(
       'receiptId',
-      'storeName purchaseDate invoiceNumber fileUrl fileType publicToken currency subtotal grandTotal'
+      'storeName purchaseDate invoiceNumber fileUrl fileData mimeType fileType publicToken currency subtotal grandTotal'
     );
 
     if (!product) {

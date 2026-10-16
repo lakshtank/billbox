@@ -44,13 +44,13 @@ const CURRENCY_SYMBOLS = {
 };
 
 export const EXCHANGE_RATES_TO_INR = {
-  INR: 1,
-  USD: 95.33,   // $1 USD = ₹95.33 INR
-  EUR: 111.25,  // €1 EUR = ₹111.25 INR
-  GBP: 129.85,  // £1 GBP = ₹129.85 INR
-  CAD: 68.74,   // CA$1 CAD = ₹68.74 INR
-  AUD: 68.43,   // AU$1 AUD = ₹68.43 INR
-  JPY: 0.62,    // ¥1 JPY = ₹0.62 INR
+  INR: 1.0,
+  USD: 84.00,  // $1 USD = ₹84.00 INR
+  EUR: 91.50,  // €1 EUR = ₹91.50 INR
+  GBP: 108.50, // £1 GBP = ₹108.50 INR
+  CAD: 61.50,  // CA$1 CAD = ₹61.50 INR
+  AUD: 55.50,  // AU$1 AUD = ₹55.50 INR
+  JPY: 0.56,   // ¥1 JPY = ₹0.56 INR
 };
 
 export const getActiveCurrency = () => {
@@ -109,11 +109,14 @@ export const formatCurrency = (amount, sourceCurrency = 'INR', targetCurrency) =
 };
 
 /**
- * Get display symbol for a currency code (e.g. INR -> ₹, USD -> $)
+ * Get the display symbol for a currency code (e.g. 'INR' -> '₹', 'USD' -> '$').
+ *
+ * The passed code wins. A receipt denominated in USD must render '$' regardless
+ * of the viewer's display preference — only fall back to the active preference
+ * when no code is supplied.
  */
 export const getCurrencySymbol = (currencyCode) => {
-  const userPreferred = getActiveCurrency();
-  const code = (userPreferred || currencyCode || 'INR').toUpperCase();
+  const code = (currencyCode || getActiveCurrency() || 'INR').toUpperCase();
   return CURRENCY_SYMBOLS[code] || code;
 };
 

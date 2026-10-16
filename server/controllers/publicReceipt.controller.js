@@ -92,7 +92,7 @@ const getPublicReceiptFile = async (req, res) => {
       return res.sendFile(absolutePath);
     }
 
-    return sendError(res, 404, 'Original document file is not available for this receipt.');
+    return sendError(res, 404, 'Original uploaded document file is not found on this server.');
   } catch (error) {
     console.error('getPublicReceiptFile error:', error);
     return sendError(res, 500, 'Server error serving public receipt file.');

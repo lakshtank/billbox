@@ -1,205 +1,400 @@
+import * as React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
+import * as m from 'motion/react-m';
 import {
   LayoutDashboard,
-  Receipt,
+  ReceiptText,
   Package,
   ShieldCheck,
   Store,
-  Plus,
-  User,
+  Bell,
   Settings,
+  User,
+  LogOut,
+  Sun,
+  Moon,
+  Laptop,
+  Command,
+  ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Check,
 } from 'lucide-react';
-import useUiStore from '../../store/uiStore';
+import { Logo } from '../brand/Logo';
+import { usePreferences } from '../../context/PreferencesContext';
+import useAuth from '../../hooks/useAuth';
+import { useRemindersQuery } from '../../queries/useRemindersQuery';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '../ui/dropdown-menu';
+import { cn } from '../../lib/utils';
+import { prefetchRoute } from '../../lib/routePreloader';
+import { spring } from '../../lib/motion';
 
-const navItems = [
-  {
-    to: '/',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    to: '/receipts',
-    label: 'Receipts',
-    icon: Receipt,
-  },
-  {
-    to: '/products',
-    label: 'Products',
-    icon: Package,
-  },
-  {
-    to: '/warranties',
-    label: 'Warranties',
-    icon: ShieldCheck,
-  },
-  {
-    to: '/stores',
-    label: 'Stores',
-    icon: Store,
-  },
-];
-
-const bottomNavItems = [
-  {
-    to: '/profile',
-    label: 'Profile',
-    icon: User,
-  },
-  {
-    to: '/settings',
-    label: 'Settings',
-    icon: Settings,
-  },
-];
-
-const Sidebar = () => {
-  const { sidebarOpen, closeSidebar } = useUiStore();
+/**
+ * Step 10.2: Sidebar component with Step 4.1 Motion Shell enhancements
+ * - 240px (w-60) wide, collapses to 64px (w-16) rail
+ * - Animated with Motion layout so labels glide and don't squash:
+ *   <m.aside animate={{ width: sidebarCollapsed ? 64 : 240 }} transition={spring.soft}>
+ * - Active highlight uses shared layoutId="nav-active" to glide between items
+ * - Labels unmount smoothly using AnimatePresence with 80ms exit
+ * - Background bg-sidebar, 1px right border line
+ * - Top: 56px (h-14) mark + wordmark & collapse button
+ * - Nav items: Overview, Receipts, Products, Warranties (amber dot when expiring), Merchants, Reminders
+ * - Settings divider + Settings nav link
+ * - Bottom: user row with dropdown menu
+ */
+export function Sidebar() {
+  const { sidebarCollapsed, toggleSidebarCollapse, theme, setTheme } = usePreferences();
+  const { user, logoutUser } = useAuth();
   const navigate = useNavigate();
 
-  return (
-    <>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-xs md:hidden"
-          onClick={closeSidebar}
-          aria-hidden="true"
-        />
-      )}
+  // Fetch reminders to count expiring items for amber dot
+  const { data: remindersData } = useRemindersQuery();
+  const expiringCount = React.useMemo(() => {
+    const items = remindersData?.items || [];
+    return items.filter((i) => i.daysRemaining > 0 && i.daysRemaining <= 30).length;
+  }, [remindersData]);
 
-      <aside
-        className={`
-          fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-60
-          bg-brand-sidebar border-r border-brand-border
-          transition-transform duration-200 ease-in-out
-          md:static md:h-full md:translate-x-0 shrink-0 flex flex-col justify-between p-4 overflow-y-auto font-sans
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+  const navItems = [
+    { to: '/', label: 'Overview', icon: LayoutDashboard, routeKey: 'dashboard' },
+    { to: '/receipts', label: 'Receipts', icon: ReceiptText, routeKey: 'receipts' },
+    { to: '/products', label: 'Products', icon: Package, routeKey: 'products' },
+    {
+      to: '/warranties',
+      label: 'Warranties',
+      icon: ShieldCheck,
+      hasDot: expiringCount > 0,
+      dotCount: expiringCount,
+      routeKey: 'warranties',
+    },
+    { to: '/stores', label: 'Merchants', icon: Store, routeKey: 'stores' },
+    { to: '/reminders', label: 'Reminders', icon: Bell, routeKey: 'reminders' },
+  ];
+
+  const handleOpenShortcuts = () => {
+    window.dispatchEvent(new CustomEvent('billbox:open-shortcuts'));
+  };
+
+  const userInitial = user?.name
+    ? user.name.charAt(0).toUpperCase()
+    : user?.email
+    ? user.email.charAt(0).toUpperCase()
+    : 'U';
+
+  const userName = user?.name || (user?.email ? user.email.split('@')[0] : 'User');
+  const userEmail = user?.email || '';
+
+  return (
+    <m.aside
+      animate={{ width: sidebarCollapsed ? 64 : 240 }}
+      transition={spring.soft}
+      className={cn(
+        'hidden md:flex flex-col shrink-0 sticky top-0 h-dvh bg-sidebar border-r border-line font-sans select-none overflow-hidden',
+        sidebarCollapsed ? 'w-16' : 'w-60'
+      )}
+    >
+      {/* 10.2 Top Block: 56px (h-14) mark + wordmark & collapse button */}
+      <div
+        className={cn(
+          'h-14 shrink-0 flex items-center border-b border-line px-3',
+          sidebarCollapsed ? 'justify-center gap-1' : 'justify-between'
+        )}
       >
-        <div className="space-y-6">
-          {/* Primary Add Receipt Button */}
-          <div>
+        {sidebarCollapsed ? (
+          <div className="flex flex-col items-center gap-1">
+            <Logo size="md" showWordmark={false} />
             <button
               type="button"
-              onClick={() => {
-                closeSidebar();
-                navigate('/receipts/new');
-              }}
-              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 bg-brand-primary hover:bg-brand-primary-hover text-white font-medium text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+              onClick={toggleSidebarCollapse}
+              className="p-1 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Receipt</span>
+              <PanelLeftOpen className="w-3.5 h-3.5" />
             </button>
           </div>
+        ) : (
+          <>
+            <Logo size="md" showWordmark={true} />
+            <button
+              type="button"
+              onClick={toggleSidebarCollapse}
+              className="p-1.5 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          </>
+        )}
+      </div>
 
-          {/* Main Navigation */}
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/'}
-                  onClick={closeSidebar}
-                  className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs no-underline select-none group"
-                >
-                  {({ isActive }) => (
-                    <>
-                      {/* Animated Dark Glass Bubble */}
-                      {isActive && (
-                        <motion.div
-                          layoutId="sidebar-active-bubble"
-                          className="absolute inset-0 rounded-xl glass-bubble-dark z-0"
-                          transition={{
-                            type: 'spring',
-                            stiffness: 400,
-                            damping: 28,
-                            mass: 0.8,
-                          }}
-                        />
+      {/* 10.2 & 4.1 Navigation Items with gliding layoutId="nav-active" */}
+      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const link = (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              onMouseEnter={() => item.routeKey && prefetchRoute(item.routeKey)}
+              onTouchStart={() => item.routeKey && prefetchRoute(item.routeKey)}
+              onFocus={() => item.routeKey && prefetchRoute(item.routeKey)}
+              className={({ isActive }) =>
+                cn(
+                  'group relative flex items-center h-10 rounded-[8px] text-sm font-medium transition-colors',
+                  sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-3 w-full',
+                  isActive ? 'text-accent font-semibold' : 'text-fg-2 hover:text-fg hover:bg-hover'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <m.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-[8px] bg-selected border border-accent/30 shadow-xs"
+                      transition={spring.snappy}
+                    />
+                  )}
+                  <div className="relative flex items-center justify-center shrink-0 w-5 h-5">
+                    <Icon
+                      className={cn(
+                        'w-[18px] h-[18px] shrink-0 transition-colors',
+                        isActive ? 'text-accent stroke-[2.25]' : 'text-fg-3 group-hover:text-fg'
                       )}
-
-                      {/* Foreground Content */}
-                      <Icon
-                        className={`relative z-10 w-4 h-4 transition-colors duration-150 ${
-                          isActive
-                            ? 'text-white'
-                            : 'text-slate-500 group-hover:text-brand-navy'
-                        }`}
-                      />
-                      <span
-                        className={`relative z-10 transition-colors duration-150 ${
-                          isActive
-                            ? 'text-white font-medium'
-                            : 'text-slate-600 font-normal group-hover:text-brand-navy group-hover:font-medium'
-                        }`}
+                    />
+                    {item.hasDot && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-warn-solid ring-2 ring-sidebar" />
+                    )}
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {!sidebarCollapsed && (
+                      <m.span
+                        className="relative text-sm font-medium whitespace-nowrap truncate"
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, transition: { duration: 0.08 } }}
                       >
                         {item.label}
-                      </span>
-                    </>
-                  )}
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Bottom Navigation: Profile & Settings */}
-        <div className="pt-4 border-t border-brand-border space-y-1 mt-auto">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={closeSidebar}
-                className="relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs no-underline select-none group"
-              >
-                {({ isActive }) => (
-                  <>
-                    {/* Animated Dark Glass Bubble */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="sidebar-active-bubble"
-                        className="absolute inset-0 rounded-xl glass-bubble-dark z-0"
-                        transition={{
-                          type: 'spring',
-                          stiffness: 400,
-                          damping: 28,
-                          mass: 0.8,
-                        }}
-                      />
+                      </m.span>
                     )}
+                  </AnimatePresence>
+                </>
+              )}
+            </NavLink>
+          );
 
-                    {/* Foreground Content */}
-                    <Icon
-                      className={`relative z-10 w-4 h-4 transition-colors duration-150 ${
-                        isActive
-                          ? 'text-white'
-                          : 'text-slate-500 group-hover:text-brand-navy'
-                      }`}
-                    />
-                    <span
-                      className={`relative z-10 transition-colors duration-150 ${
-                        isActive
-                          ? 'text-white font-medium'
-                          : 'text-slate-600 font-normal group-hover:text-brand-navy group-hover:font-medium'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                  </>
-                )}
-              </NavLink>
+          if (sidebarCollapsed) {
+            return (
+              <Tooltip key={item.to}>
+                <TooltipTrigger asChild>{link}</TooltipTrigger>
+                <TooltipContent side="right">
+                  {item.label}
+                  {item.hasDot ? ` (${item.dotCount} expiring)` : ''}
+                </TooltipContent>
+              </Tooltip>
             );
-          })}
+          }
+
+          return link;
+        })}
+
+        {/* Divider before Settings */}
+        <div className="pt-2 pb-1">
+          <hr className="border-t border-line" />
         </div>
-      </aside>
-    </>
+
+        {/* Settings Nav Item */}
+        {(() => {
+          const settingsLink = (
+            <NavLink
+              to="/settings"
+              onMouseEnter={() => prefetchRoute('settings')}
+              onTouchStart={() => prefetchRoute('settings')}
+              onFocus={() => prefetchRoute('settings')}
+              className={({ isActive }) =>
+                cn(
+                  'group relative flex items-center h-10 rounded-[8px] text-sm font-medium transition-colors',
+                  sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-3 w-full',
+                  isActive ? 'text-accent font-semibold' : 'text-fg-2 hover:text-fg hover:bg-hover'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <m.span
+                      layoutId="nav-active"
+                      className="absolute inset-0 rounded-[8px] bg-selected border border-accent/30 shadow-xs"
+                      transition={spring.snappy}
+                    />
+                  )}
+                  <div className="relative flex items-center justify-center shrink-0 w-5 h-5">
+                    <Settings
+                      className={cn(
+                        'w-[18px] h-[18px] shrink-0 transition-colors',
+                        isActive ? 'text-accent stroke-[2.25]' : 'text-fg-3 group-hover:text-fg'
+                      )}
+                    />
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {!sidebarCollapsed && (
+                      <m.span
+                        className="relative text-sm font-medium whitespace-nowrap truncate"
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                      >
+                        Settings
+                      </m.span>
+                    )}
+                  </AnimatePresence>
+                </>
+              )}
+            </NavLink>
+          );
+
+          if (sidebarCollapsed) {
+            return (
+              <Tooltip key="/settings">
+                <TooltipTrigger asChild>{settingsLink}</TooltipTrigger>
+                <TooltipContent side="right">Settings</TooltipContent>
+              </Tooltip>
+            );
+          }
+          return settingsLink;
+        })()}
+      </nav>
+
+      {/* 10.2 Bottom User Row with Dropdown Menu */}
+      <div className="p-2 border-t border-line shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                'flex items-center w-full rounded-[8px] text-left hover:bg-hover transition-colors outline-none cursor-pointer',
+                sidebarCollapsed
+                  ? 'justify-center p-2'
+                  : 'gap-2.5 p-2'
+              )}
+              aria-label="User account menu"
+            >
+              <div className="w-7 h-7 rounded-full bg-accent text-on-accent text-xs font-semibold flex items-center justify-center shrink-0">
+                {userInitial}
+              </div>
+              <AnimatePresence initial={false}>
+                {!sidebarCollapsed && (
+                  <m.div
+                    className="min-w-0 flex-1 flex items-center justify-between"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.08 } }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-fg truncate leading-tight">
+                        {userName}
+                      </p>
+                      <p className="text-[11px] text-fg-3 truncate leading-tight">
+                        {userEmail}
+                      </p>
+                    </div>
+                    <ChevronsUpDown className="w-3.5 h-3.5 text-fg-3 shrink-0 ml-1" />
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            side="top"
+            align={sidebarCollapsed ? 'center' : 'start'}
+            className="w-56 font-sans"
+          >
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-0.5">
+                <p className="text-xs font-semibold text-fg truncate">{userName}</p>
+                <p className="text-[11px] text-fg-3 truncate">{userEmail}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onMouseEnter={() => prefetchRoute('profile')}
+              onClick={() => navigate('/profile')}
+            >
+              <User className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onMouseEnter={() => prefetchRoute('settings')}
+              onClick={() => navigate('/settings')}
+            >
+              <Settings className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            {/* Theme Selectors */}
+            <DropdownMenuLabel className="text-[10px] uppercase font-semibold text-fg-3 tracking-wider py-1">
+              Theme
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => setTheme('light')}>
+              <Sun className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Light</span>
+              {theme === 'light' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')}>
+              <Moon className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Dark</span>
+              {theme === 'dark' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('system')}>
+              <Laptop className="w-4 h-4 mr-2 text-fg-3" />
+              <span>System</span>
+              {theme === 'system' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={handleOpenShortcuts}>
+              <Command className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Keyboard shortcuts</span>
+              <kbd className="ml-auto text-[10px] font-mono bg-subtle border border-line rounded px-1 text-fg-3">
+                ?
+              </kbd>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={logoutUser}
+              className="text-bad-fg focus:text-bad-fg"
+            >
+              <LogOut className="w-4 h-4 mr-2 text-bad-fg" />
+              <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </m.aside>
   );
-};
+}
 
 export default Sidebar;
-

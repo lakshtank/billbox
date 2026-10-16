@@ -3,16 +3,7 @@ const Receipt = require('../models/Receipt.model');
 const Product = require('../models/Product.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
-// Exchange rates relative to INR (Base Currency)
-const EXCHANGE_RATES_TO_INR = {
-  INR: 1.0,
-  USD: 83.50,
-  EUR: 91.20,
-  GBP: 106.00,
-  CAD: 61.50,
-  AUD: 54.80,
-  JPY: 0.56,
-};
+const { EXCHANGE_RATES_TO_INR } = require('../constants/currency.constants');
 
 // GET /api/dashboard/stats
 const getStats = async (req, res) => {
@@ -29,6 +20,7 @@ const getStats = async (req, res) => {
     const [
       totalReceipts,
       totalProducts,
+      needsReviewCount,
       thisMonthReceiptsDocs,
       lastMonthReceiptsDocs,
       totalSpentByCurrency,
@@ -39,6 +31,7 @@ const getStats = async (req, res) => {
     ] = await Promise.all([
       Receipt.countDocuments({ userId }),
       Product.countDocuments({ userId }),
+      Receipt.countDocuments({ userId, needsReview: true }),
 
       // Receipts this month
       Receipt.find({ userId, purchaseDate: { $gte: startOfThisMonth } }),
@@ -228,6 +221,7 @@ const getStats = async (req, res) => {
     const stats = {
       totalReceipts,
       totalProducts,
+      needsReviewCount: needsReviewCount || 0,
       totalSpent: totalSpentInINR,
       thisMonthSpent: thisMonthSpentINR,
       lastMonthSpent: lastMonthSpentINR,

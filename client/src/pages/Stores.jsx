@@ -1,19 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Store, Search, ArrowRight, Calendar, ShoppingBag, FileText, ArrowUpDown, SlidersHorizontal, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import {
+  Store,
+  Search,
+  ChevronRight,
+  FileText,
+  Package,
+  Plus,
+  X,
+} from 'lucide-react';
 import { useStoresQuery } from '../queries/useStoresQuery';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import EmptyState from '../components/common/EmptyState';
-import { formatDate, formatCurrency } from '../utils/formatters';
+import { PageHeader } from '../components/common/PageHeader';
+import { EmptyState } from '../components/common/EmptyState';
+import { Money } from '../components/data/Money';
+import { DateCell } from '../components/data/DateCell';
+import { Button } from '../components/ui/button';
+import RouteSkeleton from '@/components/common/RouteSkeleton';
+import PageContentTransition from '@/components/common/PageContentTransition';
+import * as m from 'motion/react-m';
+import { LayoutGroup } from 'motion/react';
+import { variants } from '@/lib/motion';
 
 const SORT_OPTIONS = [
-  { id: 'spend_desc', label: 'Highest Spend' },
-  { id: 'receipts_desc', label: 'Most Receipts' },
-  { id: 'recent', label: 'Most Recent' },
-  { id: 'name_asc', label: 'Store Name (A–Z)' },
+  { id: 'spend_desc', label: 'Highest spend' },
+  { id: 'receipts_desc', label: 'Most receipts' },
+  { id: 'recent', label: 'Most recent' },
+  { id: 'name_asc', label: 'Merchant (A–Z)' },
 ];
 
-const Stores = () => {
+export default function Stores() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -21,15 +36,55 @@ const Stores = () => {
   const sortParam = searchParams.get('sort') || 'spend_desc';
   const pageParam = parseInt(searchParams.get('page'), 10) || 1;
 
-  // Local state for Search & Filter Modal
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParam);
-  const [tempSort, setTempSort] = useState(sortParam);
 
+  // Sync internal state if URL changes
   useEffect(() => {
     setSearchTerm(searchParam);
-    setTempSort(sortParam);
-  }, [searchParam, sortParam]);
+  }, [searchParam]);
+
+  // Debounced search commit to URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchTerm.trim() !== searchParam) {
+        const params = new URLSearchParams(searchParams);
+        if (searchTerm.trim()) {
+          params.set('search', searchTerm.trim());
+        } else {
+          params.delete('search');
+        }
+        params.set('page', '1');
+        setSearchParams(params, { replace: true });
+      }
+    }, 350);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm, searchParam, searchParams, setSearchParams]);
+
+  const handleSortChange = (newSort) => {
+    const params = new URLSearchParams(searchParams);
+    if (newSort && newSort !== 'spend_desc') {
+      params.set('sort', newSort);
+    } else {
+      params.delete('sort');
+    }
+    params.set('page', '1');
+    setSearchParams(params);
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(newPage));
+    setSearchParams(params);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    const params = new URLSearchParams(searchParams);
+    params.delete('search');
+    params.set('page', '1');
+    setSearchParams(params);
+  };
 
   const filters = {
     page: pageParam,
@@ -39,370 +94,277 @@ const Stores = () => {
   };
 
   const { data, isLoading, isError } = useStoresQuery(filters);
-  const { stores = [], total = 0, page = 1, totalPages = 1 } = data || {};
+  const stores = Array.isArray(data?.stores)
+    ? data.stores
+    : Array.isArray(data)
+    ? data
+    : [];
+  const total = data?.total ?? stores.length;
+  const page = data?.page || 1;
+  const totalPages = data?.totalPages || 1;
 
-  const hasActiveFilters = Boolean(searchParam || sortParam !== 'spend_desc');
+  const startIndex = total > 0 ? (page - 1) * 15 + 1 : 0;
+  const endIndex = Math.min(page * 15, total);
 
-  const handleApplyFilters = (e) => {
-    if (e) e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchTerm.trim()) params.set('search', searchTerm.trim());
-    if (tempSort && tempSort !== 'spend_desc') params.set('sort', tempSort);
-    params.set('page', '1');
-    setSearchParams(params);
-    setIsFilterModalOpen(false); // pop up should be gayab
-  };
+  const hasAnimatedStagger = React.useRef(false);
+  const shouldStagger = !hasAnimatedStagger.current && stores.length > 0;
+  React.useEffect(() => {
+    if (stores.length > 0) {
+      hasAnimatedStagger.current = true;
+    }
+  }, [stores.length]);
 
-  const handleClearAllFilters = () => {
-    setSearchTerm('');
-    setTempSort('spend_desc');
-    setSearchParams(new URLSearchParams({ page: '1' }));
-    setIsFilterModalOpen(false);
-  };
-
-  const handlePageChange = (newPage) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(newPage));
-    setSearchParams(params);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <EmptyState
-        title="Could not load stores"
-        description="Something went wrong fetching your store history. Please try refreshing."
-      />
-    );
-  }
+  const hasActiveFilters = Boolean(searchParam.trim() || sortParam !== 'spend_desc');
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
-      {/* Search & Filter Popup Modal (Wider, Dropping from top) */}
-      {isFilterModalOpen && (
-        <div 
-          onClick={() => setIsFilterModalOpen(false)}
-          className="fixed inset-0 z-50 bg-brand-navy/40 backdrop-blur-xs flex items-start justify-center pt-6 sm:pt-12 px-4 pb-6 animate-in fade-in duration-150 overflow-y-auto"
-        >
-          <div 
-            onClick={(e) => e.stopPropagation()}
-            className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-7 shadow-2xl w-full max-w-2xl sm:max-w-3xl space-y-5 animate-in slide-in-from-top-6 duration-200"
+    <PageContentTransition
+      isLoading={isLoading && !data}
+      skeleton={<RouteSkeleton section="stores" />}
+      className="space-y-6 font-sans"
+    >
+      {/* 1. Page Header */}
+      <PageHeader
+        title="Merchants"
+        description="Track spending, order frequency, and purchase history grouped by merchant."
+        actions={
+          <Button asChild size="sm" className="gap-1.5 shrink-0">
+            <Link to="/receipts/new">
+              <Plus className="size-4" />
+              <span>Add receipt</span>
+            </Link>
+          </Button>
+        }
+      />
+
+      {/* 2. Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-3 pointer-events-none" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search merchants..."
+            className="w-full text-sm pl-9 pr-8 py-1.5 rounded-lg border border-line bg-surface text-fg placeholder:text-fg-3 focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-3 hover:text-fg p-0.5 cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Sort Options */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-fg-3 font-medium hidden sm:inline">Sort:</span>
+          <select
+            value={sortParam}
+            onChange={(e) => handleSortChange(e.target.value)}
+            className="w-auto shrink-0 text-xs h-9 px-3 rounded-[8px] border border-line bg-surface text-fg font-medium focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
           >
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border flex items-center justify-center text-brand-primary">
-                  <SlidersHorizontal className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-brand-navy leading-none">Search & Filter Merchants</h3>
-                  <p className="text-xs text-slate-400 font-normal mt-0.5">Filter stores by name or sort by spending / frequency</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsFilterModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Inline Reset button (Zero layout shift: table below never moves downwards) */}
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                handleClearSearch();
+                handleSortChange('spend_desc');
+              }}
+              className="h-9 text-xs text-accent hover:underline cursor-pointer font-medium whitespace-nowrap"
+            >
+              Reset
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Table Card */}
+      <div className="rounded-[12px] border border-line bg-surface shadow-2xs overflow-hidden">
+        {isError ? (
+          <div className="p-8">
+            <EmptyState
+              icon={Store}
+              title="Could not load merchants"
+              description="Something went wrong while fetching your merchant list. Please try refreshing."
+              actionLabel="Retry"
+              onAction={() => window.location.reload()}
+            />
+          </div>
+        ) : stores.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon={Store}
+              title={searchParam ? 'No matching merchants found' : 'No merchants yet'}
+              description={
+                searchParam
+                  ? `No stores matched "${searchParam}". Try a different search term.`
+                  : 'Upload receipts to automatically organize and track your spending by store.'
+              }
+              actionLabel={searchParam ? 'Clear search' : 'Add receipt'}
+              onAction={searchParam ? handleClearSearch : () => navigate('/receipts/new')}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+            <table className="w-full text-left border-collapse table-fixed text-sm">
+              <colgroup>
+                <col className="w-[40%] min-w-[220px]" />
+                <col className="w-[15%] min-w-[100px]" />
+                <col className="w-[15%] min-w-[100px]" />
+                <col className="w-[18%] min-w-[120px]" />
+                <col className="w-[12%] min-w-[100px]" />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                  <th className="py-2.5 px-4 font-semibold">Merchant</th>
+                  <th className="py-2.5 px-4 font-semibold">Receipts</th>
+                  <th className="py-2.5 px-4 font-semibold">Products</th>
+                  <th className="py-2.5 px-4 font-semibold text-right">Total spend</th>
+                  <th className="py-2.5 px-4 font-semibold text-right">Last purchase</th>
+                </tr>
+              </thead>
+              <m.tbody
+                variants={variants.stagger(0.015)}
+                initial={shouldStagger ? 'hidden' : false}
+                animate="show"
+                className="divide-y divide-line-subtle"
               >
-                <X className="w-4 h-4" />
-              </button>
+                <LayoutGroup id="billbox-stores-rows">
+                  {stores.map((store, index) => {
+                      const initial = (store.storeName || '?').charAt(0).toUpperCase();
+                      const encodedName = encodeURIComponent(store.storeName);
+                      const isStaggered = index < 12;
+                      const enableLayout = stores.length <= 50;
+                      const rowKey = store.storeKey || store.storeName;
+
+                      return (
+                        <m.tr
+                          key={rowKey}
+                          layout={enableLayout ? 'position' : false}
+                          transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                          variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                          onClick={() => navigate(`/stores/${encodedName}`)}
+                          className="group hover:bg-hover/60 transition-colors cursor-pointer"
+                        >
+                          {/* Merchant Avatar + Name + Categories */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="size-9 rounded-lg bg-subtle border border-line flex items-center justify-center font-bold text-sm text-fg shrink-0 group-hover:border-line-strong transition-colors">
+                                {initial}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-fg group-hover:text-accent transition-colors truncate">
+                                  {store.storeName}
+                                </div>
+                                {store.categories && store.categories.length > 0 && (
+                                  <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                    {store.categories.slice(0, 2).map((cat) => (
+                                      <span
+                                        key={cat}
+                                        className="text-[11px] text-fg-3 bg-subtle px-1.5 py-0.2 rounded border border-line-subtle truncate max-w-[110px]"
+                                      >
+                                        {cat}
+                                      </span>
+                                    ))}
+                                    {store.categories.length > 2 && (
+                                      <span className="text-[10px] text-fg-3">
+                                        +{store.categories.length - 2}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Receipts Count */}
+                          <td className="py-3 px-4 text-fg-2">
+                            <div className="flex items-center gap-1.5 font-medium tnum">
+                              <FileText className="size-3.5 text-fg-3" />
+                              <span>{store.receiptCount}</span>
+                            </div>
+                          </td>
+
+                          {/* Products Count */}
+                          <td className="py-3 px-4 text-fg-2">
+                            <div className="flex items-center gap-1.5 font-medium tnum">
+                              <Package className="size-3.5 text-fg-3" />
+                              <span>{store.productCount || 0}</span>
+                            </div>
+                          </td>
+
+                          {/* Total Spend */}
+                          <td className="py-3 px-4 text-right">
+                            <Money
+                              value={store.totalSpent}
+                              currency={store.currency || 'INR'}
+                              className="font-semibold text-fg"
+                            />
+                          </td>
+
+                          {/* Last Purchase Date */}
+                          <td className="py-3 px-4 text-right">
+                            <div className="inline-flex items-center gap-1.5">
+                              <DateCell value={store.latestPurchaseDate} />
+                              <ChevronRight className="size-4 text-fg-3 group-hover:text-fg group-hover:translate-x-0.5 transition-all shrink-0 ml-1" />
+                            </div>
+                          </td>
+                        </m.tr>
+                      );
+                    })}
+                </LayoutGroup>
+              </m.tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 4. Table Pagination Footer */}
+        {total > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-line bg-subtle/50 text-xs text-fg-3">
+            <div>
+              Showing <span className="font-medium text-fg tnum">{startIndex}</span>–
+              <span className="font-medium text-fg tnum">{endIndex}</span> of{' '}
+              <span className="font-medium text-fg tnum">{total}</span> merchants
             </div>
 
-            <form onSubmit={handleApplyFilters} className="space-y-4">
-              {/* Search Keyword */}
-              <div>
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                  Search Merchant Name
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-                  <input
-                    type="text"
-                    autoFocus
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search by store or vendor name..."
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 transition-colors font-sans"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
-                  />
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-medium p-1 cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Sort Options */}
-              <div>
-                <label className="text-xs font-medium text-slate-700 block mb-2">
-                  Sort Order
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {SORT_OPTIONS.map((opt) => {
-                    const isSelected = tempSort === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setTempSort(opt.id)}
-                        className={`text-xs px-3.5 py-2 rounded-xl font-medium border text-left transition-colors cursor-pointer ${
-                          isSelected
-                            ? 'bg-brand-border text-brand-navy border-brand-primary'
-                            : 'bg-brand-surface text-slate-600 border-brand-border hover:bg-brand-canvas'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={handleClearAllFilters}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-800 px-2 py-2 cursor-pointer"
-                >
-                  Reset All
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsFilterModalOpen(false)}
-                    className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs cursor-pointer"
-                  >
-                    Apply & Search
-                  </button>
-                </div>
-              </div>
-            </form>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+                className="h-7 text-xs px-2.5"
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="h-7 text-xs px-2.5"
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* 1. Page Header Row */}
-      <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-            Stores & Merchants
-          </h1>
-          <p className="text-xs text-slate-500 font-normal mt-1">
-            Track spending, order frequency, and purchase history by merchant.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* Compact Filter & Search Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setIsFilterModalOpen(true)}
-            className={`px-3.5 py-2 text-xs font-medium rounded-xl border transition-colors inline-flex items-center gap-2 cursor-pointer shadow-2xs ${
-              hasActiveFilters
-                ? 'bg-brand-border text-brand-navy border-brand-primary'
-                : 'bg-brand-surface text-brand-navy border-brand-border hover:bg-brand-canvas'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>Search & Filter</span>
-            {hasActiveFilters && (
-              <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Active Filter Chips Strip */}
-      {hasActiveFilters && (
-        <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-          <span className="text-slate-400 font-medium text-[11px]">Active Filters:</span>
-          {searchParam && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-primary font-semibold border border-brand-primary/25">
-              <span>"{searchParam}"</span>
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams);
-                  params.delete('search');
-                  setSearchParams(params);
-                }}
-                className="hover:text-brand-primary cursor-pointer font-medium"
-              >
-                ✕
-              </button>
-            </span>
-          )}
-          {sortParam !== 'spend_desc' && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-primary font-medium border border-brand-primary/25">
-              <span>Sort: {SORT_OPTIONS.find((s) => s.id === sortParam)?.label || sortParam}</span>
-              <button
-                onClick={() => {
-                  const params = new URLSearchParams(searchParams);
-                  params.delete('sort');
-                  setSearchParams(params);
-                }}
-                className="hover:text-brand-primary cursor-pointer font-medium"
-              >
-                ✕
-              </button>
-            </span>
-          )}
-          <button
-            onClick={handleClearAllFilters}
-            className="text-xs font-medium text-brand-navy hover:text-brand-primary hover:underline cursor-pointer ml-1"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
-
-      {/* 3. Results Count Strip */}
-      <div className="flex items-center justify-between text-xs text-slate-400 font-medium border-b border-slate-100 pb-2">
-        <div>Showing {stores.length} of {total} merchants</div>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={handleClearAllFilters}
-            className="text-xs font-semibold text-brand-primary hover:underline cursor-pointer"
-          >
-            Clear filters
-          </button>
         )}
       </div>
-
-      {/* 4. Stores List */}
-      {stores.length === 0 ? (
-        <EmptyState
-          title={searchParam ? 'No stores match your search' : 'No store history found'}
-          description={
-            searchParam
-              ? 'Try searching with a different merchant name.'
-              : 'Upload receipts to automatically populate your merchant spending history.'
-          }
-          actionLabel={searchParam ? 'Clear Search' : 'Add Receipt'}
-          onAction={searchParam ? handleClearSearch : () => navigate('/receipts/new')}
-        />
-      ) : (
-        <div className="divide-y divide-brand-border border-b border-brand-border font-sans">
-          {stores.map((store) => {
-            const currency = store.currency || 'INR';
-            return (
-              <div
-                key={store.storeKey || store.storeName}
-                onClick={() => navigate(`/stores/${encodeURIComponent(store.storeName)}`)}
-                className="py-4 md:py-5 px-2 flex items-center justify-between gap-4 cursor-pointer hover:bg-brand-border/20 transition-colors group"
-              >
-                {/* Left: Store Name & Badges */}
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3
-                      className="text-base sm:text-lg font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate"
-                      title={store.storeName}
-                    >
-                      {store.storeName}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap text-xs text-slate-400 font-normal">
-                    <span className="inline-flex items-center gap-1 font-medium text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/25 font-tabular">
-                      <FileText className="w-3 h-3 text-brand-primary" />
-                      <span>{store.receiptCount} {store.receiptCount === 1 ? 'receipt' : 'receipts'}</span>
-                    </span>
-
-                    {store.productCount > 0 && (
-                      <span className="inline-flex items-center gap-1 font-medium text-brand-primary bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/25 font-tabular">
-                        <ShoppingBag className="w-3 h-3 text-brand-primary" />
-                        <span>{store.productCount} {store.productCount === 1 ? 'item' : 'items'}</span>
-                      </span>
-                    )}
-
-                    {store.latestPurchaseDate && (
-                      <>
-                        <span className="text-slate-300">•</span>
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-slate-400" />
-                          <span>Last purchase: <strong className="font-medium text-slate-700 font-tabular">{formatDate(store.latestPurchaseDate)}</strong></span>
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  {store.categories && store.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {store.categories.map((cat) => (
-                        <span
-                          key={cat}
-                          className="text-[11px] font-medium text-brand-primary/90 bg-brand-primary/10 px-2 py-0.5 rounded-md border border-brand-primary/20"
-                        >
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Right: Total Spend & Arrow */}
-                <div className="flex items-center gap-3 shrink-0 text-right">
-                  <div>
-                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
-                      Total Spend
-                    </span>
-                    <span className="text-base sm:text-xl font-medium text-slate-900 font-tabular tracking-tight leading-none block">
-                      {formatCurrency(store.totalSpent, 'INR')}
-                    </span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-700 transition-colors shrink-0" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* 5. Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs pt-4 text-slate-500 font-sans">
-          <span>
-            Page <strong className="text-slate-900 font-tabular">{page}</strong> of <strong className="text-slate-900 font-tabular">{totalPages}</strong>
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </PageContentTransition>
   );
-};
-
-export default Stores;
+}

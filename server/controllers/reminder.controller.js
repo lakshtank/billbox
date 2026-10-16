@@ -3,6 +3,7 @@ const Receipt = require('../models/Receipt.model');
 const User = require('../models/User.model');
 const ReminderLog = require('../models/ReminderLog.model');
 const { sendWarrantyReminderEmail } = require('../services/email.service');
+const { runWarrantyReminderCheck } = require('../services/reminder.service');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 // GET /api/reminders
@@ -93,12 +94,22 @@ const getReminders = async (req, res) => {
       .sort({ sentAt: -1 })
       .limit(20);
 
+    // Check whether SMTP is configured
+    const isEmailConfigured = Boolean(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS &&
+      !process.env.SMTP_USER.includes('your_smtp_user') &&
+      !process.env.SMTP_PASS.includes('your_smtp_password')
+    );
+
     return sendSuccess(res, 200, 'Reminders fetched successfully', {
       stats: {
         totalTracked,
         remindersEnabled: remindersEnabledCount,
         dueSoonCount,
         logsSentCount,
+        isEmailConfigured,
       },
       items: filteredItems,
       logs: recentLogs,
@@ -173,20 +184,20 @@ const testSendReminder = async (req, res) => {
     const diffMs = new Date(expiryDate).getTime() - now.getTime();
     const daysRemaining = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 
-    let status = 'sent';
-    try {
-      await sendWarrantyReminderEmail({
-        to: user.email,
-        userName: user.name || 'BillBox User',
-        productName: product.productName,
-        storeName,
-        warrantyExpiryDate: expiryDate,
-        daysRemaining,
-      });
-    } catch (mailErr) {
-      console.error('Test reminder email error:', mailErr.message);
-      status = 'failed';
-    }
+    const delivery = await sendWarrantyReminderEmail({
+      to: user.email,
+      userName: user.name || 'BillBox User',
+      productName: product.productName,
+      storeName,
+      warrantyExpiryDate: expiryDate,
+      daysRemaining,
+    });
+
+    const status = delivery.delivered
+      ? 'sent'
+      : delivery.reason === 'not_configured'
+      ? 'skipped'
+      : 'failed';
 
     // Record in ReminderLog
     const log = await ReminderLog.create({
@@ -198,10 +209,22 @@ const testSendReminder = async (req, res) => {
       leadDays: product.reminderLeadDays || 30,
       recipientEmail: user.email,
       status,
+      failureReason: delivery.error || '',
       sentAt: new Date(),
     });
 
-    return sendSuccess(res, 200, 'Test reminder sent and logged successfully', { log });
+    if (!delivery.delivered) {
+      return sendError(
+        res,
+        delivery.reason === 'not_configured' ? 503 : 502,
+        delivery.reason === 'not_configured'
+          ? 'Email is not configured on this server, so no reminder was sent.'
+          : `Could not send the reminder: ${delivery.error || 'delivery failed'}`,
+        [{ field: 'email', message: delivery.error || 'Delivery failed.' }]
+      );
+    }
+
+    return sendSuccess(res, 200, `Test reminder sent to ${user.email}`, { log });
   } catch (error) {
     console.error('testSendReminder error:', error);
     return sendError(res, 500, 'Failed to send test reminder');
@@ -224,20 +247,20 @@ const sendTestAlert = async (req, res) => {
     const storeName = product?.receiptId?.storeName || 'Apple Store';
     const expiryDate = product?.warrantyExpiryDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    let status = 'sent';
-    try {
-      await sendWarrantyReminderEmail({
-        to: user.email,
-        userName: user.name || 'BillBox User',
-        productName,
-        storeName,
-        warrantyExpiryDate: expiryDate,
-        daysRemaining: 30,
-      });
-    } catch (mailErr) {
-      console.log('Test alert email dispatch logged:', mailErr.message);
-      status = 'sent';
-    }
+    const delivery = await sendWarrantyReminderEmail({
+      to: user.email,
+      userName: user.name || 'BillBox User',
+      productName,
+      storeName,
+      warrantyExpiryDate: expiryDate,
+      daysRemaining: 30,
+    });
+
+    const status = delivery.delivered
+      ? 'sent'
+      : delivery.reason === 'not_configured'
+      ? 'skipped'
+      : 'failed';
 
     let log = null;
     if (product?._id) {
@@ -250,14 +273,61 @@ const sendTestAlert = async (req, res) => {
         leadDays: 30,
         recipientEmail: user.email,
         status,
+        failureReason: delivery.error || '',
         sentAt: new Date(),
       });
     }
 
-    return sendSuccess(res, 200, `Live test reminder sent to ${user.email}`, { log });
+    if (!delivery.delivered) {
+      return sendError(
+        res,
+        delivery.reason === 'not_configured' ? 503 : 502,
+        delivery.reason === 'not_configured'
+          ? 'Email is not configured on this server, so no test alert was sent.'
+          : `Could not send the test alert to ${user.email}: ${delivery.error || 'delivery failed'}`,
+        [{ field: 'email', message: delivery.error || 'Delivery failed.' }]
+      );
+    }
+
+    return sendSuccess(res, 200, `Test alert sent to ${user.email}`, { log });
   } catch (error) {
     console.error('sendTestAlert error:', error);
     return sendError(res, 500, 'Failed to send test alert');
+  }
+};
+
+// GET / POST /api/reminders/cron-check
+// Automated serverless / cloud webhook triggered by Vercel Cron or external schedulers
+const triggerCronReminderCheck = async (req, res) => {
+  try {
+    const cronSecret = process.env.CRON_SECRET;
+    const authHeader = req.headers.authorization;
+    const customHeader = req.headers['x-cron-secret'];
+    const querySecret = req.query?.secret;
+
+    // Verify secret if configured or in production
+    if (cronSecret) {
+      const isBearerValid = authHeader === `Bearer ${cronSecret}`;
+      const isHeaderValid = customHeader === cronSecret;
+      const isQueryValid = querySecret === cronSecret;
+
+      if (!isBearerValid && !isHeaderValid && !isQueryValid) {
+        return sendError(res, 401, 'Unauthorized: Invalid or missing cron authorization secret');
+      }
+    } else if (process.env.NODE_ENV === 'production') {
+      console.warn('[Cron] Warning: CRON_SECRET is not configured in production environment.');
+    }
+
+    console.log('[Cron] Invoking runWarrantyReminderCheck via webhook...');
+    const results = await runWarrantyReminderCheck();
+
+    return sendSuccess(res, 200, 'Warranty reminder cron execution completed successfully', {
+      timestamp: new Date().toISOString(),
+      ...results,
+    });
+  } catch (error) {
+    console.error('[Cron] Execution error in triggerCronReminderCheck:', error);
+    return sendError(res, 500, 'Warranty reminder cron execution failed', { error: error.message });
   }
 };
 
@@ -266,4 +336,5 @@ module.exports = {
   updateReminderSettings,
   testSendReminder,
   sendTestAlert,
+  triggerCronReminderCheck,
 };

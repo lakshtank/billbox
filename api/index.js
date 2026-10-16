@@ -58,10 +58,13 @@ try {
 
 module.exports = (req, res) => {
   if (loadError) {
+    // Never return the stack or message to the client — it reveals file paths,
+    // dependency versions and internal structure. It is already in the logs.
+    const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
     return res.status(500).json({
       success: false,
-      message: 'Server failed to load: ' + loadError.message,
-      stack: loadError.stack,
+      message: 'The server is temporarily unavailable. Please try again shortly.',
+      ...(isProduction ? {} : { detail: loadError.message }),
     });
   }
   return app(req, res);

@@ -44,13 +44,14 @@ const runWarrantyReminderCheck = async (referenceDate = new Date()) => {
   let checked = 0;
   let remindersSentCount = 0;
   let errorCount = 0;
+  let notConfiguredCount = 0;
 
   try {
     const products = await Product.find({
       warrantyStatus: { $in: ['active', 'expiring_soon'] },
       warrantyExpiryDate: { $ne: null },
     })
-      .populate('userId', 'name email timezone')
+      .populate('userId', 'name email timezone notificationPreferences')
       .populate('receiptId', 'storeName');
 
     console.log(`[ReminderService] Found ${products.length} product(s) eligible for reminder check.`);
@@ -69,35 +70,57 @@ const runWarrantyReminderCheck = async (referenceDate = new Date()) => {
         continue;
       }
 
+      // Respect user notification preferences
+      if (user.notificationPreferences?.emailAlerts === false) {
+        console.log(`[ReminderService] User ${user.email} has disabled email alerts. Skipping email notification.`);
+        continue;
+      }
+
       const timezone = user.timezone || 'UTC';
       const daysRemaining = calculateDaysRemainingInTimezone(product.warrantyExpiryDate, timezone, referenceDate);
 
-      let shouldSendEmail = false;
-      const flagsToSet = [];
-
-      if (daysRemaining <= 30 && !product.remindersSent?.days30) {
-        shouldSendEmail = true;
-        flagsToSet.push('days30');
-      }
-      if (daysRemaining <= 15 && !product.remindersSent?.days15) {
-        shouldSendEmail = true;
-        flagsToSet.push('days15');
-      }
-      if (daysRemaining <= 7 && !product.remindersSent?.days7) {
-        shouldSendEmail = true;
-        flagsToSet.push('days7');
-      }
-      if (daysRemaining <= 1 && !product.remindersSent?.days1) {
-        shouldSendEmail = true;
-        flagsToSet.push('days1');
+      // Transition already-expired products to 'expired' and skip sending "expiring soon" alerts
+      if (daysRemaining < 0) {
+        if (product.warrantyStatus !== 'expired') {
+          product.warrantyStatus = 'expired';
+          await product.save();
+        }
+        continue;
       }
 
-      if (shouldSendEmail) {
+      // Determine single active milestone interval to prevent simultaneous multi-flag firing
+      let activeMilestone = null;
+
+      if (daysRemaining <= 1) {
+        if (!product.remindersSent?.days1) {
+          activeMilestone = 'days1';
+        }
+      } else if (daysRemaining <= 7) {
+        if (!product.remindersSent?.days7) {
+          activeMilestone = 'days7';
+        }
+      } else if (daysRemaining <= 15) {
+        if (!product.remindersSent?.days15) {
+          activeMilestone = 'days15';
+        }
+      } else if (daysRemaining <= 30) {
+        if (!product.remindersSent?.days30) {
+          activeMilestone = 'days30';
+        }
+      }
+
+      if (activeMilestone) {
+        // Check user's preferred advance notice window (default 30 days)
+        const maxNoticeDays = user.notificationPreferences?.expiryDaysNotice || 30;
+        if (daysRemaining > maxNoticeDays) {
+          continue;
+        }
+
         console.log(
-          `[ReminderService] Triggering reminder for product "${product.productName}" (ID: ${product._id}) - ${daysRemaining} days remaining (User: ${user.email}).`
+          `[ReminderService] Triggering milestone (${activeMilestone}) for product "${product.productName}" (ID: ${product._id}) - ${daysRemaining} days remaining (User: ${user.email}).`
         );
 
-        const emailSent = await sendWarrantyReminderEmail({
+        const deliveryResult = await sendWarrantyReminderEmail({
           to: user.email,
           userName: user.name,
           productName: product.productName || 'Purchased Item',
@@ -106,13 +129,30 @@ const runWarrantyReminderCheck = async (referenceDate = new Date()) => {
           daysRemaining: Math.max(0, daysRemaining),
         });
 
-        if (emailSent) {
+        if (deliveryResult.delivered) {
           if (!product.remindersSent) {
             product.remindersSent = {};
           }
-          flagsToSet.forEach((flag) => {
-            product.remindersSent[flag] = true;
-          });
+
+          // Mark current milestone
+          product.remindersSent[activeMilestone] = true;
+
+          // If triggered at a tighter milestone, acknowledge prior skipped milestones so they never backfire
+          if (activeMilestone === 'days7') {
+            product.remindersSent.days30 = true;
+            product.remindersSent.days15 = true;
+          } else if (activeMilestone === 'days15') {
+            product.remindersSent.days30 = true;
+          } else if (activeMilestone === 'days1') {
+            product.remindersSent.days30 = true;
+            product.remindersSent.days15 = true;
+            product.remindersSent.days7 = true;
+          }
+
+          // Update warranty status to 'expiring_soon' if not already
+          if (product.warrantyStatus !== 'expiring_soon') {
+            product.warrantyStatus = 'expiring_soon';
+          }
 
           await product.save();
 
@@ -131,7 +171,26 @@ const runWarrantyReminderCheck = async (referenceDate = new Date()) => {
 
           remindersSentCount++;
         } else {
-          errorCount++;
+          // Nothing was delivered. Leave remindersSent untouched so the milestone
+          // is retried once delivery is possible, and record the failure honestly.
+          if (deliveryResult.reason === 'not_configured') {
+            notConfiguredCount++;
+          } else {
+            errorCount++;
+          }
+
+          await ReminderLog.create({
+            userId: user._id,
+            productId: product._id,
+            receiptId: product.receiptId?._id || null,
+            productName: product.productName,
+            storeName: receipt?.storeName || '',
+            leadDays: daysRemaining,
+            recipientEmail: user.email,
+            status: deliveryResult.reason === 'not_configured' ? 'skipped' : 'failed',
+            failureReason: deliveryResult.error || '',
+            sentAt: new Date(),
+          });
         }
       }
     }
@@ -140,11 +199,22 @@ const runWarrantyReminderCheck = async (referenceDate = new Date()) => {
     errorCount++;
   }
 
+  if (notConfiguredCount > 0) {
+    console.warn(
+      `[ReminderService] ${notConfiguredCount} reminder(s) could not be sent because SMTP is not configured. They will be retried on the next run.`
+    );
+  }
+
   console.log(
-    `[ReminderService] Check finished. Checked: ${checked}, Reminders Sent: ${remindersSentCount}, Errors: ${errorCount}`
+    `[ReminderService] Check finished. Checked: ${checked}, Delivered: ${remindersSentCount}, Skipped (no SMTP): ${notConfiguredCount}, Errors: ${errorCount}`
   );
 
-  return { checked, remindersSentCount, errors: errorCount };
+  return {
+    checked,
+    remindersSentCount,
+    skipped: notConfiguredCount,
+    errors: errorCount,
+  };
 };
 
 module.exports = {

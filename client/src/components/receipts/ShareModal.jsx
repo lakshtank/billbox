@@ -1,60 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Copy, Check, Share2, QrCode } from 'lucide-react';
-import toast from 'react-hot-toast';
+import * as m from 'motion/react-m';
+import { AnimatePresence } from 'motion/react';
+import { Copy, Check, Share2, QrCode } from 'lucide-react';
+import toast from '@/lib/toast';
 import { formatDate } from '../../utils/formatters';
-
-const IS_PUBLIC_SHARING_ENABLED = true;
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { spring } from '@/lib/motion';
 
 // Public Base URL configuration for share links & QR codes.
-// Dynamically detects current window origin (works on localhost & production domains)
 const PUBLIC_BASE_URL = (
   import.meta.env.VITE_PUBLIC_BASE_URL ||
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
 ).replace(/\/$/, '');
 
-const ShareModal = ({ receipt, onClose }) => {
+export function ShareModal({ receipt, onClose }) {
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isSharingEnabled, setIsSharingEnabled] = useState(Boolean(receipt?.publicToken));
+  const linkInputRef = useRef(null);
 
   if (!receipt) return null;
 
-  // Real public URL construction
   const realPublicUrl = receipt.publicToken ? `${PUBLIC_BASE_URL}/public/r/${receipt.publicToken}` : '';
-  const realTruncatedUrl = realPublicUrl.replace(/^https?:\/\//, '');
-
   const vendorName = receipt.storeName?.trim() || 'Merchant Receipt';
   const formattedDate = receipt.purchaseDate ? formatDate(receipt.purchaseDate) : '';
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  const handleToggleShare = (checked) => {
+    setIsSharingEnabled(checked);
+    if (checked) {
+      toast.success('Sharing turned on', { duration: 4000 });
+      setTimeout(() => {
+        if (linkInputRef.current) {
+          linkInputRef.current.focus();
+          linkInputRef.current.select();
+        }
+      }, 100);
+    } else {
+      toast.info('Sharing turned off', { duration: 4000 });
+    }
+  };
 
   const handleCopyLink = () => {
     if (!realPublicUrl) {
-      toast.error('Shareable token not available for this receipt.');
+      toast.error('Shareable link not available for this receipt.');
       return;
     }
     navigator.clipboard.writeText(realPublicUrl);
     setCopiedLink(true);
-    toast.success('Shareable link copied to clipboard!');
-    setTimeout(() => setCopiedLink(false), 2000);
+    toast.success('Link copied', { duration: 2000 });
+    setTimeout(() => setCopiedLink(false), 1600);
   };
 
-  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+  const canNativeShare = typeof navigator !== 'undefined' && Boolean(navigator.share);
 
   const handleNativeShare = async () => {
-    if (!IS_PUBLIC_SHARING_ENABLED) {
-      toast('Sharing will be available once this app is deployed', { icon: 'ℹ️' });
-      return;
-    }
-    if (!canNativeShare) return;
+    if (!canNativeShare || !realPublicUrl) return;
     try {
       await navigator.share({
         title: `Receipt from ${vendorName}`,
@@ -69,102 +78,139 @@ const ShareModal = ({ receipt, onClose }) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200 font-sans"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Share receipt - ${vendorName}`}
-    >
-      <div
-        className="bg-brand-surface border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-5 text-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 text-left">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-bold text-slate-900 leading-snug">Share receipt</h3>
-            <p className="text-xs text-slate-500 font-medium truncate mt-0.5" title={vendorName}>
-              {vendorName} {formattedDate && `• ${formattedDate}`}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            aria-label="Close modal"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <Dialog open={Boolean(receipt)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent size="sm" className="w-[calc(100vw-32px)] sm:max-w-[420px] p-6 gap-4 overflow-hidden">
+        <div className="flex flex-col gap-4 w-full min-w-0">
+          {/* Header */}
+          <DialogHeader className="pr-6 text-left">
+            <DialogTitle className="text-base font-semibold text-fg tracking-tight">
+              Share receipt
+            </DialogTitle>
+            <DialogDescription className="text-xs text-fg-3 truncate mt-0.5">
+              {vendorName} {formattedDate && `· ${formattedDate}`}
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* QR Code Container (Live rendering vs Paused Placeholder) */}
-        {IS_PUBLIC_SHARING_ENABLED ? (
-          <div className="bg-brand-surface p-4 rounded-xl border border-slate-200 inline-block mx-auto shadow-2xs">
-            <QRCodeSVG value={realPublicUrl} size={240} level="H" includeMargin={true} />
-          </div>
-        ) : (
-          <div className="w-[240px] h-[240px] bg-slate-50 rounded-xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 mx-auto p-4 select-none">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200/80 text-slate-400 flex items-center justify-center">
-              <QrCode className="w-6 h-6" />
+          {/* Share Switch Control (Step 8: Share switch on expands link input & selects text) */}
+          <div className="flex items-center justify-between p-3 rounded-[10px] bg-subtle/50 border border-line-subtle gap-3">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <Label htmlFor="share-toggle" className="text-xs font-semibold text-fg block cursor-pointer">
+                Public link sharing
+              </Label>
+              <span className="text-[11px] text-fg-3 block leading-tight">
+                {isSharingEnabled ? 'Anyone with the link can view receipt' : 'Sharing is currently disabled'}
+              </span>
             </div>
-            <div className="space-y-1 text-center">
-              <p className="text-xs font-semibold text-slate-700">QR Code Preview</p>
-              <p className="text-[11px] text-slate-400 leading-tight">
-                Live scannable QR code available when deployed
-              </p>
-            </div>
+            <Switch
+              id="share-toggle"
+              checked={isSharingEnabled}
+              onCheckedChange={handleToggleShare}
+            />
           </div>
-        )}
 
-        {/* Truncated Link Display / Placeholder Text */}
-        <div className="px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-center">
-          <span className="text-[11px] font-mono text-slate-500 truncate block select-all">
-            {IS_PUBLIC_SHARING_ENABLED
-              ? realTruncatedUrl
-              : 'Sharable link will appear here once BillBox is live'}
-          </span>
-        </div>
+          {/* Collapsible / Expandable Link & QR Section */}
+          <AnimatePresence initial={false}>
+            {isSharingEnabled && (
+              <m.div
+                layout
+                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
+                exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                transition={spring.soft}
+                className="space-y-4"
+              >
+                {/* QR Code Container */}
+                <div className="w-[200px] mx-auto p-3.5 rounded-[12px] border border-line bg-subtle/40 flex flex-col items-center justify-center gap-2.5">
+                  {realPublicUrl ? (
+                    <div className="bg-white p-2.5 rounded-[8px] border border-line-subtle shadow-xs inline-flex items-center justify-center">
+                      <QRCodeSVG
+                        value={realPublicUrl}
+                        size={140}
+                        level="M"
+                        fgColor="#0F172A"
+                        bgColor="#FFFFFF"
+                        includeMargin={false}
+                      />
+                    </div>
+                  ) : (
+                    <div className="size-36 bg-subtle rounded-[8px] flex flex-col items-center justify-center gap-2 text-fg-3">
+                      <QrCode className="size-8 text-fg-3" />
+                      <p className="text-xs">No share token</p>
+                    </div>
+                  )}
+                  <span className="text-[11px] text-fg-3 font-medium text-center">
+                    Scan to view receipt on mobile
+                  </span>
+                </div>
 
-        {/* Primary Action Buttons */}
-        <div className="space-y-2 pt-1">
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="w-full py-2.5 px-4 text-xs font-semibold text-white bg-brand-primary rounded-xl hover:bg-brand-primary-hover transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-          >
-            {copiedLink ? (
-              <>
-                <Check className="w-4 h-4 text-white" />
-                <span>Copied to Clipboard!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-white" />
-                <span>Copy link</span>
-              </>
+                {/* Public Link Input + Copy Button Group with Step 13.4 Icon Morph */}
+                <div className="w-full min-w-0 flex items-center gap-2 rounded-[8px] border border-line bg-subtle/50 pl-3 pr-1 py-1">
+                  <input
+                    ref={linkInputRef}
+                    readOnly
+                    type="text"
+                    value={realPublicUrl || 'No link available'}
+                    onClick={(e) => e.target.select()}
+                    className="text-xs font-mono text-fg-2 truncate flex-1 min-w-0 bg-transparent border-0 outline-none select-all"
+                    title={realPublicUrl}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={copiedLink ? 'secondary' : 'default'}
+                    className="h-8 px-3 text-xs gap-1.5 shrink-0"
+                    onClick={handleCopyLink}
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      <m.span
+                        key={copiedLink ? 'ok' : 'copy'}
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.6, opacity: 0 }}
+                        transition={{ duration: 0.12 }}
+                        className="inline-flex items-center gap-1.5"
+                      >
+                        {copiedLink ? (
+                          <>
+                            <Check className="size-3.5 text-ok-fg" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-3.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </m.span>
+                    </AnimatePresence>
+                  </Button>
+                </div>
+
+                {/* Native share button (optional, mobile/Safari) */}
+                {canNativeShare && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-8 text-xs gap-1.5"
+                    onClick={handleNativeShare}
+                  >
+                    <Share2 className="size-3.5" />
+                    <span>More sharing options</span>
+                  </Button>
+                )}
+
+                {/* Footer Note */}
+                <p className="text-[11px] text-fg-3 text-center leading-normal">
+                  Anyone with this link can view and download this receipt.
+                </p>
+              </m.div>
             )}
-          </button>
-
-          {canNativeShare && (
-            <button
-              type="button"
-              onClick={handleNativeShare}
-              className="w-full py-2 px-4 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-            >
-              <Share2 className="w-3.5 h-3.5 text-slate-600" />
-              <span>Share via...</span>
-            </button>
-          )}
+          </AnimatePresence>
         </div>
-
-        {/* Reassuring Note */}
-        <p className="text-[11px] text-slate-400 leading-relaxed px-2 border-t border-slate-100 pt-3">
-          Anyone with this link can view and download this receipt.
-        </p>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
-};
+}
 
 export default ShareModal;

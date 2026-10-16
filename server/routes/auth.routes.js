@@ -1,6 +1,16 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe, updateProfile, changePassword, clearUserData } = require('../controllers/auth.controller');
+const {
+  register,
+  login,
+  getMe,
+  updateProfile,
+  changePassword,
+  clearUserData,
+  deleteAccount,
+  forgotPassword,
+  resetPassword,
+} = require('../controllers/auth.controller');
 const auth = require('../middleware/auth.middleware');
 const validate = require('../middleware/validate.middleware');
 
@@ -31,6 +41,26 @@ router.post(
   login
 );
 
+// POST /api/auth/forgot-password
+router.post(
+  '/forgot-password',
+  [body('email').trim().isEmail().withMessage('A valid email is required.')],
+  validate,
+  forgotPassword
+);
+
+// POST /api/auth/reset-password
+router.post(
+  '/reset-password',
+  [
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('Password must be at least 6 characters.'),
+  ],
+  validate,
+  resetPassword
+);
+
 // GET /api/auth/me and GET /api/auth/profile
 router.get('/me', auth, getMe);
 router.get('/profile', auth, getMe);
@@ -43,5 +73,8 @@ router.put('/change-password', auth, changePassword);
 
 // DELETE /api/auth/clear-data
 router.delete('/clear-data', auth, clearUserData);
+
+// DELETE /api/auth/account
+router.delete('/account', auth, deleteAccount);
 
 module.exports = router;

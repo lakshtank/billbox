@@ -39,9 +39,17 @@ const reminderLogSchema = new mongoose.Schema(
       trim: true,
     },
     status: {
+      // 'sent'    — an SMTP server accepted the message
+      // 'failed'  — delivery was attempted and rejected/errored
+      // 'skipped' — no delivery was attempted (SMTP not configured); will retry
       type: String,
-      enum: ['sent', 'failed'],
+      enum: ['sent', 'failed', 'skipped'],
       default: 'sent',
+    },
+    failureReason: {
+      type: String,
+      default: '',
+      trim: true,
     },
     sentAt: {
       type: Date,

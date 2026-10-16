@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import api from '../api/axios';
 
 export const useProductsQuery = (filters = {}) => {
@@ -8,6 +8,7 @@ export const useProductsQuery = (filters = {}) => {
       const { data } = await api.get('/products', { params: filters });
       return data.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

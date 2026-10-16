@@ -1,28 +1,34 @@
+import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { formatDateForInput } from '../../utils/formatters';
-import ProductListForm from './ProductListForm';
+import { ArrowRight } from 'lucide-react';
+import { formatDateForInput, getCurrencySymbol } from '../../utils/formatters';
+import { ProductListForm } from './ProductListForm';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { DEFAULT_CATEGORIES } from '../../constants/category.constants';
 
-const CATEGORIES = [
-  'Electronics',
-  'Appliances',
-  'Medical',
-  'Fashion',
-  'Furniture',
-  'Groceries',
-  'Others',
-];
+const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'CAD', 'AUD'];
 
-const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP'];
-
-const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => {
+export function ReceiptForm({ initialData = null, onSubmit, isSubmitting = false, onCancel = null }) {
   const [storeName, setStoreName] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [purchaseDate, setPurchaseDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [currency, setCurrency] = useState('INR');
+  const [category, setCategory] = useState('General');
   const [subtotal, setSubtotal] = useState('');
   const [shippingAmount, setShippingAmount] = useState('0');
   const [taxAmount, setTaxAmount] = useState('0');
+  const [discountAmount, setDiscountAmount] = useState('0');
   const [grandTotal, setGrandTotal] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -31,7 +37,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
       id: `item-1-${Date.now()}`,
       productName: '',
       brand: '',
-      category: 'Others',
+      category: 'General',
       quantity: 1,
       unitPrice: '',
       lineTotal: '',
@@ -49,9 +55,11 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
       setPurchaseDate(formatDateForInput(initialData.purchaseDate));
       setDueDate(formatDateForInput(initialData.dueDate));
       setCurrency(initialData.currency || 'INR');
+      setCategory(initialData.category || 'General');
       setSubtotal(initialData.subtotal != null ? String(initialData.subtotal) : '');
       setShippingAmount(initialData.shippingAmount != null ? String(initialData.shippingAmount) : '0');
       setTaxAmount(initialData.taxAmount != null ? String(initialData.taxAmount) : '0');
+      setDiscountAmount(initialData.discountAmount != null ? String(initialData.discountAmount) : '0');
       setGrandTotal(
         initialData.grandTotal != null
           ? String(initialData.grandTotal)
@@ -64,9 +72,10 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
       const initialProds = Array.isArray(initialData.products) && initialData.products.length > 0
         ? initialData.products.map((p, idx) => ({
             id: p._id || `item-${idx + 1}-${Date.now()}`,
+            _id: p._id,
             productName: p.productName || '',
             brand: p.brand || '',
-            category: p.category || 'Others',
+            category: p.category || 'General',
             quantity: p.quantity || 1,
             unitPrice: p.unitPrice != null ? String(p.unitPrice) : '',
             lineTotal: p.lineTotal != null ? String(p.lineTotal) : '',
@@ -78,7 +87,7 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
               id: `item-1-${Date.now()}`,
               productName: initialData.productName || '',
               brand: initialData.brand || '',
-              category: initialData.category || 'Others',
+              category: initialData.category || 'General',
               quantity: 1,
               unitPrice: initialData.totalAmount != null ? String(initialData.totalAmount) : '',
               lineTotal: initialData.totalAmount != null ? String(initialData.totalAmount) : '',
@@ -96,31 +105,52 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
     }
   }, [initialData]);
 
+  const recalculateFromList = (itemList, tax = taxAmount, ship = shippingAmount, disc = discountAmount) => {
+    const sum = itemList.reduce((acc, p) => acc + (Number(p.lineTotal) || 0), 0);
+    const sub = sum;
+    const t = Number(tax) || 0;
+    const s = Number(ship) || 0;
+    const d = Number(disc) || 0;
+    const grand = Math.max(0, sub + t + s - d);
+
+    setSubtotal(sub > 0 ? String(sub.toFixed(2)) : '0');
+    setGrandTotal(String(grand.toFixed(2)));
+  };
+
   const handleProductChange = (id, field, value) => {
-    setProducts((prev) =>
-      prev.map((p) => {
+    setProducts((prev) => {
+      const updatedList = prev.map((p) => {
         if (p.id !== id) return p;
         const updated = { ...p, [field]: value };
         if (field === 'quantity' || field === 'unitPrice') {
           const qty = Number(field === 'quantity' ? value : p.quantity) || 1;
           const price = Number(field === 'unitPrice' ? value : p.unitPrice);
-          if (!isNaN(price)) {
+          if (!isNaN(price) && updated.unitPrice !== '') {
             updated.lineTotal = String((qty * price).toFixed(2));
+          } else {
+            updated.lineTotal = '';
           }
         }
         return updated;
-      })
-    );
+      });
+
+      if (field === 'quantity' || field === 'unitPrice') {
+        recalculateFromList(updatedList);
+      }
+
+      return updatedList;
+    });
   };
 
   const handleAddProduct = () => {
+    const newId = `prod-${Date.now()}`;
     setProducts((prev) => [
       ...prev,
       {
-        id: `item-${prev.length + 1}-${Date.now()}`,
+        id: newId,
         productName: '',
         brand: '',
-        category: 'Others',
+        category: category || 'General',
         quantity: 1,
         unitPrice: '',
         lineTotal: '',
@@ -128,15 +158,75 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
         warrantyPeriodUnit: 'months',
       },
     ]);
+
+    // Auto-scroll and focus the newly added item's first input
+    setTimeout(() => {
+      const el =
+        document.getElementById(`product-name-${newId}`) ||
+        document.getElementById(`product-name-mobile-${newId}`);
+      if (el) {
+        const container = document.getElementById('main') || el.closest('.overflow-y-auto');
+        if (container) {
+          const containerRect = container.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const offset = elRect.top - containerRect.top - (containerRect.height / 2) + (elRect.height / 2);
+          container.scrollBy({ top: offset, behavior: 'smooth' });
+        } else {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        el.focus({ preventScroll: true });
+      }
+    }, 60);
   };
 
   const handleRemoveProduct = (id) => {
     if (products.length <= 1) return;
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) => {
+      const updatedList = prev.filter((p) => p.id !== id);
+      recalculateFromList(updatedList);
+      return updatedList;
+    });
+  };
+
+  const handleTaxChange = (val) => {
+    setTaxAmount(val);
+    const sub = Number(subtotal) || 0;
+    const tax = Number(val) || 0;
+    const ship = Number(shippingAmount) || 0;
+    const disc = Number(discountAmount) || 0;
+    setGrandTotal(String(Math.max(0, sub + tax + ship - disc).toFixed(2)));
+  };
+
+  const handleShippingChange = (val) => {
+    setShippingAmount(val);
+    const sub = Number(subtotal) || 0;
+    const tax = Number(taxAmount) || 0;
+    const ship = Number(val) || 0;
+    const disc = Number(discountAmount) || 0;
+    setGrandTotal(String(Math.max(0, sub + tax + ship - disc).toFixed(2)));
+  };
+
+  const handleDiscountChange = (val) => {
+    setDiscountAmount(val);
+    const sub = Number(subtotal) || 0;
+    const tax = Number(taxAmount) || 0;
+    const ship = Number(shippingAmount) || 0;
+    const disc = Number(val) || 0;
+    setGrandTotal(String(Math.max(0, sub + tax + ship - disc).toFixed(2)));
+  };
+
+  const handleSubtotalChange = (val) => {
+    setSubtotal(val);
+    const sub = Number(val) || 0;
+    const tax = Number(taxAmount) || 0;
+    const ship = Number(shippingAmount) || 0;
+    const disc = Number(discountAmount) || 0;
+    setGrandTotal(String(Math.max(0, sub + tax + ship - disc).toFixed(2)));
   };
 
   const validate = () => {
     const newErrors = {};
+    if (!storeName.trim()) newErrors.storeName = 'Store or merchant name is required.';
     if (!purchaseDate) newErrors.purchaseDate = 'Purchase date is required.';
     if (grandTotal && isNaN(Number(grandTotal))) newErrors.grandTotal = 'Must be a valid number.';
 
@@ -176,18 +266,20 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
       invoiceNumber: invoiceNumber.trim(),
       purchaseDate: validPurchaseDate,
       dueDate: validDueDate,
+      category,
       subtotal: subtotal ? Number(subtotal) : null,
       shippingAmount: Number(shippingAmount || 0),
       taxAmount: Number(taxAmount || 0),
+      discountAmount: Number(discountAmount || 0),
       grandTotal: grandTotal ? Number(grandTotal) : null,
       totalAmount: grandTotal ? Number(grandTotal) : null,
-      currency,
-      fileType: 'manual',
       notes: notes.trim(),
+      fileType: initialData?.fileType || 'manual',
       products: products.map((p) => ({
+        _id: p._id || (p.id && !String(p.id).startsWith('item-') ? p.id : undefined),
         productName: p.productName.trim(),
         brand: p.brand ? p.brand.trim() : '',
-        category: p.category || 'Others',
+        category: p.category || category || 'General',
         quantity: Number(p.quantity) || 1,
         unitPrice: p.unitPrice ? Number(p.unitPrice) : null,
         lineTotal: p.lineTotal ? Number(p.lineTotal) : null,
@@ -199,197 +291,272 @@ const ReceiptForm = ({ initialData = null, onSubmit, isSubmitting = false }) => 
     onSubmit(payload);
   };
 
-  const totalSavings = products.reduce((acc, p) => {
-    if (p.discountAmount != null && Number(p.discountAmount) > 0) {
-      return acc + Number(p.discountAmount);
-    }
-    if (p.originalUnitPrice != null && p.unitPrice != null && Number(p.originalUnitPrice) > Number(p.unitPrice)) {
-      const qty = Number(p.quantity) || 1;
-      return acc + ((Number(p.originalUnitPrice) - Number(p.unitPrice)) * qty);
-    }
-    return acc;
-  }, 0) + Number(initialData?.discountAmount || 0);
+  const currSym = getCurrencySymbol(currency);
+
+  const calculateFromItems = () => {
+    const sum = products.reduce((acc, p) => acc + (Number(p.lineTotal) || 0), 0);
+    const sub = sum;
+    const tax = Number(taxAmount) || 0;
+    const ship = Number(shippingAmount) || 0;
+    const disc = Number(discountAmount) || 0;
+    const grand = Math.max(0, sub + tax + ship - disc);
+
+    setSubtotal(sub > 0 ? String(sub.toFixed(2)) : '');
+    setGrandTotal(grand > 0 ? String(grand.toFixed(2)) : '');
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 font-sans text-brand-navy">
-      {/* 1. Receipt Header & Totals Section Card Container */}
-      <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-4 shadow-2xs">
-        <h3 className="text-base font-bold text-brand-navy tracking-tight border-b border-brand-border pb-3">
-          Receipt header & totals
-        </h3>
+    <form onSubmit={handleSubmit} className="font-sans space-y-8 w-full">
+      {/* 1. Basic Details Across 4 Columns */}
+      <div className="space-y-4">
+        <div className="border-b border-line pb-2">
+          <h3 className="text-sm font-semibold text-fg">Receipt details</h3>
+          <p className="text-xs text-fg-3">Enter merchant, invoice number, and transaction date</p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label htmlFor="manual-store" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0V9a2 2 0 012-2h2a2 2 0 012 2v12" />
-              </svg>
-              Store / merchant
-            </label>
-            <input
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <Label htmlFor="manual-store" className="text-xs font-medium text-fg">
+              Merchant / store *
+            </Label>
+            <Input
               id="manual-store"
-              type="text"
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
-              placeholder="e.g. Reliance Retail"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+              placeholder="e.g. Apple Store, Amazon"
+              className="text-sm h-9 bg-surface"
+              required
             />
+            {errors.storeName && (
+              <p className="text-xs text-bad-fg font-medium">{errors.storeName}</p>
+            )}
           </div>
 
-          <div>
-            <label htmlFor="manual-invoice" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <span className="text-slate-500 font-bold text-xs">#</span>
+          <div className="space-y-1.5">
+            <Label htmlFor="manual-invoice" className="text-xs font-medium text-fg">
               Invoice / order #
-            </label>
-            <input
+            </Label>
+            <Input
               id="manual-invoice"
-              type="text"
               value={invoiceNumber}
               onChange={(e) => setInvoiceNumber(e.target.value)}
               placeholder="e.g. INV-90428"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-mono"
+              className="text-xs font-mono h-9 bg-surface"
             />
           </div>
 
-          <div>
-            <label htmlFor="manual-date" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+          <div className="space-y-1.5">
+            <Label htmlFor="manual-date" className="text-xs font-medium text-fg">
               Purchase date *
-            </label>
-            <input
+            </Label>
+            <Input
               id="manual-date"
               type="date"
               value={purchaseDate}
               onChange={(e) => setPurchaseDate(e.target.value)}
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
+              className="text-xs font-mono h-9 bg-surface"
+              required
             />
-            {errors.purchaseDate && <p className="text-xs text-brand-navy font-medium mt-1">{errors.purchaseDate}</p>}
+            {errors.purchaseDate && (
+              <p className="text-xs text-bad-fg font-medium">{errors.purchaseDate}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="manual-cat" className="text-xs font-medium text-fg">
+              Primary category
+            </Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger id="manual-cat" className="text-xs h-9 bg-surface">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {DEFAULT_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-1">
-          <div>
-            <label htmlFor="manual-subtotal" className="text-xs font-semibold text-slate-700 mb-1.5 block">
-              Subtotal
-            </label>
-            <input
-              id="manual-subtotal"
-              type="number"
-              step="0.01"
-              value={subtotal}
-              onChange={(e) => setSubtotal(e.target.value)}
-              placeholder="0.00"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
-            />
+      {/* 2. Full-Width Line Items Table */}
+      <div className="space-y-2">
+        <ProductListForm
+          items={products}
+          onItemChange={handleProductChange}
+          onAddItem={handleAddProduct}
+          onRemoveItem={handleRemoveProduct}
+          categoryOptions={DEFAULT_CATEGORIES}
+          currencySymbol={currSym}
+          errors={errors}
+        />
+      </div>
+
+      {/* 3. Bottom Split: Notes (Left 7 cols) & Summary Breakdown (Right 5 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
+        {/* Notes & Reference */}
+        <div className="lg:col-span-7 space-y-2">
+          <div className="border-b border-line pb-2">
+            <Label htmlFor="manual-notes" className="text-sm font-semibold text-fg block">
+              Notes & reference
+            </Label>
+            <p className="text-xs text-fg-3">Add return policy, warranty claim notes, or payment references</p>
           </div>
+          <Textarea
+            id="manual-notes"
+            rows={5}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. Return window within 14 days, serial numbers, warranty support contact..."
+            className="text-xs bg-surface leading-relaxed"
+          />
+        </div>
 
-          <div>
-            <label htmlFor="manual-shipping" className="text-xs font-semibold text-slate-700 mb-1.5 block">
-              Shipping / handling
-            </label>
-            <input
-              id="manual-shipping"
-              type="number"
-              step="0.01"
-              value={shippingAmount}
-              onChange={(e) => setShippingAmount(e.target.value)}
-              placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
-            />
-          </div>
+        {/* Financial Summary & Breakdown */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="rounded-[12px] border border-line bg-surface p-5 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-line-subtle">
+              <h3 className="text-sm font-semibold text-fg">Summary</h3>
+              <div className="w-28">
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger id="manual-currency" className="text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-          <div>
-            <label htmlFor="manual-tax" className="text-xs font-semibold text-slate-700 mb-1.5 block">
-              Tax (GST)
-            </label>
-            <input
-              id="manual-tax"
-              type="number"
-              step="0.01"
-              value={taxAmount}
-              onChange={(e) => setTaxAmount(e.target.value)}
-              placeholder="0"
-              className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
-            />
-          </div>
-
-          <div>
-            <div>
-              <label htmlFor="manual-grandtotal" className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Grand total</span>
-                {totalSavings > 0 && (
-                  <span className="text-[11px] text-brand-primary font-medium font-tabular">
-                    Saved {currSym}{totalSavings.toFixed(2)}
-                  </span>
-                )}
-              </label>
-              <div className="input-group">
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="appearance-none"
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-                <input
+            {/* Grand Total Callout */}
+            <div className="space-y-1.5 p-3 rounded-[8px] bg-subtle/50 border border-line-subtle">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="manual-grandtotal" className="text-xs font-semibold text-fg">
+                  Grand total
+                </Label>
+                <span className="text-[11px] font-mono text-fg-3">{currency}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-mono font-bold text-fg-2">{currSym}</span>
+                <Input
                   id="manual-grandtotal"
                   type="number"
                   step="0.01"
                   value={grandTotal}
                   onChange={(e) => setGrandTotal(e.target.value)}
                   placeholder="0.00"
-                  className="font-bold font-tabular"
+                  className="text-xl font-bold font-mono tnum text-right h-10 bg-surface border-line"
+                  required
+                />
+              </div>
+              {errors.grandTotal && (
+                <p className="text-xs text-bad-fg font-medium">{errors.grandTotal}</p>
+              )}
+            </div>
+
+            {/* Breakdown Inputs */}
+            <div className="space-y-2.5 pt-1 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="manual-subtotal" className="text-fg-3">Subtotal</Label>
+                <Input
+                  id="manual-subtotal"
+                  type="number"
+                  step="0.01"
+                  value={subtotal}
+                  onChange={(e) => handleSubtotalChange(e.target.value)}
+                  placeholder="0.00"
+                  className="w-32 h-8 text-xs tnum text-right font-mono bg-surface"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="manual-tax" className="text-fg-3">Tax / GST</Label>
+                <Input
+                  id="manual-tax"
+                  type="number"
+                  step="0.01"
+                  value={taxAmount}
+                  onChange={(e) => handleTaxChange(e.target.value)}
+                  placeholder="0.00"
+                  className="w-32 h-8 text-xs tnum text-right font-mono bg-surface"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="manual-shipping" className="text-fg-3">Shipping</Label>
+                <Input
+                  id="manual-shipping"
+                  type="number"
+                  step="0.01"
+                  value={shippingAmount}
+                  onChange={(e) => handleShippingChange(e.target.value)}
+                  placeholder="0.00"
+                  className="w-32 h-8 text-xs tnum text-right font-mono bg-surface"
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="manual-discount" className="text-fg-3">Discount</Label>
+                <Input
+                  id="manual-discount"
+                  type="number"
+                  step="0.01"
+                  value={discountAmount}
+                  onChange={(e) => handleDiscountChange(e.target.value)}
+                  placeholder="0.00"
+                  className="w-32 h-8 text-xs tnum text-right font-mono text-ok-fg bg-surface"
                 />
               </div>
             </div>
+
+            {/* Quick Auto-calculate Helper */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={calculateFromItems}
+              className="w-full text-xs text-accent hover:text-accent font-medium h-7"
+            >
+              Recalculate total from items
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* 2. Shared Product List Form */}
-      <ProductListForm
-        items={products}
-        onItemChange={handleProductChange}
-        onAddItem={handleAddProduct}
-        onRemoveItem={handleRemoveProduct}
-        categoryOptions={CATEGORIES}
-        errors={errors}
-      />
-
-      {/* 3. Notes Section Card Container */}
-      <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-2 shadow-2xs">
-        <label htmlFor="manual-notes" className="text-xs font-semibold text-brand-navy block">
-          Notes
-        </label>
-        <textarea
-          id="manual-notes"
-          rows={3}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Add any notes about this purchase or receipt..."
-          className="w-full text-xs p-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-sans"
-        />
-      </div>
-
-      {/* 4. Action Buttons Bar */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
-        <button
+      {/* 4. Action Row */}
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-line">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={onCancel}
+            className="px-5 cursor-pointer"
+          >
+            Cancel
+          </Button>
+        )}
+        <Button
           type="submit"
+          variant="default"
+          size="md"
           disabled={isSubmitting}
-          className="px-5 py-2.5 text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover rounded-lg transition-colors shadow-xs cursor-pointer"
+          className="px-6 gap-2 font-medium cursor-pointer"
         >
           {isSubmitting ? 'Saving receipt...' : initialData ? 'Save changes' : 'Save receipt'}
-        </button>
+          <ArrowRight className="size-4" />
+        </Button>
       </div>
     </form>
   );
-};
+}
 
 export default ReceiptForm;

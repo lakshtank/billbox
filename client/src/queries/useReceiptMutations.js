@@ -71,3 +71,19 @@ export const useUpdateReceiptStatus = () => {
     },
   });
 };
+
+export const useBulkUpdateReceiptsCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ receiptIds, category }) => {
+      const { data } = await api.patch('/receipts/bulk/category', { receiptIds, category });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipts'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+

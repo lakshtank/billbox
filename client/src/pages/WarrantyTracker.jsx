@@ -1,78 +1,71 @@
+import * as React from 'react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Clock, 
-  AlertTriangle, 
-  Search, 
-  Plus, 
-  ArrowUpDown, 
-  LayoutList, 
-  LayoutGrid, 
-  ArrowRight,
-  ExternalLink
+import {
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  Search,
+  X,
+  Filter,
+  Package,
+  Bell,
+  BellOff,
+  MoreHorizontal,
+  FileText,
 } from 'lucide-react';
-import { useReceiptsQuery } from '../queries/useReceiptsQuery';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import toast from '@/lib/toast';
 import { useProductsQuery } from '../queries/useProductsQuery';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import EmptyState from '../components/common/EmptyState';
-import { formatDate, formatCurrency } from '../utils/formatters';
-import { usePersistentViewMode } from '../hooks/usePersistentViewMode';
+import { useUpdateProduct } from '../queries/useProductMutations';
+import RouteSkeleton from '@/components/common/RouteSkeleton';
+import PageContentTransition from '@/components/common/PageContentTransition';
+import { EmptyState } from '../components/common/EmptyState';
+import { PageHeader } from '../components/common/PageHeader';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import * as m from 'motion/react-m';
+import { LayoutGroup, AnimatePresence } from 'motion/react';
+import { variants } from '@/lib/motion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { formatDate } from '../utils/formatters';
+import { DEFAULT_CATEGORIES } from '../constants/category.constants';
 
 const STATUS_TABS = [
-  { id: 'all', label: 'All Items' },
-  { id: 'active', label: 'Active' },
-  { id: 'expiring_soon', label: 'Expiring Soon' },
-  { id: 'expired', label: 'Expired' },
+  { id: 'expiring_soon', label: 'Expiring', icon: Clock },
+  { id: 'all', label: 'All', icon: Package },
+  { id: 'active', label: 'Covered', icon: ShieldCheck },
+  { id: 'expired', label: 'Expired', icon: AlertTriangle },
+  { id: 'none', label: 'No cover', icon: FileText },
 ];
 
-const SORT_OPTIONS = [
-  { id: 'expiry-asc', label: 'Expiring Soonest' },
-  { id: 'expiry-desc', label: 'Latest Expiry' },
-  { id: 'amount-desc', label: 'Highest Value' },
-  { id: 'amount-asc', label: 'Lowest Value' },
-  { id: 'purchase-desc', label: 'Recently Purchased' },
-];
-
-const DEFAULT_CATEGORIES = [
-  'All',
-  'Electronics',
-  'Appliances',
-  'Hardware',
-  'Groceries',
-  'Fashion',
-  'Furniture',
-  'Others',
-];
-
-const getBrandMonogram = (name, brand) => {
-  if (brand && brand.trim()) {
-    const words = brand.trim().split(/\s+/);
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return brand.substring(0, 2).toUpperCase();
-  }
-  if (name && name.trim()) {
-    return name.substring(0, 2).toUpperCase();
-  }
-  return 'WA';
-};
-
-/**
- * Real-time calculation of days remaining and lifecycle status
- */
-const calculateWarrantyMetrics = (product, receipt) => {
+const calculateWarrantyMetrics = (product) => {
   const expiryDate = product.warrantyExpiryDate;
-  const purchaseDate = product.purchaseDate || receipt?.purchaseDate || product.createdAt;
+  const purchaseDate =
+    product.purchaseDate || product.receiptId?.purchaseDate || product.createdAt;
 
   if (!expiryDate) {
     return {
       status: 'none',
-      diffDays: null,
-      badgeText: 'No warranty',
+      daysLeft: null,
+      daysText: '—',
+      elapsedPercent: 0,
       isExpired: false,
       isExpiringSoon: false,
+      statusColor: 'text-fg-3',
+      railClass: '',
+      badgeBg: 'bg-subtle text-fg-3 border-line-subtle',
+      badgeLabel: 'No cover',
     };
   }
 
@@ -82,160 +75,137 @@ const calculateWarrantyMetrics = (product, receipt) => {
   const exp = new Date(expiryDate);
   exp.setHours(0, 0, 0, 0);
 
+  const purch = purchaseDate
+    ? new Date(purchaseDate)
+    : new Date(exp.getTime() - 365 * 24 * 60 * 60 * 1000);
+  purch.setHours(0, 0, 0, 0);
+
+  const totalDuration = Math.max(1, exp.getTime() - purch.getTime());
+  const elapsedDuration = Math.max(0, today.getTime() - purch.getTime());
+  const elapsedPercent = Math.min(
+    100,
+    Math.max(0, Math.round((elapsedDuration / totalDuration) * 100))
+  );
+
   const diffTime = exp.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
     return {
       status: 'expired',
-      diffDays,
-      badgeText: `Expired ${Math.abs(diffDays)}d ago`,
+      daysLeft: diffDays,
+      daysText: `Expired ${Math.abs(diffDays)}d ago`,
+      elapsedPercent: 100,
       isExpired: true,
       isExpiringSoon: false,
-    };
-  }
-
-  if (diffDays === 0) {
-    return {
-      status: 'expiring_soon',
-      diffDays: 0,
-      badgeText: 'Expires today',
-      isExpired: false,
-      isExpiringSoon: true,
+      statusColor: 'text-bad-fg',
+      railClass: 'border-l-3 border-bad-line',
+      badgeBg: 'bg-bad-bg text-bad-fg border-bad-line',
+      badgeLabel: 'Expired',
     };
   }
 
   if (diffDays <= 30) {
     return {
       status: 'expiring_soon',
-      diffDays,
-      badgeText: `${diffDays} days left`,
+      daysLeft: diffDays,
+      daysText: diffDays === 0 ? 'Expires today' : `${diffDays}d left`,
+      elapsedPercent,
       isExpired: false,
       isExpiringSoon: true,
+      statusColor: 'text-warn-fg',
+      railClass: 'border-l-3 border-warn-line',
+      badgeBg: 'bg-warn-bg text-warn-fg border-warn-line',
+      badgeLabel: 'Expiring soon',
     };
   }
 
   return {
     status: 'active',
-    diffDays,
-    badgeText: `${diffDays} days left`,
+    daysLeft: diffDays,
+    daysText:
+      diffDays > 365
+        ? `${(diffDays / 365).toFixed(1)}y left`
+        : `${diffDays}d left`,
+    elapsedPercent,
     isExpired: false,
     isExpiringSoon: false,
+    statusColor: 'text-ok-fg',
+    railClass: '',
+    badgeBg: 'bg-ok-bg text-ok-fg border-ok-line',
+    badgeLabel: 'Covered',
   };
 };
 
-const WarrantyTracker = () => {
+export function WarrantyTracker() {
   const navigate = useNavigate();
-
-  // Local UI state
+  const [activeTab, setActiveTab] = useState('expiring_soon');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'active' | 'expiring_soon' | 'expired'
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [sortBy, setSortBy] = useState('expiry-asc');
-  const [viewMode, setViewMode] = usePersistentViewMode('billbox_warranty_view_mode', 'table');
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // Fetch receipts and products
-  const { data: receiptsData, isLoading: loadingReceipts } = useReceiptsQuery({ limit: 150 });
-  const { data: productsData, isLoading: loadingProducts } = useProductsQuery({ limit: 150 });
+  // Query all products with high limit to compute live tab counts and metrics
+  const { data, isLoading } = useProductsQuery({ limit: 5000 });
+  const updateProductMutation = useUpdateProduct();
 
-  const isLoading = loadingReceipts || loadingProducts;
+  const allProducts = useMemo(() => {
+    if (Array.isArray(data)) return data.filter(Boolean);
+    if (Array.isArray(data?.products)) return data.products.filter(Boolean);
+    return [];
+  }, [data]);
 
-  // Aggregate and deduplicate all warranty items
-  const allWarrantyItems = useMemo(() => {
-    const map = new Map();
-
-    // 1. From Receipts
-    const receiptsList = receiptsData?.receipts || [];
-    receiptsList.forEach((receipt) => {
-      const prods = Array.isArray(receipt.products) && receipt.products.length > 0
-        ? receipt.products
-        : [{ ...receipt, receiptId: receipt._id }];
-
-      prods.forEach((prod) => {
-        const hasWarranty = prod.warrantyExpiryDate || 
-          (prod.warrantyPeriodMonths && prod.warrantyPeriodMonths > 0) ||
-          (prod.warrantyPeriodValue && prod.warrantyPeriodValue > 0) ||
-          (prod.warrantyStatus && prod.warrantyStatus !== 'none');
-
-        if (hasWarranty) {
-          const key = String(prod._id || `${receipt._id}-${prod.productName}`);
-          map.set(key, {
-            id: key,
-            product: prod,
-            receipt,
-            metrics: calculateWarrantyMetrics(prod, receipt),
-          });
-        }
-      });
-    });
-
-    // 2. From standalone Products list
-    const prodsList = productsData?.products || [];
-    prodsList.forEach((prod) => {
-      const hasWarranty = prod.warrantyExpiryDate || 
-        (prod.warrantyPeriodMonths && prod.warrantyPeriodMonths > 0) ||
-        (prod.warrantyStatus && prod.warrantyStatus !== 'none');
-
-      if (hasWarranty) {
-        const key = String(prod._id);
-        const existing = map.get(key);
-        const receipt = prod.receiptId && typeof prod.receiptId === 'object' 
-          ? prod.receiptId 
-          : existing?.receipt || null;
-
-        map.set(key, {
-          id: key,
-          product: prod,
-          receipt,
-          metrics: calculateWarrantyMetrics(prod, receipt),
-        });
-      }
-    });
-
-    return Array.from(map.values());
-  }, [receiptsData, productsData]);
-
-  // Aggregate counts
-  const counts = useMemo(() => {
-    let active = 0;
-    let expiringSoon = 0;
+  // Compute metrics and live summary counts
+  const { enrichedProducts, counts } = useMemo(() => {
+    let covered = 0;
+    let expiring = 0;
     let expired = 0;
+    let none = 0;
 
-    allWarrantyItems.forEach((item) => {
-      if (item.metrics.status === 'active') active++;
-      else if (item.metrics.status === 'expiring_soon') expiringSoon++;
-      else if (item.metrics.status === 'expired') expired++;
+    const list = allProducts.map((p) => {
+      const metrics = calculateWarrantyMetrics(p);
+      if (metrics.status === 'active') covered++;
+      else if (metrics.status === 'expiring_soon') expiring++;
+      else if (metrics.status === 'expired') expired++;
+      else none++;
+
+      return {
+        ...p,
+        metrics,
+      };
     });
 
     return {
-      total: allWarrantyItems.length,
-      active,
-      expiringSoon,
-      expired,
-      totalActiveProtected: active + expiringSoon,
+      enrichedProducts: list,
+      counts: {
+        all: list.length,
+        active: covered,
+        expiring_soon: expiring,
+        expired,
+        none,
+      },
     };
-  }, [allWarrantyItems]);
+  }, [allProducts]);
 
-  // Filter and sort items
-  const filteredItems = useMemo(() => {
-    let list = allWarrantyItems.filter((item) => {
-      // Status tab
-      if (activeTab === 'active' && item.metrics.status !== 'active') return false;
-      if (activeTab === 'expiring_soon' && item.metrics.status !== 'expiring_soon') return false;
-      if (activeTab === 'expired' && item.metrics.status !== 'expired') return false;
+  // Filter products by activeTab, search query, and category
+  const filteredProducts = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
 
-      // Category
-      if (selectedCategory !== 'All') {
-        const cat = item.product.category || item.receipt?.category || 'Others';
-        if (cat.toLowerCase() !== selectedCategory.toLowerCase()) return false;
+    return enrichedProducts.filter((item) => {
+      // 1. Tab filter
+      if (activeTab !== 'all') {
+        if (item.metrics.status !== activeTab) return false;
       }
 
-      // Search
-      if (searchTerm.trim()) {
-        const q = searchTerm.toLowerCase().trim();
-        const prodName = (item.product.productName || '').toLowerCase();
-        const brand = (item.product.brand || '').toLowerCase();
-        const storeName = (item.receipt?.storeName || '').toLowerCase();
+      // 2. Category filter
+      if (selectedCategories.length > 0) {
+        if (!selectedCategories.includes(item.category)) return false;
+      }
+
+      // 3. Search query
+      if (q) {
+        const prodName = (item.productName || '').toLowerCase();
+        const brand = (item.brand || '').toLowerCase();
+        const storeName = (item.receiptId?.storeName || '').toLowerCase();
         if (!prodName.includes(q) && !brand.includes(q) && !storeName.includes(q)) {
           return false;
         }
@@ -243,418 +213,541 @@ const WarrantyTracker = () => {
 
       return true;
     });
+  }, [enrichedProducts, activeTab, selectedCategories, searchTerm]);
 
-    // Sort
-    list.sort((a, b) => {
-      const priceA = Number(a.product.lineTotal || a.product.unitPrice || 0);
-      const priceB = Number(b.product.lineTotal || b.product.unitPrice || 0);
-      const dateA = new Date(a.product.warrantyExpiryDate || '2099-01-01').getTime();
-      const dateB = new Date(b.product.warrantyExpiryDate || '2099-01-01').getTime();
-      const purchA = new Date(a.receipt?.purchaseDate || a.product.purchaseDate || 0).getTime();
-      const purchB = new Date(b.receipt?.purchaseDate || b.product.purchaseDate || 0).getTime();
-
-      if (sortBy === 'expiry-asc') return dateA - dateB;
-      if (sortBy === 'expiry-desc') return dateB - dateA;
-      if (sortBy === 'amount-desc') return priceB - priceA;
-      if (sortBy === 'amount-asc') return priceA - priceB;
-      if (sortBy === 'purchase-desc') return purchB - purchA;
-      return 0;
-    });
-
-    return list;
-  }, [allWarrantyItems, activeTab, selectedCategory, searchTerm, sortBy]);
-
-  const hasActiveFilters = Boolean(
-    searchTerm.trim() || activeTab !== 'all' || selectedCategory !== 'All'
-  );
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setActiveTab('all');
-    setSelectedCategory('All');
+  const handleCategoryToggle = (cat) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
+  // Toggle reminder for individual product
+  const handleToggleReminder = (productId, enabled, e) => {
+    if (e) e.stopPropagation();
+    updateProductMutation.mutate(
+      { id: productId, updates: { reminderEnabled: enabled } },
+      {
+        onSuccess: () => {
+          toast.success(`Warranty reminder ${enabled ? 'enabled' : 'disabled'}.`);
+        },
+        onError: () => {
+          toast.error('Failed to update reminder status.');
+        },
+      }
     );
-  }
+  };
+
+  // Row selection handlers
+  const handleToggleSelectAll = () => {
+    if (selectedIds.size === filteredProducts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProducts.map((p) => p._id)));
+    }
+  };
+
+  const handleToggleSelectRow = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Bulk actions
+  const handleBulkReminders = (enabled) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    Promise.all(
+      ids.map((id) =>
+        updateProductMutation.mutateAsync({ id, updates: { reminderEnabled: enabled } })
+      )
+    )
+      .then(() => {
+        toast.success(`Updated reminders for ${ids.length} products.`);
+        setSelectedIds(new Set());
+      })
+      .catch(() => {
+        toast.error('Failed to update some products.');
+      });
+  };
+
+  const hasAnimatedStagger = React.useRef(false);
+  const shouldStagger = !hasAnimatedStagger.current && filteredProducts.length > 0;
+  React.useEffect(() => {
+    if (filteredProducts.length > 0) {
+      hasAnimatedStagger.current = true;
+    }
+  }, [filteredProducts.length]);
+
+  const hasActiveFilters = Boolean(
+    searchTerm.trim() || selectedCategories.length > 0 || activeTab !== 'expiring_soon'
+  );
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-4 sm:px-6 md:px-8 lg:px-10 py-7 w-full space-y-5 text-brand-navy font-sans pb-28">
-      {/* 1. Header Toolbar (Compact) */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-0.5">
+    <PageContentTransition
+      isLoading={isLoading && allProducts.length === 0}
+      skeleton={<RouteSkeleton section="warranties" />}
+      className="space-y-4 w-full font-sans"
+    >
+      {/* 1. Header Toolbar with Inline Stat Shortcuts */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-line">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-              Warranty Tracker
-            </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
-              {counts.totalActiveProtected} active
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-normal mt-0.5">
-            Track warranty expiration dates and maintain coverage across your registered assets.
-          </p>
+          <PageHeader
+            title="Warranties"
+            description="Track expiration dates and coverage timelines across your assets."
+            className="p-0 border-0"
+          />
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/receipts/new')}
-          className="px-4 py-2 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Receipt</span>
-        </button>
+        {/* Right-side summary strip: 4 clickable tab shortcuts */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setActiveTab('active')}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'active'
+                ? 'bg-ok-bg text-ok-fg border-ok-line'
+                : 'bg-surface text-fg-2 border-line hover:border-ok-line/50'
+            }`}
+          >
+            <ShieldCheck className="size-3.5 text-ok-fg" />
+            <span>Covered</span>
+            <span className="font-mono font-semibold tnum">({counts.active})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('expiring_soon')}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'expiring_soon'
+                ? 'bg-warn-bg text-warn-fg border-warn-line'
+                : 'bg-surface text-fg-2 border-line hover:border-warn-line/50'
+            }`}
+          >
+            <Clock className="size-3.5 text-warn-fg" />
+            <span>Expiring</span>
+            <span className="font-mono font-semibold tnum">({counts.expiring_soon})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('expired')}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'expired'
+                ? 'bg-bad-bg text-bad-fg border-bad-line'
+                : 'bg-surface text-fg-2 border-line hover:border-bad-line/50'
+            }`}
+          >
+            <AlertTriangle className="size-3.5 text-bad-fg" />
+            <span>Expired</span>
+            <span className="font-mono font-semibold tnum">({counts.expired})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('none')}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'none'
+                ? 'bg-subtle text-fg border-line-strong'
+                : 'bg-surface text-fg-3 border-line hover:border-line-strong'
+            }`}
+          >
+            <FileText className="size-3.5 text-fg-3" />
+            <span>No cover</span>
+            <span className="font-mono font-semibold tnum">({counts.none})</span>
+          </button>
+        </div>
       </div>
 
-      {/* 2. Streamlined High-Productivity Filter Bar (Clean & Content-Focused) */}
-      <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-3.5 shadow-xs space-y-3 font-sans">
-        {/* Row 1: Search + Status Tabs + Sort & View Controls */}
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Search Box */}
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5 pointer-events-none" />
+      {/* 2. Filter Bar & Quick Tabs */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+        {/* Segmented Quick Tabs */}
+        <div className="inline-flex items-center p-1 bg-subtle rounded-[10px] border border-line-subtle gap-1 text-xs overflow-x-auto no-scrollbar">
+          {STATUS_TABS.map((tab) => {
+            const isSelected = activeTab === tab.id;
+            const tabCount = counts[tab.id] ?? counts.all;
+            const Icon = tab.icon;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-surface text-fg font-semibold shadow-xs border border-line-subtle'
+                    : 'text-fg-3 hover:text-fg'
+                }`}
+              >
+                <Icon className={`size-3.5 ${isSelected ? 'text-accent' : 'text-fg-3'}`} />
+                <span>{tab.label}</span>
+                <span className="font-mono text-[11px] tnum px-1.5 py-0.2 rounded-full bg-subtle/80 text-fg-3">
+                  {tabCount}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search & Category Filter */}
+        <div className="flex items-center gap-2 flex-1 md:max-w-md justify-end">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-fg-3 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search product, brand, merchant..."
-              style={{ paddingLeft: '2.25rem', paddingRight: '2rem' }}
-              className="w-full text-xs py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-brand-surface border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors font-sans"
+              className="w-full text-xs h-9 pl-8 pr-7 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-3 focus:outline-none focus:border-accent transition-colors"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs p-0.5 cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-3 hover:text-fg text-xs p-1 cursor-pointer"
                 title="Clear"
               >
-                ✕
+                <X className="size-3.5" />
               </button>
             )}
           </div>
 
-          {/* Status Quick-Tabs with embedded live counts */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            {STATUS_TABS.map((tab) => {
-              const isSelected = activeTab === tab.id;
-              let count = counts.total;
-              if (tab.id === 'active') count = counts.active;
-              if (tab.id === 'expiring_soon') count = counts.expiringSoon;
-              if (tab.id === 'expired') count = counts.expired;
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
-                    isSelected
-                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
-                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
-                  }`}
-                >
-                  {tab.id === 'active' && <ShieldCheck className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-brand-primary'}`} />}
-                  {tab.id === 'expiring_soon' && <Clock className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-amber-600'}`} />}
-                  {tab.id === 'expired' && <AlertTriangle className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-rose-600'}`} />}
-                  <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-tabular ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-brand-primary'
-                  }`}>
-                    {count}
+          {/* Multi-Category Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className={`h-9 text-xs gap-1.5 shrink-0 ${
+                  selectedCategories.length > 0 ? 'border-accent text-accent bg-accent-tint/40 font-medium' : ''
+                }`}
+              >
+                <Filter className="size-3.5" />
+                <span>Category</span>
+                {selectedCategories.length > 0 && (
+                  <span className="ml-0.5 rounded-full bg-accent text-on-accent px-1.5 py-0.2 text-[10px] font-semibold tnum">
+                    {selectedCategories.length}
                   </span>
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-2">
+              <div className="px-2 py-1 text-xs font-semibold text-fg-3 border-b border-line mb-1 flex items-center justify-between">
+                <span>Filter by Category</span>
+                {selectedCategories.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategories([])}
+                    className="text-[11px] text-accent hover:underline cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="max-h-52 overflow-y-auto divide-y divide-line-subtle text-xs">
+                {DEFAULT_CATEGORIES.map((cat) => {
+                  const isChecked = selectedCategories.includes(cat);
+                  return (
+                    <label
+                      key={cat}
+                      className="flex items-center gap-2.5 py-1.5 px-2 hover:bg-hover rounded cursor-pointer select-none"
+                    >
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => handleCategoryToggle(cat)}
+                      />
+                      <span className="text-sm text-fg capitalize truncate">{cat}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          {/* Sort & View Mode Switcher */}
-          <div className="flex items-center gap-2 justify-end shrink-0">
-            <div 
-              className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0 select-none"
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span 
-                className="hidden sm:inline font-normal shrink-0" 
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                Sort&nbsp;by:
-              </span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-medium rounded-xl px-2.5 py-1.5 cursor-pointer focus:outline-none shrink-0"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                title="Table Ledger"
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'table' ? 'bg-brand-surface text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'
-                }`}
-              >
-                <LayoutList className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                title="Grid Cards"
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-brand-surface text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Row 2: Category Quick-Pills (Single compact row) */}
-        <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
-            CATEGORY:
-          </span>
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1">
-            {DEFAULT_CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                    isSelected
-                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
-                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-
+          {/* Inline Clear filters button (Zero layout shift: list below never moves downwards) */}
           {hasActiveFilters && (
-            <button
+            <Button
               type="button"
-              onClick={handleClearFilters}
-              className="text-xs text-brand-navy hover:text-brand-primary hover:underline font-medium cursor-pointer shrink-0 ml-2"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCategories([]);
+                setActiveTab('expiring_soon');
+              }}
+              className="h-9 text-xs text-accent hover:underline cursor-pointer font-medium whitespace-nowrap"
             >
-              Reset filters
-            </button>
+              Clear filters
+            </Button>
           )}
         </div>
       </div>
 
-      {/* 3. Main Content: Immediate, High-Density Visibility */}
-      {filteredItems.length === 0 ? (
-        <EmptyState
-          title={hasActiveFilters ? 'No warranties match your filter criteria' : 'No product warranties logged'}
-          description={
-            hasActiveFilters
-              ? 'Try adjusting your search query, status tab, or category pill.'
-              : 'Add your receipts with warranty durations to automatically track expiration lifecycles.'
-          }
-          actionLabel={hasActiveFilters ? 'Reset Filters' : 'Add Receipt'}
-          onAction={hasActiveFilters ? handleClearFilters : () => navigate('/receipts/new')}
-        />
-      ) : viewMode === 'table' ? (
-        /* TABLE LEDGER VIEW (Maximum Immediate Visibility of Content) */
-        <div className="bg-brand-surface border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden font-sans">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            <div className="col-span-12 sm:col-span-5 md:col-span-4">PRODUCT & ASSET</div>
-            <div className="hidden sm:block sm:col-span-2 text-left">CATEGORY</div>
-            <div className="hidden md:block md:col-span-3 text-left">MERCHANT & PURCHASE</div>
-            <div className="col-span-7 sm:col-span-3 md:col-span-2 text-right sm:text-center">WARRANTY STATUS</div>
-            <div className="col-span-5 sm:col-span-2 md:col-span-1 text-right">VALUE</div>
-          </div>
+      {/* 3. Floating Bulk Action Bar (fixed at bottom, zero vertical layout shift for table rows) */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <m.div
+            initial={{ y: 24, opacity: 0, x: '-50%' }}
+            animate={{ y: 0, opacity: 1, x: '-50%' }}
+            exit={{ y: 24, opacity: 0, x: '-50%' }}
+            transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+            className="fixed bottom-6 left-1/2 z-50 flex h-11 items-center justify-between gap-4 rounded-[12px] border border-accent/40 bg-surface/95 backdrop-blur-md px-4 py-2 text-xs shadow-xl min-w-[340px] max-w-[90vw]"
+          >
+            <span className="font-semibold text-accent tnum">
+              {selectedIds.size} {selectedIds.size === 1 ? 'product' : 'products'} selected
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkReminders(true)}
+                className="h-7 text-xs gap-1 border-accent-line text-accent cursor-pointer"
+              >
+                <Bell className="size-3" />
+                <span>Enable alerts</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkReminders(false)}
+                className="h-7 text-xs gap-1 border-accent-line text-accent cursor-pointer"
+              >
+                <BellOff className="size-3" />
+                <span>Disable alerts</span>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+                className="h-7 text-xs text-fg-3 hover:text-fg cursor-pointer"
+              >
+                Clear
+              </Button>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
 
-          {/* Table Rows */}
-          <div className="divide-y divide-slate-100">
-            {filteredItems.map(({ id, product, receipt, metrics }) => {
-              const currency = receipt?.currency || 'INR';
-              const price = product.lineTotal || product.unitPrice;
-              const monogram = getBrandMonogram(product.productName, product.brand);
-              const destinationUrl = receipt?._id ? `/receipts/${receipt._id}` : `/products/${product._id}`;
-
-              return (
-                <div
-                  key={id}
-                  onClick={() => navigate(destinationUrl)}
-                  className="grid grid-cols-12 gap-4 px-6 py-3.5 items-center hover:bg-brand-border/20 transition-colors cursor-pointer group"
-                >
-                  {/* Column 1: Monogram + Product Name & Brand */}
-                  <div className="col-span-12 sm:col-span-5 md:col-span-4 flex items-center gap-3 min-w-0 pr-2">
-                    <div className="w-8 h-8 rounded-xl bg-brand-canvas border border-brand-border text-brand-navy font-semibold text-xs flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-border/50 group-hover:text-brand-navy transition-colors">
-                      {monogram}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4
-                        className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate"
-                        title={product.productName}
-                      >
-                        {product.productName || 'Untitled Asset'}
-                      </h4>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                        {product.brand && (
-                          <span className="font-normal text-slate-600">{product.brand}</span>
-                        )}
-                        {product.brand && <span>•</span>}
-                        <span className="font-tabular">Exp: {formatDate(product.warrantyExpiryDate)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Column 2: Category Pill */}
-                  <div className="hidden sm:block sm:col-span-2 text-left">
-                    <span className="inline-block text-[11px] font-medium text-slate-700 bg-slate-100 border border-slate-200/70 px-2.5 py-0.5 rounded-full truncate max-w-full">
-                      {product.category || receipt?.category || 'General'}
-                    </span>
-                  </div>
-
-                  {/* Column 3: Store & Purchase Date */}
-                  <div className="hidden md:block md:col-span-3 text-left min-w-0">
-                    <span className="text-xs font-medium text-slate-800 block truncate" title={receipt?.storeName}>
-                      {receipt?.storeName || 'Direct Asset Entry'}
-                    </span>
-                    <span className="text-[11px] text-slate-400 font-tabular block mt-0.5">
-                      {formatDate(receipt?.purchaseDate || product.purchaseDate)}
-                    </span>
-                  </div>
-
-                  {/* Column 4: Warranty Status Badge */}
-                  <div className="col-span-7 sm:col-span-3 md:col-span-2 text-left sm:text-center">
-                    {metrics.isExpired ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-canvas text-brand-navy/70 border border-brand-border font-tabular">
-                        <AlertTriangle className="w-3.5 h-3.5 text-brand-navy/60 shrink-0" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    ) : metrics.isExpiringSoon ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-border text-brand-navy border border-brand-primary/50 font-tabular">
-                        <Clock className="w-3.5 h-3.5 text-brand-primary shrink-0" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border font-tabular">
-                        <ShieldCheck className="w-3.5 h-3.5 text-brand-primary shrink-0" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Column 5: Value & Action */}
-                  <div className="col-span-5 sm:col-span-2 md:col-span-1 flex items-center justify-end gap-2 text-right">
-                    <span className="text-sm font-medium font-tabular text-slate-900 tracking-tight">
-                      {price != null ? formatCurrency(price, currency) : '—'}
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-700 transition-colors shrink-0" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* 4. Warranties Table */}
+      {filteredProducts.length === 0 ? (
+        <div className="p-8 rounded-[12px] border border-line bg-surface">
+          <EmptyState
+            title="No warranties found"
+            description={
+              searchTerm || selectedCategory !== 'All'
+                ? 'Try clearing your filters or search keywords.'
+                : 'No registered products match this warranty lifecycle stage.'
+            }
+            actionLabel="Add receipt"
+            onAction={() => navigate('/receipts/new')}
+          />
         </div>
       ) : (
-        /* COMPACT CARD GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
-          {filteredItems.map(({ id, product, receipt, metrics }) => {
-            const currency = receipt?.currency || 'INR';
-            const price = product.lineTotal || product.unitPrice;
-            const monogram = getBrandMonogram(product.productName, product.brand);
-            const destinationUrl = receipt?._id ? `/receipts/${receipt._id}` : `/products/${product._id}`;
-
-            return (
-              <div
-                key={id}
-                onClick={() => navigate(destinationUrl)}
-                className="bg-brand-surface border border-brand-border rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-brand-primary/50 transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+        <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+          <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+            <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+              <thead>
+                <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                  <th className="py-2.5 px-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredProducts.length > 0 &&
+                        selectedIds.size === filteredProducts.length
+                      }
+                      onChange={handleToggleSelectAll}
+                      className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                    />
+                  </th>
+                  <th className="py-2.5 px-3 w-[260px]">Product</th>
+                  <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                  <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                  <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                  <th className="py-2.5 px-3 w-[120px]">Days left</th>
+                  <th className="py-2.5 px-3 w-[120px]">Coverage bar</th>
+                  <th className="py-2.5 px-3 w-[80px] text-center">Reminder</th>
+                  <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                </tr>
+              </thead>
+              <m.tbody
+                variants={variants.stagger(0.015)}
+                initial={shouldStagger ? 'hidden' : false}
+                animate="show"
+                className="divide-y divide-line-subtle"
               >
-                <div>
-                  {/* Top Bar: Monogram + Category + Status Pill */}
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        {monogram}
-                      </div>
-                      <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full">
-                        {product.category || receipt?.category || 'General'}
-                      </span>
-                    </div>
+                <LayoutGroup id="billbox-warranty-rows">
+                  {filteredProducts.map((product, index) => {
+                      if (!product) return null;
+                      const { metrics } = product;
+                      const isChecked = selectedIds.has(product._id);
+                      const isStaggered = index < 12;
+                      const enableLayout = filteredProducts.length <= 50;
+                      const receipt =
+                        product.receiptId && typeof product.receiptId === 'object'
+                          ? product.receiptId
+                          : null;
+                      const merchantName = receipt?.storeName || 'Merchant';
+                      const purchaseDate =
+                        product.purchaseDate || receipt?.purchaseDate;
+                      const receiptId =
+                        receipt?._id ||
+                        (typeof product.receiptId === 'string' ? product.receiptId : null);
 
-                    {metrics.isExpired ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full font-tabular">
-                        <AlertTriangle className="w-3 h-3 text-rose-600" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    ) : metrics.isExpiringSoon ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-0.5 rounded-full font-tabular">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/30 px-2.5 py-0.5 rounded-full font-tabular">
-                        <ShieldCheck className="w-3 h-3 text-brand-primary" />
-                        <span>{metrics.badgeText}</span>
-                      </span>
-                    )}
-                  </div>
+                      return (
+                        <m.tr
+                          key={product._id}
+                          layout={enableLayout ? 'position' : false}
+                          transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                          variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                          onClick={() => navigate(`/products/${product._id}`)}
+                          className={`hover:bg-subtle/40 transition-colors cursor-pointer group ${metrics.railClass}`}
+                        >
+                          {/* Checkbox */}
+                          <td
+                            className="py-3 px-3 text-center align-middle"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => handleToggleSelectRow(product._id, e)}
+                              className="rounded border-line size-3.5 cursor-pointer accent-accent"
+                            />
+                          </td>
 
-                  {/* Merchant & Title */}
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block truncate">
-                    {receipt?.storeName?.trim() || 'Direct Asset Entry'}
-                  </span>
-                  <h3
-                    className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors line-clamp-2 leading-snug mt-0.5"
-                    title={product.productName}
-                  >
-                    {product.productName || 'Untitled Asset'}
-                  </h3>
-                  {product.brand && (
-                    <span className="text-xs text-slate-500 font-normal mt-0.5 block">
-                      Brand: {product.brand}
-                    </span>
-                  )}
-                </div>
+                          {/* Product Name + Brand */}
+                          <td className="py-3 px-3 align-middle">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="size-8 rounded-[8px] bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-3 group-hover:text-accent group-hover:border-accent-line transition-colors">
+                                <Package className="size-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-semibold text-fg group-hover:text-accent transition-colors truncate">
+                                  {product.productName}
+                                </div>
+                                <div className="text-[11px] text-fg-3 truncate">
+                                  {product.brand ? product.brand : product.category || 'General'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                {/* Bottom Row: Expiry Date + Price */}
-                <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Expires</span>
-                    <span className={`font-medium font-tabular ${
-                      metrics.isExpired ? 'text-brand-navy/70' : metrics.isExpiringSoon ? 'text-brand-primary font-bold' : 'text-slate-900'
-                    }`}>
-                      {formatDate(product.warrantyExpiryDate)}
-                    </span>
-                  </div>
+                          {/* Merchant */}
+                          <td className="py-3 px-3 text-fg-2 truncate align-middle">
+                            {merchantName}
+                          </td>
 
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Value</span>
-                    <span className="text-sm font-semibold text-slate-900 font-tabular">
-                      {price != null ? formatCurrency(price, currency) : '—'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                          {/* Purchased */}
+                          <td className="py-3 px-3 text-fg-3 font-mono tnum align-middle">
+                            {purchaseDate ? formatDate(purchaseDate) : '—'}
+                          </td>
+
+                          {/* Expires */}
+                          <td className="py-3 px-3 text-fg-2 font-mono tnum align-middle">
+                            {product.warrantyExpiryDate
+                              ? formatDate(product.warrantyExpiryDate)
+                              : '—'}
+                          </td>
+
+                          {/* Days Left (tnum, bold, status-coloured) */}
+                          <td className="py-3 px-3 align-middle">
+                            <span className={`font-mono font-bold text-xs tnum ${metrics.statusColor}`}>
+                              {metrics.daysText}
+                            </span>
+                          </td>
+
+                          {/* Coverage Progress Bar (4px tall, width 96px, elapsed %) */}
+                          <td className="py-3 px-3 align-middle">
+                            {metrics.status !== 'none' ? (
+                              <div className="space-y-1">
+                                <div className="w-24 h-1 rounded-full bg-subtle overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-300 ${
+                                      metrics.isExpired
+                                        ? 'bg-bad'
+                                        : metrics.isExpiringSoon
+                                        ? 'bg-warn'
+                                        : 'bg-accent'
+                                    }`}
+                                    style={{ width: `${metrics.elapsedPercent}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-fg-3 font-mono tnum block">
+                                  {metrics.elapsedPercent}% elapsed
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-fg-3">—</span>
+                            )}
+                          </td>
+
+                          {/* Reminder Switch */}
+                          <td
+                            className="py-3 px-3 text-center align-middle"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Switch
+                              checked={Boolean(product.reminderEnabled)}
+                              onCheckedChange={(checked) =>
+                                handleToggleReminder(product._id, checked)
+                              }
+                              aria-label={`Toggle reminder for ${product.productName}`}
+                            />
+                          </td>
+
+                          {/* Action Menu */}
+                          <td
+                            className="py-3 px-2 text-center align-middle"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="size-7 p-0 text-fg-3 hover:text-fg cursor-pointer"
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="text-xs">
+                                <DropdownMenuItem
+                                  onClick={() => navigate(`/products/${product._id}`)}
+                                  className="cursor-pointer"
+                                >
+                                  View product details
+                                </DropdownMenuItem>
+                                {receiptId && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      navigate(`/receipts/${receiptId}`)
+                                    }
+                                    className="cursor-pointer"
+                                  >
+                                    View source receipt
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </m.tr>
+                      );
+                    })}
+                </LayoutGroup>
+              </m.tbody>
+            </table>
+          </div>
         </div>
       )}
-    </div>
+    </PageContentTransition>
   );
-};
+}
 
 export default WarrantyTracker;

@@ -38,6 +38,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
@@ -49,7 +50,7 @@ const { sendError } = require('./utils/apiResponse');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Flexible CORS for development and production deployments
+// Strict CORS configuration for development and authorized domains
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'http://localhost:5173',
@@ -59,15 +60,35 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or same-origin)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) {
         return callback(null, true);
       }
-      // Allow preview deployments on vercel.app or render.com
-      if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.netlify.app')) {
+
+      // Allow configured client origins
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(null, true);
+
+      // Allow localhost ports dynamically during non-production development
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        (/^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin))
+      ) {
+        return callback(null, true);
+      }
+
+      // Allow trusted preview deployments
+      if (
+        origin.endsWith('.vercel.app') ||
+        origin.endsWith('.onrender.com') ||
+        origin.endsWith('.netlify.app')
+      ) {
+        return callback(null, true);
+      }
+
+      // Disallow all other unauthorized origins
+      return callback(null, false);
     },
     credentials: true,
   })
@@ -94,16 +115,43 @@ const reminderRoutes = require('./routes/reminder.routes');
 
 const fs = require('fs');
 
-// Serve uploaded files statically or from MongoDB Atlas Base64 on cloud serverless
+// Secure file streaming endpoint with authentication and ownership validation
 app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
   try {
     const filename = req.params.filename;
     const safeFilename = path.basename(filename);
     const localFilePath = path.join(__dirname, 'uploads', safeFilename);
 
-    if (fs.existsSync(localFilePath)) {
-      return res.sendFile(localFilePath);
+    // Resolve caller identity from Bearer header, query token, or cookie
+    let authUserId = null;
+    let authError = null;
+    const authHeader = req.headers.authorization;
+    let cookieToken = null;
+    if (req.headers.cookie) {
+      const match = req.headers.cookie.match(/(?:^|;\s*)billbox_token=([^;]+)/);
+      if (match) {
+        try {
+          cookieToken = decodeURIComponent(match[1]);
+        } catch {
+          cookieToken = match[1];
+        }
+      }
     }
+
+    const rawToken = (authHeader && authHeader.startsWith('Bearer '))
+      ? authHeader.split(' ')[1]
+      : (req.query.token || cookieToken);
+
+    if (rawToken) {
+      try {
+        const decoded = jwt.verify(rawToken, process.env.JWT_SECRET);
+        authUserId = decoded.userId;
+      } catch (e) {
+        authError = 'Invalid or expired authentication token.';
+      }
+    }
+
+    const publicToken = req.query.publicToken;
 
     const Receipt = require('./models/Receipt.model');
     const receipt = await Receipt.findOne({
@@ -113,7 +161,21 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
       ]
     }).populate('products');
 
+    // If an associated receipt exists, enforce ownership or public share token
     if (receipt) {
+      const isOwner = authUserId && receipt.userId && receipt.userId.toString() === authUserId.toString();
+      const hasValidPublicToken = publicToken && receipt.publicToken && publicToken === receipt.publicToken;
+
+      if (!isOwner && !hasValidPublicToken) {
+        if (authError) {
+          return res.status(401).json({ success: false, message: authError });
+        }
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: You do not have permission to access this receipt file.'
+        });
+      }
+
       if (receipt.fileData) {
         const buffer = Buffer.from(receipt.fileData, 'base64');
         const isPdf = receipt.mimeType === 'application/pdf' || receipt.fileType === 'pdf' || safeFilename.toLowerCase().endsWith('.pdf');
@@ -125,11 +187,63 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
         return res.send(buffer);
       }
 
+      if (fs.existsSync(localFilePath)) {
+        return res.sendFile(localFilePath);
+      }
+
       if (receipt.publicToken) {
         const { getPublicReceiptFile } = require('./controllers/publicReceipt.controller');
         req.params.publicToken = receipt.publicToken;
         return getPublicReceiptFile(req, res);
       }
+    }
+
+    // If file belongs to a BatchUpload in progress, enforce batch ownership
+    const BatchUpload = require('./models/BatchUpload.model');
+    const batchDoc = await BatchUpload.findOne({
+      'files.fileUrl': { $regex: safeFilename, $options: 'i' }
+    });
+
+    if (batchDoc) {
+      const isBatchOwner = authUserId && batchDoc.userId && batchDoc.userId.toString() === authUserId.toString();
+      if (!isBatchOwner) {
+        if (authError) {
+          return res.status(401).json({ success: false, message: authError });
+        }
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: You do not have permission to access this batch file.'
+        });
+      }
+
+      if (fs.existsSync(localFilePath)) {
+        return res.sendFile(localFilePath);
+      }
+
+      const matchingFile = (batchDoc.files || []).find(
+        (f) => f.fileUrl && f.fileUrl.toLowerCase().includes(safeFilename.toLowerCase())
+      );
+      if (matchingFile && matchingFile.fileData) {
+        const buffer = Buffer.from(matchingFile.fileData, 'base64');
+        const isPdf = matchingFile.mimeType === 'application/pdf' || matchingFile.fileType === 'pdf' || safeFilename.toLowerCase().endsWith('.pdf');
+        const contentType = matchingFile.mimeType || (isPdf ? 'application/pdf' : 'image/jpeg');
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `inline; filename="${safeFilename}"`);
+        res.setHeader('Content-Length', buffer.length);
+        return res.send(buffer);
+      }
+    }
+
+    // Freshly uploaded file pending receipt creation requires authentication
+    if (fs.existsSync(localFilePath)) {
+      if (!authUserId) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required to access uploaded files.'
+        });
+      }
+      return res.sendFile(localFilePath);
     }
 
     return res.status(404).json({ success: false, message: 'File not found' });
@@ -138,8 +252,6 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error streaming file' });
   }
 });
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -151,6 +263,20 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/public/receipts', publicReceiptRoutes);
+
+// Client runtime error logger
+app.post('/api/client-error', express.json(), (req, res) => {
+  console.error('\n==================== CLIENT CRASH LOGGED ====================');
+  console.error(JSON.stringify(req.body, null, 2));
+  console.error('=============================================================\n');
+  try {
+    const fs = require('fs');
+    fs.writeFileSync(path.join(__dirname, 'last-client-error.json'), JSON.stringify(req.body, null, 2));
+  } catch (e) {
+    console.error('Failed to write last-client-error.json:', e);
+  }
+  res.json({ ok: true });
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

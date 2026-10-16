@@ -1,43 +1,55 @@
-import { useState, useEffect, useMemo } from 'react';
+import * as React from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  ShieldCheck, 
-  Clock, 
-  AlertTriangle, 
-  ArrowRight,
-  ArrowUpDown,
+import toast from '@/lib/toast';
+import {
+  Package,
+  Plus,
+  Search,
   X,
+  Filter,
   LayoutList,
   LayoutGrid,
-  Store,
-  Calendar,
-  ExternalLink,
-  Tag
+  MoreHorizontal,
 } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useProductsQuery } from '../queries/useProductsQuery';
-import { useCreateProduct } from '../queries/useProductMutations';
+import { useCreateProduct, useDeleteProduct } from '../queries/useProductMutations';
 import { useCategoriesQuery } from '../queries/useCategoryQueries';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import EmptyState from '../components/common/EmptyState';
+import { EmptyState } from '../components/common/EmptyState';
+import { PageHeader } from '../components/common/PageHeader';
+import { StatusBadge } from '../components/data/StatusBadge';
+import { ConfirmModal } from '../components/common/ConfirmModal';
+import RouteSkeleton from '@/components/common/RouteSkeleton';
+import PageContentTransition from '@/components/common/PageContentTransition';
+import { LayoutGroup } from 'motion/react';
+import * as m from 'motion/react-m';
+import { variants, spring } from '@/lib/motion';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { usePersistentViewMode } from '../hooks/usePersistentViewMode';
-
-const DEFAULT_CATEGORIES = [
-  'Electronics',
-  'Appliances',
-  'Medical',
-  'Fashion',
-  'Furniture',
-  'Groceries',
-  'Hardware',
-  'Utilities',
-  'Office',
-  'Others',
-];
+import { DEFAULT_CATEGORIES } from '../constants/category.constants';
 
 const WARRANTY_FILTERS = [
   { id: 'All', label: 'All Items' },
@@ -55,26 +67,23 @@ const SORT_OPTIONS = [
   { id: 'warranty', label: 'Expiring Soonest', sortBy: 'warrantyExpiryDate', sortOrder: 'asc' },
 ];
 
-const getBrandMonogram = (name, brand) => {
-  if (brand && brand.trim()) {
-    const words = brand.trim().split(/\s+/);
-    if (words.length >= 2) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    return brand.substring(0, 2).toUpperCase();
-  }
-  if (name && name.trim()) {
-    return name.substring(0, 2).toUpperCase();
-  }
-  return 'PR';
-};
-
-const Products = () => {
+export function Products() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: fetchedCategories = [] } = useCategoriesQuery();
   const createMutation = useCreateProduct();
+  const deleteMutation = useDeleteProduct();
+
+  const categoryOptions = useMemo(() => {
+    const list = Array.isArray(fetchedCategories)
+      ? fetchedCategories
+      : Array.isArray(fetchedCategories?.categories)
+      ? fetchedCategories.categories
+      : [];
+    const extra = list.map((c) => (typeof c === 'string' ? c : c?.name)).filter(Boolean);
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...extra]));
+  }, [fetchedCategories]);
 
   // URL search params
   const categoryParam = searchParams.get('category') || 'All';
@@ -87,134 +96,147 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState(searchParam);
   const [viewMode, setViewMode] = usePersistentViewMode('billbox_products_view_mode', 'table');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
   const [newProduct, setNewProduct] = useState({
     productName: '',
     brand: '',
     category: 'Electronics',
     quantity: 1,
     unitPrice: '',
+    purchaseDate: new Date().toISOString().split('T')[0],
     warrantyPeriodMonths: 12,
-    warrantyStatus: 'active',
   });
 
-  // Sync search input with URL param
-  useEffect(() => {
-    setSearchTerm(searchParam);
-  }, [searchParam]);
+  const activeSort = SORT_OPTIONS.find((s) => s.id === sortParam) || SORT_OPTIONS[0];
 
-  // Categories list
-  const categoryPillList = useMemo(() => {
-    const userCatNames = Array.isArray(fetchedCategories)
-      ? fetchedCategories.map((c) => (typeof c === 'string' ? c : c.name)).filter(Boolean)
-      : [];
-    return Array.from(new Set(['All', ...DEFAULT_CATEGORIES, ...userCatNames]));
-  }, [fetchedCategories]);
-
-  // Construct query filters
-  const currentSortObj = SORT_OPTIONS.find((s) => s.id === sortParam) || SORT_OPTIONS[0];
-  const filters = useMemo(() => {
-    const q = { 
-      page: pageParam, 
-      limit: viewMode === 'grid' ? 12 : 20,
-      sortBy: currentSortObj.sortBy,
-      sortOrder: currentSortObj.sortOrder
-    };
-    if (categoryParam !== 'All') q.category = categoryParam;
-    if (searchParam.trim()) q.search = searchParam.trim();
-    if (warrantyStatusParam !== 'All') q.warrantyStatus = warrantyStatusParam;
-    return q;
-  }, [pageParam, categoryParam, searchParam, warrantyStatusParam, currentSortObj, viewMode]);
-
-  const { data, isLoading, isError } = useProductsQuery(filters);
-  const { products = [], total = 0, page = 1, totalPages = 1 } = data || {};
-
-  const hasActiveFilters = Boolean(
-    searchParam ||
-    (categoryParam && categoryParam !== 'All') ||
-    (warrantyStatusParam && warrantyStatusParam !== 'All') ||
-    sortParam !== 'newest'
+  const queryFilters = useMemo(
+    () => ({
+      page: pageParam,
+      limit: 20,
+      search: searchParam,
+      category: categoryParam,
+      warrantyStatus: warrantyStatusParam,
+      sortBy: activeSort.sortBy,
+      sortOrder: activeSort.sortOrder,
+    }),
+    [pageParam, searchParam, categoryParam, warrantyStatusParam, activeSort]
   );
 
-  // Filter Handlers
-  const handleSelectCategory = (cat) => {
-    const params = new URLSearchParams(searchParams);
+  const { data, isLoading, isError } = useProductsQuery(queryFilters);
+
+  const products = useMemo(() => {
+    if (Array.isArray(data)) return data.filter(Boolean);
+    if (Array.isArray(data?.products)) return data.products.filter(Boolean);
+    return [];
+  }, [data]);
+  const total = data?.total ?? products.length;
+  const totalPages =
+    data?.totalPages || Math.max(1, Math.ceil(total / (queryFilters.limit || 20)));
+
+  // Sync search input with debounce into URL
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== searchParam) {
+        const next = new URLSearchParams(searchParams);
+        if (searchTerm.trim()) {
+          next.set('search', searchTerm.trim());
+        } else {
+          next.delete('search');
+        }
+        next.set('page', '1');
+        setSearchParams(next);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm, searchParam, searchParams, setSearchParams]);
+
+  const selectedCategories = useMemo(() => {
+    if (!categoryParam || categoryParam === 'All') return [];
+    return categoryParam.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All');
+  }, [categoryParam]);
+
+  const handleCategoryToggle = (cat) => {
+    let next;
+    if (selectedCategories.includes(cat)) {
+      next = selectedCategories.filter((c) => c !== cat);
+    } else {
+      next = [...selectedCategories, cat];
+    }
+    const nextParams = new URLSearchParams(searchParams);
+    if (next.length > 0) {
+      nextParams.set('category', next.join(','));
+    } else {
+      nextParams.delete('category');
+    }
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
+  };
+
+  const handleCategoryChange = (cat) => {
+    const next = new URLSearchParams(searchParams);
     if (cat === 'All') {
-      params.delete('category');
+      next.delete('category');
     } else {
-      params.set('category', cat);
+      next.set('category', cat);
     }
-    params.set('page', '1');
-    setSearchParams(params);
+    next.set('page', '1');
+    setSearchParams(next);
   };
 
-  const handleSelectWarranty = (status) => {
-    const params = new URLSearchParams(searchParams);
+  const handleWarrantyStatusChange = (status) => {
+    const next = new URLSearchParams(searchParams);
     if (status === 'All') {
-      params.delete('warrantyStatus');
+      next.delete('warrantyStatus');
     } else {
-      params.set('warrantyStatus', status);
+      next.set('warrantyStatus', status);
     }
-    params.set('page', '1');
-    setSearchParams(params);
+    next.set('page', '1');
+    setSearchParams(next);
   };
 
-  const handleSortChange = (newSort) => {
-    const params = new URLSearchParams(searchParams);
-    if (newSort === 'newest') {
-      params.delete('sort');
-    } else {
-      params.set('sort', newSort);
-    }
-    params.set('page', '1');
-    setSearchParams(params);
-  };
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    const params = new URLSearchParams(searchParams);
-    if (searchTerm.trim()) {
-      params.set('search', searchTerm.trim());
-    } else {
-      params.delete('search');
-    }
-    params.set('page', '1');
-    setSearchParams(params);
-  };
-
-  const handleClearSearch = () => {
-    setSearchTerm('');
-    const params = new URLSearchParams(searchParams);
-    params.delete('search');
-    params.set('page', '1');
-    setSearchParams(params);
-  };
-
-  const handleClearAllFilters = () => {
-    setSearchTerm('');
-    setSearchParams(new URLSearchParams({ page: '1' }));
+  const handleSortChange = (sortId) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('sort', sortId);
+    next.set('page', '1');
+    setSearchParams(next);
   };
 
   const handlePageChange = (newPage) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(newPage));
-    setSearchParams(params);
+    const next = new URLSearchParams(searchParams);
+    next.set('page', String(newPage));
+    setSearchParams(next);
   };
 
-  const handleCreateProductSubmit = (e) => {
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSearchParams(new URLSearchParams());
+  };
+
+  const handleCreateProduct = (e) => {
     e.preventDefault();
     if (!newProduct.productName.trim()) {
-      toast.error('Please enter a product name');
+      toast.error('Product name is required');
       return;
     }
 
     const priceNum = newProduct.unitPrice ? parseFloat(newProduct.unitPrice) : null;
-    const monthsNum = newProduct.warrantyPeriodMonths ? parseInt(newProduct.warrantyPeriodMonths, 10) : null;
-    
+    const monthsNum = newProduct.warrantyPeriodMonths
+      ? parseInt(newProduct.warrantyPeriodMonths, 10)
+      : null;
+    const purchaseDate = newProduct.purchaseDate
+      ? new Date(newProduct.purchaseDate)
+      : new Date();
+
     let expiryDate = null;
+    let warrantyStatus = 'none';
+
     if (monthsNum && monthsNum > 0) {
-      const d = new Date();
+      const d = new Date(purchaseDate);
       d.setMonth(d.getMonth() + monthsNum);
       expiryDate = d;
+      const now = new Date();
+      warrantyStatus = expiryDate < now ? 'expired' : 'active';
     }
 
     createMutation.mutate(
@@ -229,7 +251,7 @@ const Products = () => {
         warrantyPeriodUnit: 'months',
         warrantyPeriodMonths: monthsNum,
         warrantyExpiryDate: expiryDate,
-        warrantyStatus: expiryDate ? 'active' : 'none',
+        warrantyStatus,
       },
       {
         onSuccess: (res) => {
@@ -241,8 +263,8 @@ const Products = () => {
             category: 'Electronics',
             quantity: 1,
             unitPrice: '',
+            purchaseDate: new Date().toISOString().split('T')[0],
             warrantyPeriodMonths: 12,
-            warrantyStatus: 'active',
           });
           if (res?.product?._id) {
             navigate(`/products/${res.product._id}`);
@@ -256,578 +278,627 @@ const Products = () => {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget._id, {
+      onSuccess: () => {
+        toast.success('Product deleted.');
+        setDeleteTarget(null);
+      },
+      onError: () => {
+        toast.error('Failed to delete product.');
+        setDeleteTarget(null);
+      },
+    });
+  };
+
+  const hasAnimatedStagger = React.useRef(false);
+  const shouldStagger = !hasAnimatedStagger.current && products.length > 0;
+  React.useEffect(() => {
+    if (products.length > 0) {
+      hasAnimatedStagger.current = true;
+    }
+  }, [products.length]);
+
+  const hasActiveFilters = Boolean(
+    searchTerm.trim() || selectedCategories.length > 0 || warrantyStatusParam !== 'All'
+  );
 
   if (isError) {
     return (
-      <EmptyState
-        title="Could not load products"
-        description="Something went wrong fetching your products. Please try refreshing."
-      />
+      <div className="py-8">
+        <EmptyState
+          title="Could not load products"
+          description="Something went wrong fetching your products. Please try refreshing."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-4 sm:px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-28">
+    <PageContentTransition
+      isLoading={isLoading && !data}
+      skeleton={<RouteSkeleton section="products" />}
+      className="space-y-4 w-full font-sans"
+    >
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-1">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-              Products Inventory
-            </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25 font-tabular">
-              {total} {total === 1 ? 'total record' : 'total records'}
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-normal mt-1">
-            Registered merchandise, warranty lifecycles, and item purchase histories.
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-line">
+        <PageHeader
+          title="Products"
+          description="Registered merchandise, warranty lifecycles, and purchase values."
+          className="p-0 border-0"
+        />
 
-        <div className="flex items-center gap-2.5">
-          <button
+        <div className="flex items-center gap-2">
+          <Button
             type="button"
+            variant="default"
+            size="sm"
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer"
+            className="gap-1.5 cursor-pointer text-xs h-8"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Product</span>
-          </button>
+            <Plus className="size-3.5" />
+            <span>Add product</span>
+          </Button>
         </div>
       </div>
 
-      {/* 2. High-Productivity Inline Search, Filter & Controls Bar */}
-      <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-3 font-sans">
-        {/* Top: Live Search Input + Sort Dropdown + View Mode Switcher */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Live Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-            <div className="relative flex items-center w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none z-10 shrink-0" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search product name, brand, model..."
-                style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
-                className="w-full text-xs py-2.5 !pl-10 !pr-9 bg-slate-50 hover:bg-slate-100/70 focus:bg-brand-surface border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 transition-colors font-sans shadow-none"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={handleClearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-medium p-1 cursor-pointer z-10"
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </form>
-
-          {/* Right Toolbar: Sort Dropdown & View Mode Switcher */}
-          <div className="flex items-center gap-2.5 justify-end shrink-0">
-            <div 
-              className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0 select-none"
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span 
-                className="hidden sm:inline font-normal shrink-0" 
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                Sort&nbsp;by:
-              </span>
-              <select
-                value={sortParam}
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="bg-slate-50 border border-slate-200/90 text-slate-800 text-xs font-medium rounded-xl px-2.5 py-2 cursor-pointer focus:outline-none shrink-0"
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* View Mode Switcher: Table Ledger vs Card Grid */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80">
-              <button
-                type="button"
-                onClick={() => setViewMode('table')}
-                title="Table Ledger View"
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'table' ? 'bg-brand-surface text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'
-                }`}
-              >
-                <LayoutList className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('grid')}
-                title="Grid Cards View"
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-brand-surface text-slate-900 shadow-2xs' : 'text-slate-400 hover:text-slate-700'
-                }`}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Middle: Warranty Status Pills */}
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 flex-wrap">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
-            WARRANTY:
-          </span>
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-            {WARRANTY_FILTERS.map((wf) => {
-              const isSelected = warrantyStatusParam === wf.id;
-              return (
-                <button
-                  key={wf.id}
-                  type="button"
-                  onClick={() => handleSelectWarranty(wf.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
-                    isSelected
-                      ? 'bg-slate-900 text-white'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
-                  }`}
-                >
-                  {wf.id === 'active' && <ShieldCheck className="w-3.5 h-3.5 text-brand-primary" />}
-                  {wf.id === 'expiring_soon' && <Clock className="w-3.5 h-3.5 text-brand-primary" />}
-                  {wf.id === 'expired' && <AlertTriangle className="w-3.5 h-3.5 text-brand-navy/60" />}
-                  <span>{wf.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Bottom: Category Quick-Pills (Scrollable) */}
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
-            CATEGORY:
-          </span>
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1">
-            {categoryPillList.map((cat) => {
-              const isSelected = categoryParam === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => handleSelectCategory(cat)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer shrink-0 ${
-                    isSelected
-                      ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
-                      : 'bg-brand-surface hover:bg-brand-primary/10 text-slate-700 hover:text-brand-primary border border-brand-border'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-
-          {hasActiveFilters && (
+      {/* 2. Search, Filter & View Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Search */}
+        <div className="relative w-full sm:w-64 md:w-72 shrink-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-fg-3 pointer-events-none" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search product, brand, merchant..."
+            className="w-full text-xs h-9 pl-8 pr-7 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-3 focus:outline-none focus:border-accent transition-colors"
+          />
+          {searchTerm && (
             <button
               type="button"
-              onClick={handleClearAllFilters}
-              className="text-xs text-brand-navy hover:text-brand-primary hover:underline font-medium cursor-pointer shrink-0 ml-2"
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-3 hover:text-fg text-xs p-1 cursor-pointer"
+              title="Clear"
             >
-              Reset filters
+              <X className="size-3.5" />
             </button>
+          )}
+        </div>
+
+        {/* Filters & View Switcher */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-start sm:justify-end">
+          {/* Multi-Category Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className={`h-9 text-xs gap-1.5 shrink-0 ${
+                  selectedCategories.length > 0 ? 'border-accent text-accent bg-accent-tint/40 font-medium' : ''
+                }`}
+              >
+                <Filter className="size-3.5" />
+                <span>Category</span>
+                {selectedCategories.length > 0 && (
+                  <span className="ml-0.5 rounded-full bg-accent text-on-accent px-1.5 py-0.2 text-[10px] font-semibold tnum">
+                    {selectedCategories.length}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-2">
+              <div className="px-2 py-1 text-xs font-semibold text-fg-3 border-b border-line mb-1 flex items-center justify-between">
+                <span>Filter by Category</span>
+                {selectedCategories.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryChange('All')}
+                    className="text-[11px] text-accent hover:underline cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="max-h-52 overflow-y-auto divide-y divide-line-subtle text-xs">
+                {categoryOptions.map((cat) => {
+                  const isChecked = selectedCategories.includes(cat);
+                  return (
+                    <label
+                      key={cat}
+                      className="flex items-center gap-2.5 py-1.5 px-2 hover:bg-hover rounded cursor-pointer select-none"
+                    >
+                      <Checkbox
+                        checked={isChecked}
+                        onCheckedChange={() => handleCategoryToggle(cat)}
+                      />
+                      <span className="text-sm text-fg capitalize truncate">{cat}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Warranty Status Filter */}
+          <select
+            value={warrantyStatusParam}
+            onChange={(e) => handleWarrantyStatusChange(e.target.value)}
+            className="w-auto text-xs h-9 px-3 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent cursor-pointer shrink-0"
+          >
+            {WARRANTY_FILTERS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Sort Dropdown */}
+          <select
+            value={sortParam}
+            onChange={(e) => handleSortChange(e.target.value)}
+            className="w-auto text-xs h-9 px-3 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent cursor-pointer shrink-0"
+          >
+            {SORT_OPTIONS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+
+          {/* View Mode Toggle with Slider Animation */}
+          <div className="relative inline-flex items-center h-9 p-0.5 bg-subtle border border-line rounded-[8px] gap-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`relative z-10 h-7 px-2 rounded-[6px] transition-colors cursor-pointer flex items-center justify-center ${
+                viewMode === 'table' ? 'text-fg font-medium' : 'text-fg-3 hover:text-fg'
+              }`}
+              title="Table view"
+              aria-label="Table view"
+            >
+              {viewMode === 'table' && (
+                <m.div
+                  layoutId="products-view-mode-pill"
+                  className="absolute inset-0 rounded-[6px] bg-surface shadow-2xs border border-line-subtle"
+                  transition={spring.snappy}
+                />
+              )}
+              <LayoutList className="relative z-10 size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`relative z-10 h-7 px-2 rounded-[6px] transition-colors cursor-pointer flex items-center justify-center ${
+                viewMode === 'grid' ? 'text-fg font-medium' : 'text-fg-3 hover:text-fg'
+              }`}
+              title="Grid view"
+              aria-label="Grid view"
+            >
+              {viewMode === 'grid' && (
+                <m.div
+                  layoutId="products-view-mode-pill"
+                  className="absolute inset-0 rounded-[6px] bg-surface shadow-2xs border border-line-subtle"
+                  transition={spring.snappy}
+                />
+              )}
+              <LayoutGrid className="relative z-10 size-3.5" />
+            </button>
+          </div>
+
+          {/* Inline Clear filters button (Zero layout shift: list below never moves downwards) */}
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleClearFilters}
+              className="h-9 text-xs text-accent hover:underline cursor-pointer font-medium whitespace-nowrap"
+            >
+              Clear filters
+            </Button>
           )}
         </div>
       </div>
 
-      {/* 4. Products Presentation */}
+      {/* 3. Product Listing (Table or Grid) */}
       {products.length === 0 ? (
-        <EmptyState
-          title={hasActiveFilters ? 'No products match your filters' : 'No products registered yet'}
-          description={
-            hasActiveFilters
-              ? 'Try adjusting your search query, warranty status, or category filter.'
-              : 'Add your first product or upload an invoice to start tracking item lifecycles.'
-          }
-          actionLabel={hasActiveFilters ? 'Reset Filters' : 'Add Product'}
-          onAction={hasActiveFilters ? handleClearAllFilters : () => setIsAddModalOpen(true)}
-        />
+        <div className="p-8 rounded-[12px] border border-line bg-surface">
+          <EmptyState
+            title="No products found"
+            description={
+              hasActiveFilters
+                ? 'No items matched your active filters. Try clearing your search.'
+                : 'You have not added any products yet. Upload a receipt or create one manually.'
+            }
+            actionLabel={hasActiveFilters ? 'Clear filters' : 'Add product'}
+            onAction={hasActiveFilters ? handleClearFilters : () => setIsAddModalOpen(true)}
+          />
+        </div>
       ) : viewMode === 'table' ? (
-        /* TABLE LEDGER VIEW */
-        <div className="bg-brand-surface border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden font-sans">
-          {/* Table Header Row */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b border-slate-200/80 bg-slate-50/70 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            <div className="col-span-12 sm:col-span-5 md:col-span-4">PRODUCT & SPECIFICATION</div>
-            <div className="hidden sm:block sm:col-span-2 text-left">CATEGORY</div>
-            <div className="hidden md:block md:col-span-3 text-left">PURCHASE SOURCE</div>
-            <div className="col-span-7 sm:col-span-3 md:col-span-2 text-right sm:text-center">WARRANTY</div>
-            <div className="col-span-5 sm:col-span-2 md:col-span-1 text-right">VALUE</div>
-          </div>
+        <div className="w-full overflow-hidden rounded-[12px] border border-line bg-surface shadow-2xs">
+          <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+            <table className="w-full text-left border-collapse table-fixed text-xs min-w-[850px]">
+              <thead>
+                <tr className="bg-subtle/50 border-b border-line text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                  <th className="py-2.5 px-3 w-[260px]">Product</th>
+                  <th className="py-2.5 px-3 w-[120px]">Brand</th>
+                  <th className="py-2.5 px-3 w-[120px]">Category</th>
+                  <th className="py-2.5 px-3 w-[150px]">Merchant</th>
+                  <th className="py-2.5 px-3 w-[110px]">Purchased</th>
+                  <th className="py-2.5 px-3 w-[120px]">Warranty</th>
+                  <th className="py-2.5 px-3 w-[110px]">Expires</th>
+                  <th className="py-2.5 px-3 w-[110px] text-right">Value</th>
+                  <th className="py-2.5 px-2 w-[40px] text-center"></th>
+                </tr>
+              </thead>
+              <m.tbody
+                variants={variants.stagger(0.025)}
+                initial={shouldStagger ? 'hidden' : false}
+                animate="show"
+                className="divide-y divide-line-subtle"
+              >
+                <LayoutGroup id="billbox-products-rows">
+                  {products.map((prod, index) => {
+                    if (!prod) return null;
+                    const receipt =
+                      prod.receiptId && typeof prod.receiptId === 'object' ? prod.receiptId : null;
+                    const merchantName = receipt?.storeName || '—';
+                    const purchaseDate = prod.purchaseDate || receipt?.purchaseDate;
+                    const receiptId =
+                      receipt?._id || (typeof prod.receiptId === 'string' ? prod.receiptId : null);
+                    const statusKey =
+                      prod.warrantyStatus === 'expiring_soon' ? 'expiring' : prod.warrantyStatus || 'none';
+                    const isStaggered = index < 12;
+                    const enableLayout = products.length <= 50;
 
-          {/* Table Rows */}
-          <div className="divide-y divide-slate-100">
-            {products.map((product) => {
-              const receipt = product.receiptId;
-              const currency = receipt?.currency || 'INR';
-              const price = product.lineTotal || product.unitPrice;
-              const monogram = getBrandMonogram(product.productName, product.brand);
-
-              // Warranty Status formatting
-              let warrantyNode = (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-normal text-slate-500 bg-slate-100 border border-slate-200/70">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                  <span>No warranty</span>
-                </span>
-              );
-
-              if (product.warrantyStatus === 'active') {
-                warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30">
-                    <ShieldCheck className="w-3.5 h-3.5 text-brand-primary shrink-0" />
-                    <span>Under Warranty</span>
-                  </span>
-                );
-              } else if (product.warrantyStatus === 'expiring_soon') {
-                warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>Expiring Soon</span>
-                  </span>
-                );
-              } else if (product.warrantyStatus === 'expired') {
-                warrantyNode = (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                    <span>Expired</span>
-                  </span>
-                );
-              }
-
-              return (
-                <div
-                  key={product._id}
-                  onClick={() => navigate(`/products/${product._id}`)}
-                  className="grid grid-cols-12 gap-4 px-6 py-3.5 items-center hover:bg-brand-border/20 transition-colors cursor-pointer group"
-                >
-                  {/* Column 1: Product Monogram, Name & Brand */}
-                  <div className="col-span-12 sm:col-span-5 md:col-span-4 flex items-center gap-3 min-w-0 pr-2">
-                    <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center shrink-0 uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                      {monogram}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h4
-                        className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate"
-                        title={product.productName}
+                    return (
+                      <m.tr
+                        key={prod._id}
+                        layout={enableLayout ? 'position' : false}
+                        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                        variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                        onClick={() => navigate(`/products/${prod._id}`)}
+                        className="hover:bg-subtle/40 transition-colors cursor-pointer group"
                       >
-                        {product.productName}
-                      </h4>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5 flex-wrap">
-                        {product.brand && (
-                          <span className="font-normal text-slate-600">{product.brand}</span>
-                        )}
-                        {product.brand && product.quantity > 1 && <span>•</span>}
-                        {product.quantity > 1 && (
-                          <span className="font-tabular text-slate-500">Qty: {product.quantity}</span>
-                        )}
-                        {/* Mobile Category indicator */}
-                        <span className="sm:hidden text-slate-400">• {product.category || 'Others'}</span>
-                      </div>
-                    </div>
-                  </div>
+                      {/* Product */}
+                      <td className="py-3 px-3 align-middle">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="size-8 rounded-[8px] bg-subtle border border-line-subtle flex items-center justify-center shrink-0 text-fg-3 group-hover:text-accent group-hover:border-accent-line transition-colors">
+                            <Package className="size-4" />
+                          </div>
+                          <div className="font-semibold text-fg group-hover:text-accent transition-colors truncate">
+                            {prod.productName}
+                          </div>
+                        </div>
+                      </td>
 
-                  {/* Column 2: Category Pill */}
-                  <div className="hidden sm:block sm:col-span-2 text-left">
-                    <span className="inline-block text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full truncate max-w-full">
-                      {product.category || 'Others'}
-                    </span>
-                  </div>
+                      {/* Brand */}
+                      <td className="py-3 px-3 text-fg-2 truncate align-middle">
+                        {prod.brand || '—'}
+                      </td>
 
-                  {/* Column 3: Linked Receipt / Merchant */}
-                  <div className="hidden md:block md:col-span-3 text-left min-w-0">
-                    {receipt ? (
-                      <div>
-                        <span className="text-xs font-medium text-slate-800 block truncate" title={receipt.storeName}>
-                          {receipt.storeName || 'Merchant'}
-                        </span>
-                        <span className="text-[11px] text-slate-400 font-tabular block mt-0.5">
-                          {formatDate(receipt.purchaseDate)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400 font-normal">Direct Entry</span>
-                    )}
-                  </div>
+                      {/* Category */}
+                      <td className="py-3 px-3 text-fg-2 truncate align-middle">
+                        {prod.category || 'General'}
+                      </td>
 
-                  {/* Column 4: Warranty Status */}
-                  <div className="col-span-7 sm:col-span-3 md:col-span-2 text-left sm:text-center">
-                    {warrantyNode}
-                  </div>
+                      {/* Merchant */}
+                      <td className="py-3 px-3 text-fg-2 truncate align-middle">
+                        {merchantName}
+                      </td>
 
-                  {/* Column 5: Value & Arrow */}
-                  <div className="col-span-5 sm:col-span-2 md:col-span-1 flex items-center justify-end gap-2 text-right">
-                    <span className="text-sm font-medium font-tabular text-slate-900 tracking-tight">
-                      {price != null ? formatCurrency(price, currency) : '—'}
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-700 transition-colors shrink-0" />
-                  </div>
-                </div>
-              );
-            })}
+                      {/* Purchased */}
+                      <td className="py-3 px-3 text-fg-3 font-mono tnum align-middle">
+                        {purchaseDate ? formatDate(purchaseDate) : '—'}
+                      </td>
+
+                      {/* Warranty Status */}
+                      <td className="py-3 px-3 align-middle">
+                        <StatusBadge status={statusKey} />
+                      </td>
+
+                      {/* Expires */}
+                      <td className="py-3 px-3 text-fg-2 font-mono tnum align-middle">
+                        {prod.warrantyExpiryDate ? formatDate(prod.warrantyExpiryDate) : '—'}
+                      </td>
+
+                      {/* Value */}
+                      <td className="py-3 px-3 text-right font-mono font-semibold text-fg tnum align-middle whitespace-nowrap">
+                        {prod.unitPrice != null
+                          ? formatCurrency(prod.unitPrice, receipt?.currency)
+                          : '—'}
+                      </td>
+
+                      {/* Actions */}
+                      <td
+                        className="py-3 px-2 text-center align-middle"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="size-7 p-0 text-fg-3 hover:text-fg cursor-pointer"
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="text-xs">
+                            <DropdownMenuItem
+                              onClick={() => navigate(`/products/${prod._id}`)}
+                              className="cursor-pointer"
+                            >
+                              View details
+                            </DropdownMenuItem>
+                            {receiptId && (
+                              <DropdownMenuItem
+                                onClick={() => navigate(`/receipts/${receiptId}`)}
+                                className="cursor-pointer"
+                              >
+                                View receipt
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => setDeleteTarget(prod)}
+                              className="text-bad-fg hover:bg-bad-bg/20 cursor-pointer"
+                            >
+                              Delete product
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                        </m.tr>
+                      );
+                    })}
+                </LayoutGroup>
+              </m.tbody>
+            </table>
           </div>
         </div>
       ) : (
-        /* GRID CARDS VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-sans">
-          {products.map((product) => {
-            const receipt = product.receiptId;
-            const currency = receipt?.currency || 'INR';
-            const price = product.lineTotal || product.unitPrice;
-            const monogram = getBrandMonogram(product.productName, product.brand);
+        /* Grid View with Step 6 Stagger & Card Micro-interactions */
+        <LayoutGroup id="billbox-products-grid">
+          <m.div
+            key="products-grid-container"
+            variants={variants.stagger(0.02)}
+            initial={shouldStagger ? 'hidden' : false}
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          >
+            {products.map((prod, index) => {
+              if (!prod) return null;
+              const receipt =
+                prod.receiptId && typeof prod.receiptId === 'object' ? prod.receiptId : null;
+              const statusKey =
+                prod.warrantyStatus === 'expiring_soon' ? 'expiring' : prod.warrantyStatus || 'none';
+              const merchantName = receipt?.storeName || '—';
+              const isStaggered = index < 12;
 
-            return (
-              <div
-                key={product._id}
-                onClick={() => navigate(`/products/${product._id}`)}
-                className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-xs hover:shadow-md hover:border-brand-primary/50 transition-all cursor-pointer flex flex-col justify-between space-y-4 group"
-              >
-                {/* Card Top: Monogram + Category + Warranty Badge */}
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary font-bold text-xs flex items-center justify-center uppercase tracking-tight group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        {monogram}
+              return (
+                <m.div
+                  key={prod._id}
+                  layout={products.length <= 50 ? 'position' : false}
+                  variants={shouldStagger && isStaggered ? variants.fadeUp : undefined}
+                  whileHover={{ y: -2, transition: { duration: 0.15, ease: [0.2, 0, 0, 1] } }}
+                  transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+                  onClick={() => navigate(`/products/${prod._id}`)}
+                  className="p-4 rounded-[12px] border border-line bg-surface hover:border-line-strong transition-shadow cursor-pointer space-y-3 shadow-2xs group flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="size-8 rounded-[8px] bg-subtle border border-line-subtle flex items-center justify-center text-fg-3 group-hover:text-accent group-hover:border-accent-line transition-colors shrink-0">
+                        <Package className="size-4" />
                       </div>
-                      <span className="text-[11px] font-medium text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full">
-                        {product.category || 'Others'}
-                      </span>
+                      <StatusBadge status={statusKey} />
                     </div>
 
-                    {/* Warranty pill */}
-                    {product.warrantyStatus === 'active' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/30 px-2 py-0.5 rounded-full">
-                        <ShieldCheck className="w-3 h-3 text-brand-primary" />
-                        <span>Active</span>
-                      </span>
-                    )}
-                    {product.warrantyStatus === 'expiring_soon' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        <span>Expiring</span>
-                      </span>
-                    )}
-                    {product.warrantyStatus === 'expired' && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                        <AlertTriangle className="w-3 h-3 text-rose-600" />
-                        <span>Expired</span>
-                      </span>
-                    )}
-                    {(!product.warrantyStatus || product.warrantyStatus === 'none') && (
-                      <span className="text-[11px] font-medium text-slate-500 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-full">
-                        No warranty
-                      </span>
-                    )}
+                    <div>
+                      <h3 className="font-semibold text-sm text-fg group-hover:text-accent transition-colors line-clamp-1">
+                        {prod.productName}
+                      </h3>
+                      <p className="text-xs text-fg-3 mt-0.5 truncate">
+                        {prod.brand ? `${prod.brand} · ` : ''}{prod.category || 'General'}
+                      </p>
+                    </div>
                   </div>
 
-                  <h3
-                    className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors line-clamp-2 leading-snug"
-                    title={product.productName}
-                  >
-                    {product.productName}
-                  </h3>
-
-                  {product.brand && (
-                    <span className="text-xs text-slate-500 font-normal mt-1 block">
-                      Brand: {product.brand}
-                    </span>
-                  )}
-                </div>
-
-                {/* Card Bottom: Origin and Spend */}
-                <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-3 text-xs">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[11px] text-slate-400 block mb-0.5">Purchased from</span>
-                    <span className="font-medium text-slate-800 block truncate" title={receipt?.storeName || 'Direct Entry'}>
-                      {receipt?.storeName || 'Direct Entry'}
+                  <div className="pt-2 border-t border-line-subtle flex items-center justify-between text-xs">
+                    <span className="text-fg-3 truncate max-w-[120px]">{merchantName}</span>
+                    <span className="font-mono font-semibold text-fg tnum">
+                      {prod.unitPrice != null
+                        ? formatCurrency(prod.unitPrice, receipt?.currency)
+                        : '—'}
                     </span>
                   </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                      Value
-                    </span>
-                    <span className="text-base font-semibold text-slate-900 font-tabular">
-                      {price != null ? formatCurrency(price, currency) : '—'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </m.div>
+              );
+            })}
+          </m.div>
+        </LayoutGroup>
       )}
 
-      {/* 5. Pagination Controls */}
+      {/* 4. Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-xs pt-2 text-slate-500 font-sans">
+        <div className="flex items-center justify-between pt-2 text-xs text-fg-3">
           <span>
-            Showing <strong className="text-slate-900 font-tabular">{products.length}</strong> of{' '}
-            <strong className="text-slate-900 font-tabular">{total}</strong> products
+            Page {pageParam} of {totalPages} ({total} items)
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-              className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-brand-surface border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+              variant="outline"
+              size="sm"
+              disabled={pageParam <= 1}
+              onClick={() => handlePageChange(pageParam - 1)}
+              className="h-7 text-xs cursor-pointer"
             >
               Previous
-            </button>
-            <span className="font-tabular px-1">
-              Page {page} of {totalPages}
-            </span>
-            <button
+            </Button>
+            <Button
               type="button"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-brand-surface border border-slate-200 rounded-xl hover:bg-slate-50 disabled:opacity-40 transition-colors cursor-pointer"
+              variant="outline"
+              size="sm"
+              disabled={pageParam >= totalPages}
+              onClick={() => handlePageChange(pageParam + 1)}
+              className="h-7 text-xs cursor-pointer"
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      {/* 6. Add Product Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div
-            className="bg-brand-surface rounded-2xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl space-y-5 font-sans animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900">Add New Product</h3>
-                <p className="text-xs text-slate-500 font-normal mt-0.5">Register an item and track its warranty lifecycle independently.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+      {/* 5. Add Product Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent size="md" className="p-6">
+          <DialogHeader>
+            <DialogTitle>Add product</DialogTitle>
+            <DialogDescription>
+              Register merchandise directly to track coverage and purchase history.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateProduct} className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-prod-name" className="text-xs">
+                Product name *
+              </Label>
+              <Input
+                id="add-prod-name"
+                value={newProduct.productName}
+                onChange={(e) =>
+                  setNewProduct({ ...newProduct, productName: e.target.value })
+                }
+                placeholder="e.g. MacBook Pro 16, Sony WH-1000XM5"
+                required
+              />
             </div>
 
-            <form onSubmit={handleCreateProductSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Product Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. MacBook Pro M3, Sony WH-1000XM5"
-                  value={newProduct.productName}
-                  onChange={(e) => setNewProduct({ ...newProduct, productName: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs"
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="add-prod-brand" className="text-xs">
+                  Brand (optional)
+                </Label>
+                <Input
+                  id="add-prod-brand"
+                  value={newProduct.brand}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, brand: e.target.value })
+                  }
+                  placeholder="e.g. Apple, Sony"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Brand</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Apple, Sony"
-                    value={newProduct.brand}
-                    onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Category</label>
-                  <select
-                    value={newProduct.category}
-                    onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs cursor-pointer"
-                  >
-                    {DEFAULT_CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="add-prod-cat" className="text-xs">
+                  Category
+                </Label>
+                <select
+                  id="add-prod-cat"
+                  value={newProduct.category}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, category: e.target.value })
+                  }
+                  className="w-full text-xs h-9 px-2.5 bg-surface border border-line rounded-[8px] text-fg focus:outline-none focus:border-accent"
+                >
+                  {categoryOptions.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Unit Price (₹)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. 14999"
-                    value={newProduct.unitPrice}
-                    onChange={(e) => setNewProduct({ ...newProduct, unitPrice: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 mb-1">Quantity</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={newProduct.quantity}
-                    onChange={(e) => setNewProduct({ ...newProduct, quantity: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-medium text-slate-700 mb-1">Warranty Period (Months)</label>
-                <input
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="add-prod-price" className="text-xs">
+                  Purchase price (₹)
+                </Label>
+                <Input
+                  id="add-prod-price"
                   type="number"
-                  min="0"
-                  placeholder="e.g. 12 or 24 months (0 for none)"
-                  value={newProduct.warrantyPeriodMonths}
-                  onChange={(e) => setNewProduct({ ...newProduct, warrantyPeriodMonths: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-slate-400 font-sans text-xs"
+                  step="0.01"
+                  value={newProduct.unitPrice}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, unitPrice: e.target.value })
+                  }
+                  placeholder="0.00"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending}
-                  className="px-4 py-2 font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
-                >
-                  {createMutation.isPending ? 'Adding...' : 'Add Product'}
-                </button>
+              <div className="space-y-1.5">
+                <Label htmlFor="add-prod-date" className="text-xs">
+                  Purchase date
+                </Label>
+                <Input
+                  id="add-prod-date"
+                  type="date"
+                  value={newProduct.purchaseDate}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, purchaseDate: e.target.value })
+                  }
+                />
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="add-prod-warranty" className="text-xs">
+                Warranty duration (months)
+              </Label>
+              <Input
+                id="add-prod-warranty"
+                type="number"
+                min="0"
+                value={newProduct.warrantyPeriodMonths}
+                onChange={(e) =>
+                  setNewProduct({
+                    ...newProduct,
+                    warrantyPeriodMonths: e.target.value,
+                  })
+                }
+                placeholder="12"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="default"
+                size="sm"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? 'Saving...' : 'Add product'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete product"
+        message={`Are you sure you want to remove "${deleteTarget?.productName}"? This action cannot be undone.`}
+        confirmText="Delete product"
+        isDestructive={true}
+        isLoading={deleteMutation.isPending}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
+    </PageContentTransition>
   );
-};
+}
 
 export default Products;

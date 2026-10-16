@@ -8,6 +8,8 @@ const {
   createReceipt,
   updateReceipt,
   deleteReceipt,
+  bulkDeleteReceipts,
+  bulkUpdateReceiptsCategory,
   updateReceiptStatus,
   triggerReminders,
 } = require('../controllers/receipt.controller');
@@ -71,6 +73,12 @@ router.put('/:id', updateValidation, validate, updateReceipt);
 
 // PATCH /api/receipts/:id/status
 router.patch('/:id/status', statusValidation, validate, updateReceiptStatus);
+
+// DELETE /api/receipts/bulk (Must precede /:id to prevent matching 'bulk' as id)
+router.delete('/bulk', bulkDeleteReceipts);
+
+// PATCH /api/receipts/bulk/category
+router.patch('/bulk/category', bulkUpdateReceiptsCategory);
 
 // DELETE /api/receipts/:id
 router.delete('/:id', deleteReceipt);

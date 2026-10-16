@@ -1,0 +1,148 @@
+:root {
+  /* Slate — cool neutral */
+  --slate-0:   #FFFFFF;
+  --slate-25:  #F6F8F8;
+  --slate-50:  #ECEFEF;
+  --slate-100: #E2E7E6;
+  --slate-200: #D3D9D4;
+  --slate-300: #B7C0BF;
+  --slate-400: #909EA1;
+  --slate-500: #748D92;
+  --slate-600: #526369;
+  --slate-700: #3C4A51;
+  --slate-800: #2E3944;
+  --slate-850: #26323B;
+  --slate-900: #212A31;
+  --slate-950: #182026;
+
+  /* Cosmic Artistry — Core Palette (Jeff Koons Moon Phases) */
+  --cosmic-abyss:     #212A31;
+  --cosmic-midnight:  #2E3944;
+  --cosmic-petrol:    #124E66;
+  --cosmic-steel:     #748D92;
+  --cosmic-mist:      #D3D9D4;
+
+  /* Cosmic Teal — brand / action ramp */
+  --cosmic-50:  #E8F1F3;
+  --cosmic-100: #D0E2E7;
+  --cosmic-200: #A1C6D0;
+  --cosmic-300: #748D92;
+  --cosmic-400: #427B8C;
+  --cosmic-500: #236B85;
+  --cosmic-600: #124E66;
+  --cosmic-700: #0E3F53;
+  --cosmic-800: #0A3141;
+  --cosmic-900: #072330;
+
+  /* Status */
+  --green-tint: #E8F7F1;  --green-line: #A9E2CB;  --green-fg: #0A6B49;  --green-solid: #0F9D6B;
+  --amber-tint: #FEF4E0;  --amber-line: #F3D69C;  --amber-fg: #8A5200;  --amber-solid: #C77700;
+  --red-tint:   #FDECEA;  --red-line:   #F6BDB7;  --red-fg:   #A31B12;  --red-solid:   #D4291F;
+
+  /* Motion tokens (Step 5) */
+  --dur-fast: 120ms;   /* hover, focus, colour */
+  --dur-base: 180ms;   /* menus, popovers, tabs */
+  --dur-slow: 260ms;   /* dialogs, sheets */
+  --ease-out: cubic-bezier(.2, 0, 0, 1);
+  --ease-in:  cubic-bezier(.4, 0, 1, 1);
+
+  /* Z-index scale (Step 5: No literal z-* in components) */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-sidebar: 20;
+  --z-header: 30;
+  --z-dropdown: 40;
+  --z-scrim: 50;
+  --z-modal: 60;
+  --z-palette: 70;
+  --z-toast: 80;
+  --z-tooltip: 90;
+}
+
+:root, [data-theme="light"] {
+  color-scheme: light;
+
+  --bg-app:        #F6F8F8;              /* page background */
+  --bg-surface:    #FFFFFF;              /* cards, tables, inputs */
+  --bg-sidebar:    #ECEFEF;
+  --bg-subtle:     #EEF2F1;              /* wells, chips, table header - crisp light mineral wash */
+  --bg-hover:      #E5EBEA;
+  --bg-pressed:    #D8DFDE;
+  --bg-selected:   #D6E5EB;
+  --bg-scrim:      rgb(33 42 49 / 0.50);
+
+  --fg-primary:    #212A31;              /* 11.2:1 contrast on surface */
+  --fg-secondary:  #2E3944;              /* 8.5:1 contrast */
+  --fg-tertiary:   #526369;              /* 5.1:1 contrast */
+  --fg-disabled:   #748D92;
+  --fg-on-accent:  #FFFFFF;
+  --fg-link:       #124E66;
+
+  --line-subtle:   #E8EDEC;
+  --line-default:  #D5DCDB;
+  --line-strong:   #B7C0BF;
+  --line-focus:    #124E66;
+
+  --accent:        #124E66;              /* Cosmic Petrol Teal */
+  --accent-hover:  #0E3F53;
+  --accent-press:  #0A3141;
+  --accent-tint:   #E8F1F3;
+  --accent-line:   #A1C6D0;
+
+  --ok-bg: var(--green-tint);  --ok-line: var(--green-line);  --ok-fg: var(--green-fg);  --ok-solid: var(--green-solid);
+  --warn-bg: var(--amber-tint); --warn-line: var(--amber-line); --warn-fg: var(--warn-fg); --warn-solid: var(--amber-solid);
+  --bad-bg: var(--red-tint);   --bad-line: var(--red-line);   --bad-fg: var(--red-fg);   --bad-solid: var(--red-solid);
+
+  --chart-1: #124E66; --chart-2: #0F9D6B; --chart-3: #C77700;
+  --chart-4: #748D92; --chart-5: #2E3944; --chart-6: #909EA1;
+
+  /* Elevation (Light) */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgb(33 42 49 / 0.06);
+  --elevation-2: 0 8px 24px -8px rgb(33 42 49 / 0.14), 0 0 0 1px var(--line-default);
+  --elevation-3: 0 24px 56px -16px rgb(33 42 49 / 0.22), 0 0 0 1px var(--line-default);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-app:        #182026;
+  --bg-surface:    #212A31;              /* Cosmic Abyss */
+  --bg-sidebar:    #182026;
+  --bg-subtle:     #2E3944;              /* Space Cadet Slate */
+  --bg-hover:      #2E3944;
+  --bg-pressed:    #3C4A51;
+  --bg-selected:   rgb(35 119 142 / 0.18);
+  --bg-scrim:      rgb(10 14 18 / 0.70);
+
+  --fg-primary:    #F6F8F8;              /* 12.8:1 contrast on surface */
+  --fg-secondary:  #D3D9D4;              /* 8.7:1 contrast on surface */
+  --fg-tertiary:   #909EA1;              /* 4.6:1 contrast on surface */
+  --fg-disabled:   #748D92;
+  --fg-on-accent:  #FFFFFF;
+  --fg-link:       #58A3B9;
+
+  --line-subtle:   #26323B;
+  --line-default:  #2E3944;
+  --line-strong:   #3C4A51;
+  --line-focus:    #3E97B0;
+
+  --accent:        #23778E;              /* Lifted Petrol Teal */
+  --accent-hover:  #2C8CA7;
+  --accent-press:  #1A6377;
+  --accent-tint:   rgb(35 119 142 / 0.18);
+  --accent-line:   rgb(62 151 176 / 0.40);
+
+  --ok-bg: rgb(15 157 107 / 0.14);  --ok-line: rgb(15 157 107 / 0.40);  --ok-fg: #4FD1A1;  --ok-solid: #1FB783;
+  --warn-bg: rgb(199 119 0 / 0.16); --warn-line: rgb(231 150 20 / 0.40); --warn-fg: #F2B24A; --warn-solid: #E8A026;
+  --bad-bg: rgb(212 41 31 / 0.16);  --bad-line: rgb(240 90 80 / 0.40);  --bad-fg: #FF8C84;  --bad-solid: #F0554A;
+
+  --chart-1: #3E97B0; --chart-2: #1FB783; --chart-3: #E8A026;
+  --chart-4: #748D92; --chart-5: #D3D9D4; --chart-6: #909EA1;
+
+  /* Elevation (Dark) */
+  --elevation-0: none;
+  --elevation-1: none;
+  --elevation-2: 0 8px 24px -8px rgb(0 0 0 / 0.60), 0 0 0 1px var(--line-default);
+  --elevation-3: 0 24px 56px -16px rgb(0 0 0 / 0.70), 0 0 0 1px var(--line-default);
+}

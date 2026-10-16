@@ -1,183 +1,297 @@
-/**
- * Shared Product List Form Component used identically across:
- * - Single Receipt Review Form (ReceiptReviewForm.jsx)
- * - Single Receipt Manual Entry Form (ReceiptForm.jsx)
- * - Batch Receipt Review Screen (BatchReview.jsx)
- */
-const ProductListForm = ({
+import * as React from 'react';
+import { Plus, Trash2, Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+export function ProductListForm({
   items = [],
   onItemChange,
   onAddItem,
   onRemoveItem,
   categoryOptions = [],
+  currencySymbol = '₹',
   errors = {},
-}) => {
+}) {
   return (
-    <div className="bg-brand-surface border border-brand-border rounded-xl p-6 space-y-4 shadow-2xs font-sans text-brand-navy">
+    <div className="space-y-3 font-sans">
       {/* Section Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-brand-border">
-        <h2 className="text-base font-bold text-brand-navy tracking-tight">
-          Purchased products ({items.length})
-        </h2>
+      <div className="flex items-center justify-between pb-2 border-b border-line">
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-sm font-semibold text-fg">Line items</h3>
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-mono bg-subtle border border-line-subtle text-fg-3 tnum">
+            {items.length} {items.length === 1 ? 'item' : 'items'}
+          </span>
+        </div>
 
         {onAddItem && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onAddItem}
-            className="px-3 py-1.5 text-xs font-semibold text-brand-primary bg-brand-surface border border-brand-primary rounded-lg hover:bg-brand-border/30 transition-colors cursor-pointer flex items-center gap-1"
+            className="h-8 text-xs gap-1.5 font-medium cursor-pointer"
           >
-            + Add product
-          </button>
+            <Plus className="size-3.5 text-accent" />
+            <span>Add item</span>
+          </Button>
         )}
       </div>
 
-      {/* Clean Repeating Product List */}
-      <div className="space-y-6">
+      {/* Desktop Table View */}
+      <div className="hidden md:block w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+        <table className="w-full text-left border-collapse min-w-[720px]">
+          <thead>
+            <tr className="border-b border-line-subtle text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+              <th className="py-2.5 px-2 w-8 text-center">#</th>
+              <th className="py-2.5 px-3 min-w-[220px]">Description & Brand</th>
+              <th className="py-2.5 px-2 w-36">Category</th>
+              <th className="py-2.5 px-2 w-16 text-center">Qty</th>
+              <th className="py-2.5 px-2 w-28 text-right">Unit price</th>
+              <th className="py-2.5 px-2 w-32 text-center">Warranty</th>
+              <th className="py-2.5 px-2 w-28 text-right">Total</th>
+              <th className="py-2.5 px-2 w-9 text-center"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line-subtle">
+            {items.map((item, idx) => {
+              const itemError = errors.products?.[item.id] || errors.items?.[item.id];
+              return (
+                <tr key={item.id || idx} className="hover:bg-subtle/30 transition-colors">
+                  {/* Row index */}
+                  <td className="py-2.5 px-2 text-xs font-mono text-fg-3 tnum text-center align-top pt-3.5">
+                    {idx + 1}
+                  </td>
+
+                  {/* Description & Brand stacked */}
+                  <td className="py-2.5 px-3 align-top space-y-1">
+                    <Input
+                      id={`product-name-${item.id}`}
+                      type="text"
+                      value={item.productName || ''}
+                      onChange={(e) => onItemChange(item.id, 'productName', e.target.value)}
+                      placeholder="Item name / title *"
+                      className={`h-8 text-xs bg-surface ${itemError ? 'border-bad-line focus:ring-bad' : ''}`}
+                      required
+                    />
+                    <Input
+                      type="text"
+                      value={item.brand || ''}
+                      onChange={(e) => onItemChange(item.id, 'brand', e.target.value)}
+                      placeholder="Brand (optional)"
+                      className="h-6 text-[11px] bg-subtle/50 text-fg-2 border-line-subtle"
+                    />
+                    {itemError && (
+                      <p className="text-[10px] text-bad-fg font-medium">{itemError}</p>
+                    )}
+                  </td>
+
+                  {/* Category */}
+                  <td className="py-2.5 px-2 align-top pt-2.5">
+                    <Select
+                      value={item.category || 'General'}
+                      onValueChange={(val) => onItemChange(item.id, 'category', val)}
+                    >
+                      <SelectTrigger className="h-8 text-xs bg-surface">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+
+                  {/* Qty */}
+                  <td className="py-2.5 px-2 align-top pt-2.5">
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity || 1}
+                      onChange={(e) => onItemChange(item.id, 'quantity', e.target.value)}
+                      className="h-8 text-xs tnum text-center bg-surface px-1"
+                      required
+                    />
+                  </td>
+
+                  {/* Unit Price */}
+                  <td className="py-2.5 px-2 align-top pt-2.5">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.unitPrice || ''}
+                      onChange={(e) => onItemChange(item.id, 'unitPrice', e.target.value)}
+                      placeholder="0.00"
+                      className="h-8 text-xs tnum text-right font-mono bg-surface px-2"
+                    />
+                  </td>
+
+                  {/* Warranty */}
+                  <td className="py-2.5 px-2 align-top pt-2.5">
+                    <div className="flex items-center gap-1 justify-center">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={item.warrantyPeriodValue || ''}
+                        onChange={(e) => onItemChange(item.id, 'warrantyPeriodValue', e.target.value)}
+                        placeholder="0"
+                        className="h-8 text-xs tnum w-12 text-center bg-surface px-1"
+                      />
+                      <Select
+                        value={item.warrantyPeriodUnit || 'months'}
+                        onValueChange={(val) => onItemChange(item.id, 'warrantyPeriodUnit', val)}
+                      >
+                        <SelectTrigger className="h-8 text-[11px] w-14 bg-surface px-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="months">mo</SelectItem>
+                          <SelectItem value="years">yr</SelectItem>
+                          <SelectItem value="days">d</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </td>
+
+                  {/* Line Total */}
+                  <td className="py-2.5 px-2 text-right align-top pt-3.5 font-mono text-xs font-semibold text-fg tnum whitespace-nowrap">
+                    {currencySymbol}{' '}
+                    {item.lineTotal ? Number(item.lineTotal).toFixed(2) : '0.00'}
+                  </td>
+
+                  {/* Remove */}
+                  <td className="py-2.5 px-2 text-center align-top pt-2.5">
+                    {items.length > 1 && onRemoveItem && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveItem(item.id)}
+                        className="size-7 p-0 text-fg-3 hover:text-bad-fg hover:bg-bad-bg/20"
+                        title="Remove item"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card Rows (visible only on small screens) */}
+      <div className="md:hidden space-y-3">
         {items.map((item, idx) => (
           <div
             key={item.id || idx}
-            className={idx > 0 ? 'border-t border-brand-border pt-6 space-y-4' : 'space-y-4'}
+            className="p-3 rounded-[10px] border border-line bg-surface space-y-3"
           >
-            {/* Index Label & Review Flag & Remove Link */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  PRODUCT {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
-                </span>
-              </div>
-
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-medium text-fg-3">
+                ITEM {idx + 1}
+              </span>
               {items.length > 1 && onRemoveItem && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => onRemoveItem(item.id)}
-                  className="text-xs font-semibold text-brand-navy hover:text-brand-primary hover:underline cursor-pointer"
+                  className="size-7 p-0 text-fg-3 hover:text-bad-fg"
                 >
-                  Remove
-                </button>
+                  <Trash2 className="size-3.5" />
+                </Button>
               )}
             </div>
 
-            {/* Row 1: Product Name (Wide), Brand, Category */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="lg:col-span-2">
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">
-                  Product name *
-                </label>
-                <input
-                  type="text"
-                  value={item.productName || ''}
-                  onChange={(e) => onItemChange(item.id, 'productName', e.target.value)}
-                  placeholder="e.g. Tesa 51903 Hi-Lo Tack 12mmx66m"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
-                />
-                {errors.items?.[item.id] && (
-                  <p className="text-xs text-brand-navy font-medium mt-1">{errors.items[item.id]}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Input
+                id={`product-name-mobile-${item.id}`}
+                type="text"
+                value={item.productName || ''}
+                onChange={(e) => onItemChange(item.id, 'productName', e.target.value)}
+                placeholder="Product name *"
+                className="text-xs"
+                required
+              />
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Brand</label>
-                <input
+              <div className="grid grid-cols-2 gap-2">
+                <Input
                   type="text"
                   value={item.brand || ''}
                   onChange={(e) => onItemChange(item.id, 'brand', e.target.value)}
-                  placeholder="e.g. Tesa"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors"
+                  placeholder="Brand (optional)"
+                  className="text-xs"
                 />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Category</label>
-                <select
-                  value={item.category || 'Others'}
-                  onChange={(e) => onItemChange(item.id, 'category', e.target.value)}
-                  className="w-full text-xs h-10 pl-3 pr-8 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors cursor-pointer appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none' stroke='%230F172A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4L5 6.5L7.5 4'/%3E%3C/svg%3E")`,
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 10px center',
-                  }}
+                <Select
+                  value={item.category || 'General'}
+                  onValueChange={(val) => onItemChange(item.id, 'category', val)}
                 >
-                  {categoryOptions.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Row 2: Quantity, Unit Price, Line Total, Warranty */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Quantity</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity ?? 1}
-                  onChange={(e) => onItemChange(item.id, 'quantity', e.target.value)}
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
-                />
+                  <SelectTrigger className="text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>Unit price</span>
-                  {item.originalUnitPrice != null && Number(item.originalUnitPrice) > Number(item.unitPrice || 0) && (
-                    <span className="text-[11px] text-slate-500 line-through font-normal font-tabular">
-                      ₹{Number(item.originalUnitPrice).toFixed(2)}
-                    </span>
-                  )}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={item.unitPrice ?? ''}
-                  onChange={(e) => onItemChange(item.id, 'unitPrice', e.target.value)}
-                  placeholder="0.00"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span>Line total</span>
-                  {item.discountAmount != null && Number(item.discountAmount) > 0 && (
-                    <span className="text-[11px] text-brand-primary font-medium font-tabular">
-                      Saved ₹{Number(item.discountAmount).toFixed(2)}
-                    </span>
-                  )}
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={item.lineTotal ?? ''}
-                  onChange={(e) => onItemChange(item.id, 'lineTotal', e.target.value)}
-                  placeholder="0.00"
-                  className="w-full text-xs h-10 px-3 bg-brand-canvas border border-brand-border rounded-lg text-brand-navy placeholder-slate-400 focus:outline-none focus:bg-brand-surface focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors font-tabular font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700 mb-1.5 block">Warranty</label>
-                <div className="input-group-warranty">
-                  <input
-                    type="text"
-                    value={item.warrantyPeriodValue ?? ''}
-                    onChange={(e) => onItemChange(item.id, 'warrantyPeriodValue', e.target.value)}
-                    placeholder="-"
-                    className="font-tabular"
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[10px] text-fg-3 block mb-1">Qty</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={item.quantity || 1}
+                    onChange={(e) => onItemChange(item.id, 'quantity', e.target.value)}
+                    className="text-xs tnum text-center"
+                    required
                   />
-                  <select
-                    value={item.warrantyPeriodUnit || 'months'}
-                    onChange={(e) => onItemChange(item.id, 'warrantyPeriodUnit', e.target.value)}
-                    className="appearance-none"
-                  >
-                    <option value="days">Days</option>
-                    <option value="weeks">Weeks</option>
-                    <option value="months">Months</option>
-                    <option value="years">Years</option>
-                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] text-fg-3 block mb-1">Unit price</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.unitPrice || ''}
+                    onChange={(e) => onItemChange(item.id, 'unitPrice', e.target.value)}
+                    placeholder="0.00"
+                    className="text-xs tnum text-right font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-line-subtle text-xs">
+                <div className="flex items-center gap-1 text-[11px] text-fg-3">
+                  <Shield className="size-3 text-accent" />
+                  <span>Warranty:</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={item.warrantyPeriodValue || ''}
+                    onChange={(e) => onItemChange(item.id, 'warrantyPeriodValue', e.target.value)}
+                    placeholder="0"
+                    className="w-10 text-center font-mono border-b border-line text-fg bg-transparent"
+                  />
+                  <span>mo</span>
+                </div>
+                <div className="font-mono font-semibold text-fg tnum">
+                  Total: {currencySymbol}{' '}
+                  {item.lineTotal ? Number(item.lineTotal).toFixed(2) : '0.00'}
                 </div>
               </div>
             </div>
@@ -186,6 +300,6 @@ const ProductListForm = ({
       </div>
     </div>
   );
-};
+}
 
 export default ProductListForm;

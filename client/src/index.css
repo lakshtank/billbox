@@ -1,99 +1,51 @@
-/*
- * =====================================================
- * BILLBOX DESIGN SYSTEM — 4-Color Precision Palette
- * =====================================================
- *
- * PALETTE SPECIFICATION:
- *   #F9F7F7 (Canvas Background / Clean Off-White)
- *   #DBE2EF (Hairline Borders / Subtle Badges / Dividers)
- *   #3F72AF (Primary Brand Accent / Buttons / Active Highlights)
- *   #112D4E (Deep Midnight Navy / High-Contrast Headings & Body)
- *
- * TYPOGRAPHY SYSTEM:
- *   Primary / Display: "Geist", "Inter", sans-serif
- *   Code / IDs:        "JetBrains Mono", monospace
- * =====================================================
- */
+@import "./styles/tokens.css";
+@import "./styles/theme.css";
+@import "./styles/base.css";
+@import "./styles/typography.css";
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
-@theme {
-  /* ========================================================================= */
-  /* BILLBOX MASTER THEME CONTROL CENTER                                       */
-  /* >>> CHANGE COLOR CODES HERE AT ONE PLACE TO RESTYLE THE WHOLE APP <<<     */
-  /* ========================================================================= */
-  --color-brand-canvas: #F2F1EF;        /* 1. Canvas / App Background (Platinum) */
-  --color-brand-border: #E2E0DC;        /* 2. Hairlines, borders, dividers, subtle chips */
-  --color-brand-primary: #154D57;       /* 3. Primary brand accent (Petroleum Teal) */
-  --color-brand-primary-hover: #0F3A42; /* 3b. Primary hover state */
-  --color-brand-navy: #000000;          /* 4. Deep contrast headings, text (Pure Black) */
-  --color-brand-navy-hover: #1A1A1A;    /* 4b. Dark button hover state */
-  --color-brand-surface: #FAFAF8;       /* 5. Card / Surface background (Porcelain - Option 1) */
-  --color-brand-surface-hover: #F2F0EC; /* 5b. Card surface hover state */
-  --color-brand-sidebar: #E8E6E2;       /* 6. Sidebar background (Soft Stone - Option 1) */
-  /* ========================================================================= */
+/* Backward compatibility aliases during component-by-component migration */
+:root {
+  --color-brand-canvas: var(--bg-app);
+  --color-brand-border: var(--line-default);
+  --color-brand-primary: var(--accent);
+  --color-brand-primary-hover: var(--accent-hover);
+  --color-brand-navy: var(--fg-primary);
+  --color-brand-navy-hover: var(--bg-pressed);
+  --color-brand-surface: var(--bg-surface);
+  --color-brand-surface-hover: var(--bg-hover);
+  --color-brand-sidebar: var(--bg-sidebar);
 
-  --color-bg-app: var(--color-brand-canvas);
-  --color-surface: var(--color-brand-surface);
-  --color-surface-hover: var(--color-brand-surface-hover);
-  --color-surface-subtle: var(--color-brand-border);
-  --color-sidebar: var(--color-brand-sidebar);
-  --color-border: var(--color-brand-border);
-  --color-border-subtle: var(--color-brand-border);
+  --color-bg-app: var(--bg-app);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-hover);
+  --color-surface-subtle: var(--bg-subtle);
+  --color-sidebar: var(--bg-sidebar);
+  --color-border: var(--line-default);
+  --color-border-subtle: var(--line-subtle);
 
-  /* Aliases mapped directly to master theme */
-  --color-brand-white: var(--color-brand-canvas);
-  --color-brand-ice: var(--color-brand-border);
-  --color-brand-blue: var(--color-brand-primary);
+  --color-text-primary: var(--fg-primary);
+  --color-text-secondary: var(--fg-secondary);
+  --color-text-body: var(--fg-primary);
+  --color-text-muted: var(--fg-tertiary);
 
-  /* Typography System */
-  --color-text-primary: var(--color-brand-navy);
-  --color-text-secondary: var(--color-brand-primary);
-  --color-text-body: var(--color-brand-navy);
-  --color-text-muted: #666C6E;
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent);
+  --color-accent-soft: var(--accent-tint);
 
-  /* Primary Accent */
-  --color-accent: var(--color-brand-primary);
-  --color-accent-hover: var(--color-brand-primary-hover);
-  --color-accent-text: var(--color-brand-primary);
-  --color-accent-soft: var(--color-brand-border);
-
-  /* Semantic Alerts */
-  --color-danger: #E11D48;
-  --color-danger-soft: #FFE4E6;
-  --color-warning: #D97706;
-  --color-warning-soft: #FEF3C7;
-  --color-success: #0D9488;
-  --color-success-soft: #CCFBF1;
-
-  /* Re-mapping Tailwind slate-* to Theme Palette (Warm Mineral Stone) */
-  --color-slate-50: var(--color-brand-canvas);
-  --color-slate-100: var(--color-brand-surface-hover);
-  --color-slate-200: var(--color-brand-border);
-  --color-slate-300: #D8D6D1;
-  --color-slate-400: #8E9396;
-  --color-slate-500: #62686B;
-  --color-slate-600: #42494C;
-  --color-slate-700: #293033;
-  --color-slate-800: #191F21;
-  --color-slate-900: var(--color-brand-navy);
-  --color-slate-950: var(--color-brand-navy-hover);
-
-  --font-sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  --font-body: var(--font-sans);
-  --font-mono: 'JetBrains Mono', monospace;
-}
-
-/* ===== Base Reset & System Font Override ===== */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+  --color-danger: var(--bad-solid);
+  --color-danger-soft: var(--bad-bg);
+  --color-warning: var(--warn-solid);
+  --color-warning-soft: var(--warn-bg);
+  --color-success: var(--ok-solid);
+  --color-success-soft: var(--ok-bg);
 }
 
 html,
-body {
+body,
+#root {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -101,11 +53,63 @@ body {
   overflow: hidden;
   font-family: var(--font-sans);
   font-weight: 400;
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-app);
+  color: var(--fg-primary);
+  background-color: var(--bg-app);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: normal;
+}
+
+/* ===== Sleek Modern Scrollbars for inner containers ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+html,
+body,
+#main {
+  scrollbar-gutter: stable;
+}
+
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+main::-webkit-scrollbar,
+nav::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+main::-webkit-scrollbar-track,
+nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb,
+nav::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 9999px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover,
+nav::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-secondary);
+}
+
+/* Utility to hide scrollbars while allowing scroll (tabs, filmstrips, chips, tables) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* ===== Typography Utility Classes ===== */
@@ -123,10 +127,12 @@ h6 {
 
 .font-tabular {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
 }
 
 .font-code {
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== Hide browser default number input spinners ===== */
@@ -150,25 +156,21 @@ select.appearance-none {
 
 /* ===== Interactive Cards ===== */
 .surface-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
 }
 
 .surface-card-interactive {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 
 .surface-card-interactive:hover {
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 4px 14px -2px rgba(21, 77, 87, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  transform: translateY(-1px);
+  border-color: var(--accent);
 }
 
 /* ===== Form Input Styling ===== */
@@ -180,32 +182,44 @@ select.appearance-none {
   input[type="number"],
   input[type="date"],
   input[type="search"],
-  select,
   textarea {
     width: 100%;
-    padding: 0.625rem 0.875rem;
+    padding: 0.5rem 0.75rem;
     font-family: var(--font-sans);
     font-size: 0.875rem;
+    line-height: 1.25rem;
     font-weight: 400;
-    color: var(--color-text-primary);
-    background-color: var(--color-brand-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    color: var(--fg-primary);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--line-default);
+    border-radius: var(--radius-md);
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  select {
+    padding: 0.375rem 0.75rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    font-weight: 400;
+    color: var(--fg-primary);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--line-default);
+    border-radius: var(--radius-md);
+    transition: border-color var(--dur-fast) var(--ease-out);
   }
 
   input:focus,
   select:focus,
   textarea:focus {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(21, 77, 87, 0.18);
-    outline: none;
+    border-color: var(--line-focus);
+    outline: 2px solid var(--line-focus);
+    outline-offset: 2px;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--color-text-muted);
+    color: var(--fg-tertiary);
   }
 }
 
@@ -215,17 +229,17 @@ select.appearance-none {
   align-items: center;
   width: 100%;
   height: 40px;
-  background-color: var(--color-brand-canvas);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
   overflow: hidden;
 }
 
 .input-group:focus-within {
-  background-color: var(--color-brand-surface);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent);
+  border-color: var(--line-focus);
+  outline: 2px solid var(--line-focus);
+  outline-offset: 1px;
 }
 
 .input-group select {
@@ -234,13 +248,13 @@ select.appearance-none {
   max-width: 68px !important;
   flex-shrink: 0 !important;
   border: none !important;
-  border-right: 1px solid var(--color-border) !important;
+  border-right: 1px solid var(--line-default) !important;
   border-radius: 0 !important;
   background-color: transparent !important;
   padding: 0.5rem 1.25rem 0.5rem 0.625rem !important;
   font-size: 0.75rem !important;
   font-weight: 500 !important;
-  color: var(--color-text-primary) !important;
+  color: var(--fg-primary) !important;
   box-shadow: none !important;
   outline: none !important;
   cursor: pointer;
@@ -260,7 +274,7 @@ select.appearance-none {
   background-color: transparent !important;
   padding: 0.5rem 0.75rem !important;
   font-size: 0.75rem !important;
-  color: var(--color-text-primary) !important;
+  color: var(--fg-primary) !important;
   box-shadow: none !important;
   outline: none !important;
   height: 100% !important;
@@ -276,17 +290,17 @@ select.appearance-none {
   align-items: center;
   width: 100%;
   height: 40px;
-  background-color: var(--color-brand-canvas);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--line-default);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
   overflow: hidden;
 }
 
 .input-group-warranty:focus-within {
-  background-color: var(--color-brand-surface);
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent);
+  border-color: var(--line-focus);
+  outline: 2px solid var(--line-focus);
+  outline-offset: 1px;
 }
 
 .input-group-warranty input {
@@ -298,7 +312,7 @@ select.appearance-none {
   background-color: transparent !important;
   padding: 0.5rem 0.75rem !important;
   font-size: 0.75rem !important;
-  color: var(--color-text-primary) !important;
+  color: var(--fg-primary) !important;
   box-shadow: none !important;
   outline: none !important;
   height: 100% !important;
@@ -314,13 +328,13 @@ select.appearance-none {
   max-width: 78px !important;
   flex-shrink: 0 !important;
   border: none !important;
-  border-left: 1px solid var(--color-border) !important;
+  border-left: 1px solid var(--line-default) !important;
   border-radius: 0 !important;
   background-color: transparent !important;
   padding: 0.5rem 1.25rem 0.5rem 0.5rem !important;
   font-size: 0.75rem !important;
   font-weight: 500 !important;
-  color: var(--color-text-primary) !important;
+  color: var(--fg-primary) !important;
   box-shadow: none !important;
   outline: none !important;
   cursor: pointer;
@@ -355,126 +369,173 @@ select.appearance-none {
 }
 
 .btn-primary {
-  background-color: var(--color-accent);
-  color: #FFFFFF;
-  box-shadow: 0 1px 3px 0 rgba(21, 77, 87, 0.25);
+  background-color: var(--accent);
+  color: var(--fg-on-accent);
+  box-shadow: 0 1px 2px rgba(14, 16, 21, 0.08);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-accent-hover);
-  box-shadow: 0 2px 6px 0 rgba(21, 77, 87, 0.35);
+  background-color: var(--accent-hover);
 }
 
 .btn-navy {
-  background-color: var(--color-brand-navy);
-  color: #FFFFFF;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  background-color: var(--fg-primary);
+  color: var(--bg-surface);
 }
 
 .btn-navy:hover {
-  background-color: var(--color-brand-navy-hover);
+  background-color: var(--bg-pressed);
 }
 
 .btn-secondary {
-  background-color: var(--color-brand-surface);
-  color: var(--color-text-primary);
-  border-color: var(--color-border);
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  background-color: var(--bg-surface);
+  color: var(--fg-primary);
+  border-color: var(--line-default);
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-surface-hover);
-  border-color: var(--color-border);
+  background-color: var(--bg-hover);
+  border-color: var(--line-strong);
 }
 
 .btn-danger {
-  background-color: var(--color-brand-surface);
-  color: var(--color-danger);
-  border-color: #FCA5A5;
+  background-color: var(--bad-bg);
+  color: var(--bad-fg);
+  border-color: var(--bad-line);
 }
 
 .btn-danger:hover {
-  background-color: var(--color-danger-soft);
-  border-color: var(--color-danger);
+  background-color: var(--bad-solid);
+  color: #FFFFFF;
 }
 
-/* ===== Signature Element: Live Status Pulse Dot ===== */
-.status-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+@theme inline {
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+  @keyframes shimmer-slide {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
+  @keyframes spin-around {
+  0% {
+    transform: translateZ(0) rotate(0);
+    }
+  15%, 35% {
+    transform: translateZ(0) rotate(90deg);
+    }
+  65%, 85% {
+    transform: translateZ(0) rotate(270deg);
+    }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+    }
+  }
+}
+/* ===== Step 5.5: Spotlight Border (fine pointer devices only) ===== */
+@media (hover: hover) and (pointer: fine) {
+  .spotlight {
+    position: relative;
+  }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-base, 180ms);
+    background: radial-gradient(180px circle at var(--mx, -1000px) var(--my, -1000px), var(--accent-line, #124E66), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    padding: 1px;
+  }
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+}
+
+/* ===== Step 7.3: Scan effect on document (only during processing) ===== */
+.scan {
   position: relative;
-  display: inline-block;
+  overflow: hidden;
+}
+.scan::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, var(--accent-tint, rgba(18, 78, 102, 0.2)), var(--accent-line, #124E66));
+  transform: translateY(-100%);
+  animation: scan 2.2s var(--ease-inout, ease-in-out) infinite;
+  pointer-events: none;
+}
+@keyframes scan {
+  to {
+    transform: translateY(calc(100% + var(--scan-h, 540px)));
+  }
 }
 
-.status-pulse-dot::after {
+/* Luminous laser line sweeping down the document */
+.laser-line {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent-hover, #3E97B0) 25%, #FFFFFF 50%, var(--accent-hover, #3E97B0) 75%, transparent 100%);
+  box-shadow: 0 0 16px 3px rgba(62, 151, 176, 0.8), 0 0 32px 6px rgba(18, 78, 102, 0.5);
+  animation: laserSweep 2.2s var(--ease-inout, ease-in-out) infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+.laser-line::after {
   content: '';
   position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.35;
-  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  bottom: 0;
+  inset-inline: 0;
+  height: 52px;
+  background: linear-gradient(to top, rgba(62, 151, 176, 0.22), rgba(18, 78, 102, 0.08) 50%, transparent 100%);
+  pointer-events: none;
 }
-
-@keyframes pulse-ring {
-
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.35;
-  }
-
-  50% {
-    transform: scale(1.6);
-    opacity: 0.1;
-  }
-}
-
-/* ===== Focus States (Accessibility) ===== */
-*:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ===== Dark Glass Bubble (Dark + Physical Glass Theme, No Gradient) ===== */
-.glass-bubble-dark {
-  background-color: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.38),
-    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.6),
-    0 4px 14px -1px rgba(0, 0, 0, 0.30),
-    0 2px 5px rgba(0, 0, 0, 0.18);
-}
-
-/* ===== Keyframes & Animations ===== */
-@keyframes fadeIn {
-  from {
+@keyframes laserSweep {
+  0% {
+    top: 0%;
     opacity: 0;
-    transform: scale(0.98);
   }
-
-  to {
+  12% {
     opacity: 1;
-    transform: scale(1);
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
   }
 }
-
-.animate-fade-in {
-  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* ===== Motion Preference ===== */
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  .scan::after,
+  .laser-line {
+    animation: none;
+    display: none;
   }
+}
+
+/* Field highlight overlay for auto-fill reveal */
+.field-reveal-highlight {
+  position: relative;
+}
+.field-reveal-highlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-tint, rgba(18, 78, 102, 0.15));
+  pointer-events: none;
+  opacity: 0;
+  animation: fieldFade 900ms ease-out forwards;
+}
+@keyframes fieldFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }

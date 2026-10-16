@@ -1,594 +1,690 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import * as React from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Package,
-  ShieldCheck,
-  Receipt,
-  ArrowRight,
-  Shield,
-  CheckCircle2,
   AlertCircle,
-  Mail,
-  X,
+  ArrowRight,
+  Clock,
+  Scan,
   FileText,
-  Plus,
-  Lock,
-  UploadCloud,
+  ShieldCheck,
+  Trash2,
+  Edit3,
+  Store,
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { useDashboardQuery } from '../queries/useDashboardQuery';
-import WarrantyTimelineWidget from '../components/dashboard/WarrantyTimelineWidget';
-import ActivityFeedWidget from '../components/dashboard/ActivityFeedWidget';
-import UpcomingExpiriesWidget from '../components/dashboard/UpcomingExpiriesWidget';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useActivityFeedQuery } from '../queries/useDashboardExtraQueries';
+import { useRemindersQuery } from '../queries/useRemindersQuery';
+import { PageHeader } from '../components/common/PageHeader';
+import { KpiTile } from '../components/data/KpiTile';
+import { SpendingChart } from '../components/data/SpendingChart';
+import { Money } from '../components/data/Money';
+import { StatusBadge } from '../components/data/StatusBadge';
+import { DateCell } from '../components/data/DateCell';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { useViewTransitionNavigate, useViewTransitionState } from '@/context/ViewTransitionContext';
 import EmptyState from '../components/common/EmptyState';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { Skeleton } from '../components/ui/skeleton';
+import PageContentTransition from '@/components/common/PageContentTransition';
+import * as m from 'motion/react-m';
+import { spring } from '@/lib/motion';
+import { useOverviewIntro } from '@/hooks/useOverviewIntro';
+import { cn } from '../lib/utils';
 
-const Dashboard = () => {
-  const navigate = useNavigate();
+/**
+ * Helper: format relative timestamp for activity feed
+ */
+function formatRelativeTime(dateString) {
+  if (!dateString) return 'Just now';
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return '1d ago';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+}
+
+function getActivityIcon(type) {
+  switch (type) {
+    case 'receipt_ocr_scanned':
+      return <Scan className="size-3.5 text-accent" />;
+    case 'receipt_created':
+      return <FileText className="size-3.5 text-accent" />;
+    case 'product_created':
+      return <ShieldCheck className="size-3.5 text-ok-fg" />;
+    case 'product_updated':
+      return <Edit3 className="size-3.5 text-accent" />;
+    case 'receipt_deleted':
+    case 'product_deleted':
+      return <Trash2 className="size-3.5 text-bad-fg" />;
+    default:
+      return <Clock className="size-3.5 text-fg-3" />;
+  }
+}
+
+function RecentReceiptRow({ r, currency, onNavigate }) {
+  const statusKey = r.needsReview
+    ? 'needs_review'
+    : r.status === 'archived'
+    ? 'expired'
+    : 'reconciled';
+  const to = `/receipts/${r._id}`;
+  const isTransitioning = useViewTransitionState(to);
+
+  return (
+    <tr
+      data-intro="row"
+      onClick={() => onNavigate(to)}
+      className="hover:bg-hover transition-colors cursor-pointer group"
+    >
+      <td className="p-2.5 font-medium text-fg group-hover:text-accent">
+        <div className="flex items-center gap-2">
+          <div
+            style={isTransitioning ? { viewTransitionName: `receipt-avatar-${r._id}` } : undefined}
+            className="size-6 rounded bg-subtle border border-line flex items-center justify-center shrink-0"
+          >
+            <Store className="size-3 text-fg-3" />
+          </div>
+          <span
+            style={isTransitioning ? { viewTransitionName: `receipt-title-${r._id}` } : undefined}
+            className="truncate max-w-[180px]"
+          >
+            {r.storeName || 'Merchant'}
+          </span>
+        </div>
+      </td>
+      <td className="p-2.5">
+        <DateCell value={r.purchaseDate || r.createdAt} />
+      </td>
+      <td className="p-2.5 text-right font-medium">
+        <Money
+          value={r.grandTotal != null ? r.grandTotal : (r.totalAmount || 0)}
+          currency={r.currency || currency}
+        />
+      </td>
+      <td className="p-2.5 text-right">
+        <StatusBadge status={statusKey} />
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * Step 12: Overview Page (/)
+ * - Answers: What did I spend, what loses cover soon, did anything fail, what changed.
+ * - Header: "Overview" / "Your spending and warranty status." with range selector: [30d] [90d] [1y] [All] stored in URL (?range=90d)
+ * - 4 KPI tiles: Total spend, Receipts, Under warranty, Expiring in 30d
+ * - Middle row (8/4 split): Spend over time (area chart) & Expiring soon
+ * - Bottom row (8/4 split): Recent receipts (5-row table) & Activity feed
+ * - Needs-review banner only when count > 0
+ * - Greeting removed. Real user name only in sidebar.
+ */
+const RANGE_BUTTONS = [
+  { id: '30d', label: '30d' },
+  { id: '90d', label: '90d' },
+  { id: '1y', label: '1y' },
+  { id: 'all', label: 'All' },
+];
+
+function DashboardSkeleton({ range, handleRangeChange }) {
+  return (
+    <div className="space-y-6 font-sans select-none" aria-busy="true">
+      <PageHeader
+        title="Overview"
+        description="Your spending and warranty status."
+        actions={
+          <div className="inline-flex items-center p-1 bg-subtle border border-line rounded-[8px] text-xs font-medium">
+            {RANGE_BUTTONS.map((r) => (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => handleRangeChange(r.id)}
+                className={cn(
+                  'px-2.5 py-1 rounded-[6px] transition-all cursor-pointer font-medium',
+                  range === r.id
+                    ? 'bg-surface text-fg font-semibold shadow-xs'
+                    : 'text-fg-3 hover:text-fg hover:bg-hover/60'
+                )}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
+
+      {/* 4 KPI Tile Skeletons */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="p-4 rounded-[10px] border border-line bg-surface space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-3.5 w-24 rounded" />
+              <Skeleton className="size-4 rounded" />
+            </div>
+            <Skeleton className="h-7 w-32 rounded" />
+            <Skeleton className="h-3 w-20 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Middle Row Skeletons (8/4 split) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        <div className="lg:col-span-8 p-5 rounded-[10px] border border-line bg-surface space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-5 w-36 rounded" />
+            <Skeleton className="h-4 w-24 rounded" />
+          </div>
+          <Skeleton className="h-60 w-full rounded-lg" />
+        </div>
+        <div className="lg:col-span-4 p-5 rounded-[10px] border border-line bg-surface space-y-4">
+          <Skeleton className="h-5 w-28 rounded" />
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center justify-between py-2 border-b border-line-subtle last:border-0">
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-28 rounded" />
+                  <Skeleton className="h-3 w-16 rounded" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row Skeletons (8/4 split) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 p-5 rounded-[10px] border border-line bg-surface space-y-4">
+          <Skeleton className="h-5 w-32 rounded" />
+          <div className="space-y-2.5">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-10 w-full rounded" />
+            ))}
+          </div>
+        </div>
+        <div className="lg:col-span-4 p-5 rounded-[10px] border border-line bg-surface space-y-4">
+          <Skeleton className="h-5 w-20 rounded" />
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="size-6 rounded-full shrink-0" />
+                <div className="space-y-1 flex-1">
+                  <Skeleton className="h-3.5 w-3/4 rounded" />
+                  <Skeleton className="h-3 w-1/3 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Dashboard() {
+  const navigate = useViewTransitionNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
+
+  const range = searchParams.get('range') || '30d';
+
   const { data: stats, isLoading, isError } = useDashboardQuery();
+  const { data: activities = [], isLoading: activitiesLoading } = useActivityFeedQuery(5);
+  const { data: remindersData } = useRemindersQuery();
 
-  const [timeframe, setTimeframe] = useState('all'); // 'all' | 'month'
-  const [showReminderBanner, setShowReminderBanner] = useState(() => {
-    return localStorage.getItem('billbox_hide_reminder_banner') !== 'true';
-  });
+  const scopeRef = React.useRef(null);
+  useOverviewIntro(scopeRef, Boolean(stats && !isLoading));
 
-  const handleDismissBanner = () => {
-    setShowReminderBanner(false);
-    localStorage.setItem('billbox_hide_reminder_banner', 'true');
+  const handleRangeChange = (newRange) => {
+    setSearchParams({ range: newRange });
   };
 
-  // Extract user's display first name
-  const firstName = useMemo(() => {
-    if (user?.name) return user.name.split(' ')[0];
-    if (user?.email) return user.email.split('@')[0];
-    return 'Laksh';
-  }, [user]);
+  const currency = user?.defaultCurrency || stats?.baseCurrency || 'INR';
 
-  // Time-based greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  }, []);
+  // Compute upcoming expiring items (sorted by daysRemaining ascending, max 5)
+  const expiringItems = React.useMemo(() => {
+    const rawList = Array.isArray(remindersData?.items)
+      ? remindersData.items
+      : Array.isArray(stats?.warrantyTimeline)
+      ? stats.warrantyTimeline
+      : [];
+    return rawList
+      .filter((i) => i && i.daysRemaining > 0 && i.daysRemaining <= 90)
+      .sort((a, b) => (a.daysRemaining || 0) - (b.daysRemaining || 0))
+      .slice(0, 5);
+  }, [remindersData, stats]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  // Compute spend and chart data based on selected range
+  const { filteredSpend, displayDelta, deltaLabel, chartData } = React.useMemo(() => {
+    const rawPoints = Array.isArray(stats?.spendingOverTime) ? stats.spendingOverTime : [];
+    if (!rawPoints.length) {
+      return {
+        filteredSpend: stats?.totalSpent || 0,
+        displayDelta: stats?.spentVsLastMonthDiff,
+        deltaLabel: 'vs previous period',
+        chartData: [],
+      };
+    }
+
+    const now = new Date();
+    let cutoff = new Date(0); // All time
+
+    if (range === '30d') {
+      cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    } else if (range === '90d') {
+      cutoff = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    } else if (range === '1y') {
+      cutoff = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    }
+
+    const pointsInRange = rawPoints.filter((pt) => {
+      const ptDate = new Date(pt.rawDate || pt.date);
+      return !isNaN(ptDate.getTime()) ? ptDate >= cutoff : true;
+    });
+
+    const spendSum = range === '30d'
+      ? (stats?.thisMonthSpent || stats?.totalSpent || 0)
+      : pointsInRange.reduce((acc, pt) => acc + (pt.amount || 0), 0);
+
+    return {
+      filteredSpend: range === 'all' ? (stats?.totalSpent || 0) : spendSum,
+      displayDelta: range === '30d' ? stats?.spentVsLastMonthDiff : undefined,
+      deltaLabel: 'vs previous period',
+      chartData: pointsInRange.length ? pointsInRange : rawPoints,
+    };
+  }, [stats, range]);
+
+
 
   if (isError) {
     return (
       <EmptyState
-        title="Unable to load dashboard"
-        description="We ran into an issue fetching your dashboard data. Please try refreshing."
+        title="Unable to load overview"
+        description="We ran into an issue fetching your overview data. Please try refreshing."
       />
     );
   }
 
-  const currency = user?.defaultCurrency || (typeof window !== 'undefined' ? localStorage.getItem('billbox_default_currency') : null) || stats?.baseCurrency || 'INR';
+  const totalReceipts = stats?.totalReceipts || 0;
+  const activeWarranties = stats?.activeWarranties || 0;
+  const expiringCount = stats?.expiringWarranties || 0;
+  const needsReviewCount = stats?.needsReviewCount || 0;
+  const recentReceipts = stats?.recentReceipts || [];
 
-  // Process Category Spending List
-  const topCategories = Array.isArray(stats?.topCategoriesThisMonth) && stats.topCategoriesThisMonth.length > 0
-    ? stats.topCategoriesThisMonth
-    : [
-        { category: 'Electronics', count: 6, total: 980206.99, percentage: 65 },
-        { category: 'Groceries', count: 4, total: 506.00, percentage: 20 },
-        { category: 'Hardware', count: 2, total: 410.00, percentage: 10 },
-        { category: 'Appliances', count: 1, total: 172.00, percentage: 5 },
-      ];
-
-  // Tiered palette matching user's cold winter gradient (#112D4E -> #3F72AF -> #DBE2EF)
-  const categoryBarTones = [
-    'bg-brand-navy',
-    'bg-brand-primary',
-    'bg-brand-primary/70',
-    'bg-brand-primary/40',
-    'bg-brand-border',
+  const rangeButtons = [
+    { id: '30d', label: '30d' },
+    { id: '90d', label: '90d' },
+    { id: '1y', label: '1y' },
+    { id: 'all', label: 'All' },
   ];
 
-  const recentReceipts = Array.isArray(stats?.recentReceipts) ? stats.recentReceipts : [];
-
-  const displaySpend = timeframe === 'month'
-    ? (stats?.thisMonthSpent || 0)
-    : (stats?.totalSpent || stats?.thisMonthSpent || 0);
-
-  const coveragePercent = stats?.totalProducts > 0
-    ? Math.min(100, Math.round(((stats.activeWarranties || 0) / stats.totalProducts) * 100))
-    : 100;
-
-  return (
-    <div className="min-h-screen bg-brand-canvas px-4 sm:px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
-      {/* 1. Executive Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-semibold text-brand-navy tracking-tight leading-snug">
-              {greeting}, {firstName} 👋
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
-              <span>{stats?.activeWarranties || 0} Warranties Protected</span>
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-normal mt-1">
-            Here is the portfolio overview of your documented purchases and warranties.
-          </p>
-        </div>
-
-        {/* Action Toolbar */}
-        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-          {/* Timeframe selector pill */}
-          <div className="inline-flex items-center p-1 bg-brand-surface border border-brand-border rounded-xl shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setTimeframe('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                timeframe === 'all'
-                  ? 'bg-brand-navy text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-brand-navy'
-              }`}
-            >
-              All Time
-            </button>
-            <button
-              type="button"
-              onClick={() => setTimeframe('month')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
-                timeframe === 'month'
-                  ? 'bg-brand-navy text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-brand-navy'
-              }`}
-            >
-              This Month
-            </button>
-          </div>
-
-          {/* Quick Add Receipt Button */}
-          <button
-            type="button"
-            onClick={() => navigate('/receipts/new')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Receipt</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Top 4 Balanced KPI Metric Cards (Equal Height Stretch) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        {/* KPI 1: Expenditure */}
-        <div
-          onClick={() => navigate('/receipts')}
-          className="bg-brand-surface border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between group h-full"
+  const headerActions = (
+    <div className="relative inline-flex items-center p-1 bg-subtle border border-line rounded-[8px] text-xs font-medium">
+      {rangeButtons.map((r) => (
+        <button
+          key={r.id}
+          type="button"
+          onClick={() => handleRangeChange(r.id)}
+          className={cn(
+            'relative px-2.5 py-1 rounded-[6px] transition-colors cursor-pointer font-medium z-1',
+            range === r.id
+              ? 'text-fg font-semibold'
+              : 'text-fg-3 hover:text-fg hover:bg-hover/40'
+          )}
         >
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200/70 flex items-center justify-center text-slate-700 group-hover:bg-slate-200/80 transition-colors">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] font-medium text-slate-500 block">
-                {timeframe === 'month' ? 'Spent This Month' : 'Total Expenditure'}
-              </span>
-              <span className="text-2xl font-semibold text-slate-900 font-tabular tracking-tight">
-                {formatCurrency(displaySpend, currency)}
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[11px] text-slate-400 font-normal">
-              {stats?.totalReceipts || 0} {stats?.totalReceipts === 1 ? 'receipt' : 'receipts'} logged
-            </span>
-            <span className="text-[11px] font-medium text-slate-700 group-hover:text-brand-primary transition-colors inline-flex items-center gap-0.5">
-              Ledger <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 2: Tracked Products */}
-        <div
-          onClick={() => navigate('/products')}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-xs hover:border-brand-primary/50 transition-all cursor-pointer flex flex-col justify-between group h-full"
-        >
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-brand-border flex items-center justify-center text-slate-700 group-hover:bg-brand-border/60 transition-colors">
-              <Package className="w-5 h-5" />
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] font-medium text-slate-500 block">
-                Cataloged Products
-              </span>
-              <span className="text-2xl font-semibold text-brand-navy font-tabular tracking-tight">
-                {stats?.totalProducts || 0}
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[11px] text-slate-400 font-normal">
-              Across {topCategories.length} categories
-            </span>
-            <span className="text-[11px] font-medium text-slate-700 group-hover:text-brand-primary transition-colors inline-flex items-center gap-0.5">
-              Inventory <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 3: Active Warranties */}
-        <div
-          onClick={() => navigate('/warranties')}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-xs hover:border-brand-primary/50 transition-all cursor-pointer flex flex-col justify-between group h-full"
-        >
-          <div className="flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-brand-border/60 border border-brand-border flex items-center justify-center text-brand-primary group-hover:bg-brand-border transition-colors">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] font-medium text-slate-500 block">
-                Active Warranties
-              </span>
-              <span className="text-2xl font-semibold text-brand-navy font-tabular tracking-tight">
-                {stats?.activeWarranties || 0}
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[11px] text-slate-400 font-normal">
-              {coveragePercent}% portfolio covered
-            </span>
-            <span className="text-[11px] font-medium text-slate-700 group-hover:text-brand-primary transition-colors inline-flex items-center gap-0.5">
-              Coverage <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 4: Action Status / Expiring Soon */}
-        <div
-          onClick={() => navigate('/warranties')}
-          className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-xs hover:border-brand-primary/50 transition-all cursor-pointer flex flex-col justify-between group h-full"
-        >
-          <div className="flex items-start justify-between">
-            <div
-              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-colors ${
-                (stats?.expiringWarranties || 0) > 0
-                  ? 'bg-brand-border border-brand-primary/40 text-brand-navy'
-                  : 'bg-slate-100 border-brand-border text-slate-700'
-              }`}
-            >
-              {(stats?.expiringWarranties || 0) > 0 ? (
-                <AlertCircle className="w-5 h-5 text-brand-primary" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 text-brand-primary" />
-              )}
-            </div>
-            <div className="text-right">
-              <span className="text-[11px] font-medium text-slate-500 block">
-                Action Required
-              </span>
-              <span
-                className={`text-2xl font-semibold font-tabular tracking-tight ${
-                  (stats?.expiringWarranties || 0) > 0 ? 'text-brand-primary' : 'text-slate-900'
-                }`}
-              >
-                {stats?.expiringWarranties || 0}
-              </span>
-            </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span className="text-[11px] text-slate-400 font-normal">
-              {(stats?.expiringWarranties || 0) > 0 ? 'Warranties expire soon' : 'All warranties safe'}
-            </span>
-            <span
-              className={`text-[11px] font-medium transition-colors inline-flex items-center gap-0.5 ${
-                (stats?.expiringWarranties || 0) > 0
-                  ? 'text-brand-primary font-bold'
-                  : 'text-brand-navy group-hover:text-brand-primary'
-              }`}
-            >
-              {(stats?.expiringWarranties || 0) > 0 ? 'Review alerts' : 'View all'} <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Paired Structured Sections (Exact Equal Heights Side-by-Side) */}
-      <div className="space-y-6">
-        {/* ROW 1: Warranty Horizon (8 cols) + Upcoming Expiries (4 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          <div className="lg:col-span-8 flex flex-col">
-            <WarrantyTimelineWidget />
-          </div>
-          <div className="lg:col-span-4 flex flex-col">
-            <UpcomingExpiriesWidget />
-          </div>
-        </div>
-
-        {/* ROW 2: Recent Receipts Ledger (8 cols) + Vault Protection Health (4 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Left Box: Recent Receipts Ledger */}
-          <div className="lg:col-span-8 flex flex-col">
-            <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between font-sans h-full">
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
-                      Recent Receipts & Invoices
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                      Latest documented merchant purchases
-                    </p>
-                  </div>
-                  <Link
-                    to="/receipts"
-                    className="text-xs font-medium text-brand-navy hover:text-brand-primary transition-colors inline-flex items-center gap-1 shrink-0"
-                  >
-                    <span>View all</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                {recentReceipts.length === 0 ? (
-                  <div className="py-10 text-center space-y-2 my-auto">
-                    <FileText className="w-8 h-8 text-slate-300 mx-auto" />
-                    <p className="text-xs font-medium text-slate-700">No recent receipts found</p>
-                    <p className="text-[11px] text-slate-400">Add your first invoice to see transactions here.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 my-auto">
-                    {recentReceipts.slice(0, 4).map((rcpt, idx) => {
-                      const itemCount = rcpt.products?.length || rcpt.itemsCount || 1;
-                      const store = rcpt.storeName || 'Merchant';
-                      const amt = rcpt.grandTotal != null ? rcpt.grandTotal : (rcpt.totalAmount != null ? rcpt.totalAmount : 0);
-                      const storeInitials = store.substring(0, 2).toUpperCase();
-
-                      return (
-                        <div
-                          key={rcpt._id || idx}
-                          onClick={() => navigate(`/receipts/${rcpt._id}`)}
-                          className="py-3 px-1.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/80 transition-colors rounded-xl group"
-                        >
-                          <div className="flex items-center gap-3.5 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-brand-primary/10 border border-brand-primary/25 font-bold text-xs text-brand-primary flex items-center justify-center shrink-0 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                              {storeInitials}
-                            </div>
-                            <div className="min-w-0">
-                              <span className="font-medium text-slate-900 text-xs truncate block group-hover:text-brand-primary transition-colors">
-                                {store}
-                              </span>
-                              <span className="text-[11px] text-slate-400 font-tabular block">
-                                {formatDate(rcpt.purchaseDate)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="text-right shrink-0">
-                            <span className="text-xs font-semibold text-slate-900 font-tabular block">
-                              {formatCurrency(amt, rcpt.currency || 'INR')}
-                            </span>
-                            <span className="text-[10px] text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded-full font-medium inline-block mt-0.5">
-                              {itemCount} {itemCount === 1 ? 'item' : 'items'}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Pinned Bottom Footer */}
-              <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  Showing {Math.min(4, recentReceipts.length)} of {stats?.totalReceipts || recentReceipts.length} recorded purchases
-                </span>
-                <Link
-                  to="/receipts"
-                  className="font-medium text-brand-navy hover:text-brand-primary hover:underline"
-                >
-                  View Complete Ledger
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Box: Warranty Vault Protection */}
-          <div className="lg:col-span-4 flex flex-col">
-            <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between font-sans h-full">
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-brand-primary/10 border border-brand-primary/25 text-brand-primary flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-brand-primary" />
-                    </div>
-                    <span className="text-[11px] font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2.5 py-0.5 rounded-full">
-                      Vault Active
-                    </span>
-                  </div>
-
-                  <div className="mt-3.5">
-                    <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-                      Warranty Vault Protection
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed font-normal">
-                      Continuous monitoring, cloud invoice archival, and automated warranty tracking.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 py-3 text-xs font-normal text-slate-700 my-auto">
-                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                    <span className="flex items-center gap-2 text-slate-600">
-                      <UploadCloud className="w-4 h-4 text-slate-400" />
-                      <span>Cloud Invoice Backup</span>
-                    </span>
-                    <span className="font-medium text-brand-primary text-[11px]">Synced</span>
-                  </div>
-                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
-                    <span className="flex items-center gap-2 text-slate-600">
-                      <Mail className="w-4 h-4 text-slate-400" />
-                      <span>Expiry Alerts</span>
-                    </span>
-                    <span className="font-medium text-slate-900 text-[11px]">Active</span>
-                  </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="flex items-center gap-2 text-slate-600">
-                      <Lock className="w-4 h-4 text-slate-400" />
-                      <span>Digital Vault</span>
-                    </span>
-                    <span className="font-medium text-slate-900 text-[11px]">Encrypted</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pinned Bottom Button */}
-              <div className="pt-4 mt-auto border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => navigate('/warranties')}
-                  className="w-full py-2.5 px-3 text-xs font-medium text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl transition-colors cursor-pointer text-center"
-                >
-                  Configure Expiry Alerts
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ROW 3: Top Spending Categories (8 cols) + Activity Feed (4 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Left Box: Top Spending Categories */}
-          <div className="lg:col-span-8 flex flex-col">
-            <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-6 shadow-xs flex flex-col justify-between font-sans h-full">
-              <div className="flex-1 flex flex-col justify-between">
-                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
-                      Top Spending Categories
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-0.5 font-normal">
-                      Portfolio expenditure breakdown by department
-                    </p>
-                  </div>
-                  <Link
-                    to="/products"
-                    className="text-xs font-medium text-brand-navy hover:text-brand-primary transition-colors inline-flex items-center gap-1 shrink-0"
-                  >
-                    <span>View all</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="space-y-4 py-2.5 my-auto">
-                  {topCategories.map((cat, idx) => {
-                    const barColor = categoryBarTones[idx % categoryBarTones.length];
-                    const pct = cat.percentage || Math.max(10, 80 - idx * 20);
-
-                    return (
-                      <div key={idx} className="space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-slate-800 text-xs flex items-center gap-2">
-                            <span>{cat.category}</span>
-                            {cat.count && (
-                              <span className="text-[10px] text-slate-400 font-normal font-tabular">
-                                ({cat.count} items)
-                              </span>
-                            )}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-900 text-xs font-semibold font-tabular">
-                              {cat.total ? formatCurrency(cat.total, currency) : ''}
-                            </span>
-                            <span className="text-[11px] font-medium text-brand-primary font-tabular bg-brand-primary/10 border border-brand-primary/20 px-1.5 py-0.5 rounded">
-                              {pct}%
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Clean Segment Track */}
-                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Pinned Bottom Footer */}
-              <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>
-                  Categorized across {topCategories.length} product classifications
-                </span>
-                <Link
-                  to="/products"
-                  className="font-medium text-brand-navy hover:text-brand-primary hover:underline"
-                >
-                  Manage Categories
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Box: Activity Feed */}
-          <div className="lg:col-span-4 flex flex-col">
-            <ActivityFeedWidget />
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Actionable Reminder Notification Banner */}
-      {showReminderBanner && (
-        <div className="bg-brand-surface border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200/70 flex items-center justify-center text-slate-700 shrink-0">
-              <Mail className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-medium text-slate-900">
-                Never miss a warranty claim deadline
-              </h4>
-              <p className="text-[11px] text-slate-500 font-normal">
-                Enable automated notifications to receive an alert before manufacturer warranties expire.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
-            <button
-              type="button"
-              onClick={() => navigate('/warranties')}
-              className="px-3.5 py-1.5 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors shadow-2xs cursor-pointer"
-            >
-              Enable Reminders
-            </button>
-            <button
-              type="button"
-              onClick={handleDismissBanner}
-              className="px-2.5 py-1.5 text-xs font-normal text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-            >
-              Dismiss
-            </button>
-            <button
-              type="button"
-              onClick={handleDismissBanner}
-              className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-              aria-label="Dismiss banner"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+          {range === r.id && (
+            <m.span
+              layoutId="range-pill"
+              className="absolute inset-0 rounded-[6px] bg-surface shadow-xs border border-line-subtle -z-1"
+              transition={spring.snappy}
+            />
+          )}
+          <span className="relative z-10">{r.label}</span>
+        </button>
+      ))}
     </div>
   );
-};
+
+  return (
+    <PageContentTransition
+      isLoading={isLoading && !stats}
+      skeleton={<DashboardSkeleton range={range} handleRangeChange={handleRangeChange} />}
+      className="space-y-6 font-sans"
+    >
+      <div ref={scopeRef} className="space-y-6">
+        {/* 1. Header with Range Selector */}
+        <div data-intro="header">
+          <PageHeader
+            title="Overview"
+            description="Your spending and warranty status."
+            actions={headerActions}
+          />
+        </div>
+
+        {/* 2. Needs Review Alert Banner (only when count > 0) */}
+        {needsReviewCount > 0 && (
+          <div
+            role="alert"
+            className="rounded-[12px] border border-warn-line bg-warn-bg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs"
+          >
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-warn-solid shrink-0" />
+              <span className="text-sm font-medium text-warn-fg">
+                {needsReviewCount} {needsReviewCount === 1 ? 'receipt needs' : 'receipts need'} review — totals don&apos;t match
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/receipts?status=needs_review')}
+              className="shrink-0 border-warn-line hover:bg-warn-bg text-warn-fg font-medium"
+            >
+              Review
+            </Button>
+          </div>
+        )}
+
+        {/* 3. Four KPI Tiles (grid-cols-4 >=1024, 2 on tablet, 1 on mobile) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+          {/* KPI 1: Total spend */}
+          <KpiTile
+            data-intro="kpi"
+            label="Total spend"
+            numericValue={filteredSpend}
+            currency={currency}
+            delta={displayDelta}
+            deltaLabel={deltaLabel}
+            hint={range === 'all' ? 'All time' : `${range} period`}
+            to="/receipts"
+            className="h-full"
+          />
+
+          {/* KPI 2: Receipts */}
+          <KpiTile
+            data-intro="kpi"
+            label="Receipts"
+            numericValue={totalReceipts}
+            unit={totalReceipts === 1 ? 'receipt' : 'receipts'}
+            delta={stats?.receiptsDiff !== undefined && stats.receiptsDiff !== 0 ? (stats.receiptsDiff > 0 ? `+${stats.receiptsDiff}` : stats.receiptsDiff) : undefined}
+            deltaLabel="vs previous period"
+            hint="All time"
+            to="/receipts"
+            className="h-full"
+          />
+
+          {/* KPI 3: Under warranty */}
+          <KpiTile
+            data-intro="kpi"
+            label="Under warranty"
+            numericValue={activeWarranties}
+            unit={stats?.totalProducts ? `of ${stats.totalProducts} products` : 'products'}
+            hint="Active protection"
+            to="/warranties"
+            className="h-full"
+          />
+
+          {/* KPI 4: Expiring in 30d */}
+          <KpiTile
+            data-intro="kpi"
+            label="Expiring in 30d"
+            numericValue={expiringCount}
+            footerLinkText="View →"
+            hint="Safe horizon"
+            to="/warranties?status=expiring_soon"
+            className="h-full"
+          />
+        </div>
+
+      {/* 4. Middle Row: 8/4 split — Spend over time & Expiring soon */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left (8 cols): Spend over time Area Chart */}
+        <div data-intro="panel" className="lg:col-span-8 flex flex-col h-full min-h-[360px]">
+          {totalReceipts === 0 ? (
+            <div className="rounded-[12px] border border-line bg-surface p-8 text-center flex flex-col items-center justify-center min-h-[280px] h-full flex-1">
+              <EmptyState
+                title="No receipts yet"
+                description="Upload a receipt to start tracking your spending and warranties."
+                actionLabel="Upload receipt"
+                onAction={() => navigate('/receipts/new')}
+              />
+            </div>
+          ) : (
+            <SpendingChart
+              data={chartData}
+              title="Spend over time"
+              className="h-full flex-1 min-h-[360px]"
+            />
+          )}
+        </div>
+
+        {/* Right (4 cols): Expiring soon list */}
+        <div data-intro="panel" className="lg:col-span-4 rounded-[12px] border border-line bg-surface p-4 shadow-2xs text-left h-full min-h-[360px] flex flex-col justify-between">
+          <div className="flex-1 flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-line-subtle shrink-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+                Expiring soon
+              </span>
+              <Link
+                to="/warranties"
+                className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>View all</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+
+            {expiringItems.length === 0 ? (
+              <div className="py-12 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+                <div className="size-10 rounded-full bg-subtle border border-line flex items-center justify-center text-fg-3">
+                  <ShieldCheck className="size-5 text-accent" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-fg">No imminent expiries</p>
+                  <p className="text-[11px] text-fg-3 max-w-[220px]">
+                    All active warranties are covered beyond 90 days.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-line-subtle my-1">
+                {expiringItems.map((item) => {
+                  const days = item.daysRemaining || 0;
+                  const isUrgent = days <= 30;
+
+                  return (
+                    <Link
+                      key={item._id}
+                      to={`/products/${item._id}`}
+                      className="py-2.5 px-1.5 flex items-center justify-between gap-3 hover:bg-hover rounded-[8px] transition-colors group text-left cursor-pointer"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-fg group-hover:text-accent truncate">
+                          {item.productName}
+                        </p>
+                        <p className="text-xs text-fg-3 truncate mt-0.5">
+                          {item.brand || item.storeName || 'Merchant'} ·{' '}
+                          <DateCell value={item.expiryDate || item.warrantyExpiryDate} />
+                        </p>
+                      </div>
+
+                      <Badge
+                        variant={isUrgent ? 'warn' : 'neutral'}
+                        className="shrink-0 font-mono text-[11px] tnum"
+                      >
+                        {days}d
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 mt-auto border-t border-line-subtle shrink-0">
+            <Link
+              to="/warranties"
+              className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Manage all warranties</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Bottom Row: 8/4 split — Recent receipts table & Activity feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Left (8 cols): Recent receipts 5-row table */}
+        <div data-intro="panel" className="lg:col-span-8 rounded-[12px] border border-line bg-surface p-4 shadow-2xs text-left h-full min-h-[350px] flex flex-col justify-between">
+          <div className="flex-1 flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-line-subtle mb-3 shrink-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+                Recent receipts
+              </span>
+              <Link
+                to="/receipts"
+                className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>View all</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+
+            {recentReceipts.length === 0 ? (
+              <div className="py-12 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+                <div className="size-10 rounded-full bg-subtle border border-line flex items-center justify-center text-fg-3">
+                  <Store className="size-5 text-fg-3" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-fg">No receipts recorded yet</p>
+                  <p className="text-[11px] text-fg-3">
+                    Upload your first receipt to see transactions here.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+                <table className="w-full text-xs text-left font-sans">
+                  <thead className="bg-subtle text-fg-3 border-b border-line">
+                    <tr>
+                      <th className="p-2.5 font-semibold">Merchant</th>
+                      <th className="p-2.5 font-semibold">Date</th>
+                      <th className="p-2.5 font-semibold text-right">Total</th>
+                      <th className="p-2.5 font-semibold text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line-subtle">
+                    {recentReceipts.slice(0, 5).map((r) => (
+                      <RecentReceiptRow
+                        key={r._id}
+                        r={r}
+                        currency={currency}
+                        onNavigate={navigate}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 mt-auto border-t border-line-subtle flex items-center justify-between text-xs text-fg-3 shrink-0">
+            <span>Showing latest {Math.min(recentReceipts.length, 5)} receipts</span>
+            <Link
+              to="/receipts"
+              className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>View all receipts</span>
+              <ArrowRight className="size-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Right (4 cols): Activity feed */}
+        <div data-intro="panel" className="lg:col-span-4 rounded-[12px] border border-line bg-surface p-4 shadow-2xs text-left h-full min-h-[350px] flex flex-col justify-between">
+          <div className="flex-1 flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-line-subtle shrink-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+                Activity
+              </span>
+              <Link
+                to="/receipts"
+                className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>View all</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
+
+            {activitiesLoading ? (
+              <div className="py-12 text-center text-xs text-fg-3 flex-1 flex items-center justify-center">Loading activity...</div>
+            ) : activities.length === 0 ? (
+              <div className="py-12 flex-1 flex flex-col items-center justify-center text-center space-y-2">
+                <div className="size-10 rounded-full bg-subtle border border-line flex items-center justify-center text-fg-3">
+                  <Clock className="size-5 text-fg-3" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold text-fg">No activity logged yet</p>
+                  <p className="text-[11px] text-fg-3 max-w-[220px]">
+                    Recent uploads and updates will appear here.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-line-subtle my-1">
+                {activities.slice(0, 5).map((act) => (
+                  <div
+                    key={act._id}
+                    className="py-2.5 px-1.5 flex items-center justify-between gap-3 hover:bg-hover rounded-[8px] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="size-7 rounded-[6px] bg-subtle border border-line flex items-center justify-center shrink-0">
+                        {getActivityIcon(act.type)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-fg truncate">
+                          {act.title || act.action || 'Event recorded'}
+                        </p>
+                        <p className="text-[11px] text-fg-3 truncate">
+                          {act.message || act.description || ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="text-[11px] text-fg-3 font-mono tnum shrink-0">
+                      {formatRelativeTime(act.createdAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 mt-auto border-t border-line-subtle flex items-center justify-between text-xs text-fg-3 shrink-0">
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-3 text-fg-3" />
+              <span>Audit feed</span>
+            </span>
+            <Link
+              to="/receipts"
+              className="text-xs font-medium text-accent hover:underline cursor-pointer"
+            >
+              Receipts
+            </Link>
+          </div>
+        </div>
+      </div>
+      </div>
+    </PageContentTransition>
+  );
+}
 
 export default Dashboard;

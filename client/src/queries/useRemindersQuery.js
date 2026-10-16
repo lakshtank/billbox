@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '../api/axios';
 
 export const useRemindersQuery = (filters = {}) => {
@@ -8,6 +8,7 @@ export const useRemindersQuery = (filters = {}) => {
       const { data } = await api.get('/reminders', { params: filters });
       return data.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

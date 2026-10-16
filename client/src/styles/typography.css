@@ -1,0 +1,120 @@
+/*
+ * =====================================================
+ * BILLBOX TYPOGRAPHY SYSTEM (Step 4)
+ * =====================================================
+ * Primary Font: Geist Variable
+ * Monospace Font: Geist Mono Variable
+ *
+ * TOKENS:
+ *   display     32 / 38   600   -0.025em  (KPI hero figures, 1 per screen)
+ *   title-1     24 / 30   600   -0.02em   (Page titles)
+ *   title-2     18 / 26   600   -0.01em   (Section / dialog titles)
+ *   title-3     15 / 22   600   -0.005em  (Card titles)
+ *   body        14 / 20   400    0        (Default text, inputs, buttons)
+ *   body-strong 14 / 20   500    0        (Labels, nav items)
+ *   table       13 / 18   400    0        (Table cells, secondary text)
+ *   caption     12 / 16   400-500 0       (Helper text, metadata, badges)
+ *   overline    11 / 14   500   +0.04em   (Uppercase table headers only)
+ * =====================================================
+ */
+
+.text-display {
+  font-family: var(--font-sans);
+  font-size: 2rem;           /* 32px */
+  line-height: 2.375rem;     /* 38px */
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.text-title-1 {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;         /* 24px */
+  line-height: 1.875rem;     /* 30px */
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.text-title-2 {
+  font-family: var(--font-sans);
+  font-size: 1.125rem;       /* 18px */
+  line-height: 1.625rem;     /* 26px */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.text-title-3 {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;      /* 15px */
+  line-height: 1.375rem;     /* 22px */
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.text-body {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;       /* 14px */
+  line-height: 1.25rem;      /* 20px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-body-strong {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;       /* 14px */
+  line-height: 1.25rem;      /* 20px */
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.text-table {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;      /* 13px */
+  line-height: 1.125rem;     /* 18px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-caption {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;        /* 12px */
+  line-height: 1rem;         /* 16px */
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.text-caption-strong {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;        /* 12px */
+  line-height: 1rem;         /* 16px */
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.text-overline {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;      /* 11px */
+  line-height: 0.875rem;     /* 14px */
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Geist Mono for invoice numbers, serials, auth codes, and IDs */
+.mono-id {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;      /* 13px */
+  line-height: 1.125rem;     /* 18px */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Tabular figures utility for money, counts, dates, percentages */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+/* Standard prose measure limit (68 characters maximum) */
+.prose-max {
+  max-width: 68ch;
+}

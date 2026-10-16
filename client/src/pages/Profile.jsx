@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 import {
   User,
   Mail,
@@ -11,15 +11,14 @@ import {
   ShieldCheck,
   Receipt,
   Package,
-  Settings,
+  Settings as SettingsIcon,
   Save,
   CheckCircle2,
-  Clock,
-  Sparkles,
 } from 'lucide-react';
 import { useUserProfileQuery, useUpdateProfileMutation } from '../queries/useUserQueries';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { formatDate, formatCurrency } from '../utils/formatters';
+import { Skeleton } from '../components/ui/skeleton';
+import { Money } from '../components/data/Money';
+import { Button } from '../components/ui/button';
 
 const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
@@ -41,7 +40,7 @@ const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-const Profile = () => {
+export default function Profile() {
   const navigate = useNavigate();
   const { data, isLoading } = useUserProfileQuery();
   const updateMutation = useUpdateProfileMutation();
@@ -90,7 +89,7 @@ const Profile = () => {
       },
       {
         onSuccess: () => {
-          toast.success('Profile updated successfully!');
+          toast.success('Profile updated successfully');
           setIsSaved(true);
           setTimeout(() => setIsSaved(false), 3000);
         },
@@ -104,8 +103,27 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6 font-sans select-none max-w-4xl" aria-busy="true">
+        <div className="space-y-1.5 pb-2 border-b border-line">
+          <Skeleton className="h-7 w-32 rounded-md" />
+          <Skeleton className="h-4 w-72 rounded-md" />
+        </div>
+        <div className="p-6 rounded-[12px] border border-line bg-surface space-y-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="size-16 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40 rounded" />
+              <Skeleton className="h-4 w-56 rounded" />
+            </div>
+          </div>
+        </div>
+        <div className="p-6 rounded-[12px] border border-line bg-surface space-y-4">
+          <Skeleton className="h-5 w-32 rounded" />
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full rounded" />
+            <Skeleton className="h-10 w-full rounded" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -127,131 +145,129 @@ const Profile = () => {
     : 'Recent Member';
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* 1. Page Header */}
-      <div className="flex items-center justify-between gap-4 pb-1">
+      <div className="flex items-center justify-between gap-4 pb-2 border-b border-line">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-            Account Profile
+          <h1 className="text-xl font-semibold text-fg tracking-tight">
+            Account profile
           </h1>
-          <p className="text-xs text-slate-500 font-normal mt-1">
-            Manage your personal profile, regional preferences, and account metadata.
+          <p className="text-xs text-fg-muted mt-0.5">
+            Manage your personal profile and regional preferences.
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => navigate('/settings')}
-          className="px-3.5 py-2 text-xs font-medium text-slate-700 bg-brand-surface hover:bg-brand-surface-hover border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
         >
-          <Settings className="w-3.5 h-3.5 text-slate-500" />
-          <span>Account Settings</span>
-        </button>
+          <SettingsIcon className="size-3.5" />
+          <span>Account settings</span>
+        </Button>
       </div>
 
       {/* 2. Hero Profile Identity Card */}
-      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-brand-border/60 to-transparent rounded-bl-full pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-5">
-            {/* Avatar Initials Badge */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-brand-navy to-brand-primary text-white flex items-center justify-center font-medium text-xl sm:text-2xl shadow-md shrink-0 border-2 border-white">
+      <div className="bg-surface border border-line rounded-[12px] p-5 sm:p-6 shadow-2xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            {/* Avatar Initials */}
+            <div className="size-16 rounded-[12px] bg-accent text-accent-fg flex items-center justify-center font-medium text-xl shrink-0">
               {initials}
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-semibold text-brand-navy tracking-tight">
-                  {user?.name || 'User Profile'}
+                <h2 className="text-lg font-semibold text-fg tracking-tight">
+                  {user?.name || 'Account User'}
                 </h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-brand-border/60 text-brand-navy border border-brand-border">
-                  <Sparkles className="w-3 h-3 text-brand-primary" />
-                  <span>Standard Member</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-surface-subtle text-fg border border-line">
+                  Standard Member
                 </span>
               </div>
 
-              <p className="text-xs text-slate-500 font-normal flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+              <div className="text-xs text-fg-muted flex items-center gap-3 flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <Mail className="size-3.5 text-fg-muted" />
                   {user?.email}
                 </span>
-                <span className="text-slate-300">•</span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-line">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="size-3.5 text-fg-muted" />
                   Member since {memberSince}
                 </span>
-              </p>
+              </div>
             </div>
           </div>
 
           <div className="self-end sm:self-auto shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-canvas border border-brand-border text-xs font-medium text-brand-navy">
-              <CheckCircle2 className="w-3.5 h-3.5 text-brand-primary" />
-              <span>Email Verified</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] bg-ok-bg text-ok-text border border-ok-border text-xs font-medium">
+              <CheckCircle2 className="size-3.5" />
+              <span>Email verified</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* 3. Account Lifetime Metrics (4 Tiles) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-surface border border-line rounded-[12px] p-4 shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-medium text-fg-muted uppercase tracking-wider">
               Total Receipts
             </span>
-            <Receipt className="w-4 h-4 text-slate-400" />
+            <Receipt className="size-3.5 text-fg-muted" />
           </div>
-          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight">
+          <span className="text-2xl font-semibold text-fg font-tabular block leading-tight">
             {stats.receiptCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
+          <span className="text-[11px] text-fg-muted mt-1 block">
             Archived transactions
           </span>
         </div>
 
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+        <div className="bg-surface border border-line rounded-[12px] p-4 shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-medium text-fg-muted uppercase tracking-wider">
               Tracked Items
             </span>
-            <Package className="w-4 h-4 text-slate-400" />
+            <Package className="size-3.5 text-fg-muted" />
           </div>
-          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight">
+          <span className="text-2xl font-semibold text-fg font-tabular block leading-tight">
             {stats.productCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
-            Standalone assets
+          <span className="text-[11px] text-fg-muted mt-1 block">
+            Standalone items
           </span>
         </div>
 
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+        <div className="bg-surface border border-line rounded-[12px] p-4 shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-medium text-fg-muted uppercase tracking-wider">
               Active Warranties
             </span>
-            <ShieldCheck className="w-4 h-4 text-brand-primary" />
+            <ShieldCheck className="size-3.5 text-accent" />
           </div>
-          <span className="text-2xl sm:text-3xl font-semibold text-brand-primary font-tabular block leading-tight">
+          <span className="text-2xl font-semibold text-accent font-tabular block leading-tight">
             {stats.activeWarrantyCount}
           </span>
-          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
+          <span className="text-[11px] text-fg-muted mt-1 block">
             Protected products
           </span>
         </div>
 
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+        <div className="bg-surface border border-line rounded-[12px] p-4 shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-medium text-fg-muted uppercase tracking-wider">
               Lifetime Spend
             </span>
-            <DollarSign className="w-4 h-4 text-slate-400" />
+            <DollarSign className="size-3.5 text-fg-muted" />
           </div>
-          <span className="text-2xl sm:text-3xl font-semibold text-brand-navy font-tabular block leading-tight truncate">
-            {formatCurrency(stats.totalSpent, 'INR')}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-1 block font-normal">
+          <div className="text-2xl font-semibold text-fg font-tabular block leading-tight truncate">
+            <Money amount={stats.totalSpent} currency={formData.defaultCurrency} />
+          </div>
+          <span className="text-[11px] text-fg-muted mt-1 block">
             Aggregated purchases
           </span>
         </div>
@@ -259,12 +275,12 @@ const Profile = () => {
 
       {/* 4. Edit Personal Profile Form */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-7 shadow-xs space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
-              Personal Information
+        <div className="lg:col-span-2 bg-surface border border-line rounded-[12px] p-5 sm:p-6 shadow-2xs space-y-5">
+          <div className="border-b border-line pb-3">
+            <h3 className="text-sm font-semibold text-fg tracking-tight">
+              Personal information
             </h3>
-            <p className="text-xs text-slate-500 font-normal mt-0.5">
+            <p className="text-xs text-fg-muted mt-0.5">
               Update your personal details and how your profile is displayed.
             </p>
           </div>
@@ -273,18 +289,18 @@ const Profile = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Full Name */}
               <div>
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                  Full Name
+                <label htmlFor="profileNameInput" className="text-xs font-medium text-fg block mb-1.5">
+                  Full name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-muted pointer-events-none" />
                   <input
+                    id="profileNameInput"
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
-                    placeholder="Your Full Name"
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors"
+                    placeholder="Your full name"
                     required
                   />
                 </div>
@@ -292,34 +308,34 @@ const Profile = () => {
 
               {/* Email (Read-only) */}
               <div>
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                  Email Address
+                <label htmlFor="profileEmailInput" className="text-xs font-medium text-fg block mb-1.5">
+                  Email address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-muted pointer-events-none" />
                   <input
+                    id="profileEmailInput"
                     type="email"
                     value={user?.email || ''}
                     disabled
-                    className="w-full text-xs py-2.5 bg-slate-100/70 border border-slate-200/80 rounded-xl text-slate-500 font-sans cursor-not-allowed"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface-subtle border border-line rounded-[8px] text-fg-muted cursor-not-allowed"
                   />
                 </div>
               </div>
 
               {/* Phone Number */}
               <div>
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                  Phone Number
+                <label htmlFor="profilePhoneInput" className="text-xs font-medium text-fg block mb-1.5">
+                  Phone number
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-muted pointer-events-none" />
                   <input
+                    id="profilePhoneInput"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors"
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
@@ -327,16 +343,16 @@ const Profile = () => {
 
               {/* Preferred Currency */}
               <div>
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                  Preferred Currency
+                <label htmlFor="profileCurrencySelect" className="text-xs font-medium text-fg block mb-1.5">
+                  Preferred currency
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-muted pointer-events-none" />
                   <select
+                    id="profileCurrencySelect"
                     value={formData.defaultCurrency}
                     onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors cursor-pointer"
                   >
                     {CURRENCIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -349,16 +365,16 @@ const Profile = () => {
 
               {/* Timezone */}
               <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-slate-700 block mb-1.5">
+                <label htmlFor="profileTimezoneSelect" className="text-xs font-medium text-fg block mb-1.5">
                   Timezone
                 </label>
                 <div className="relative">
-                  <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-muted pointer-events-none" />
                   <select
+                    id="profileTimezoneSelect"
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans cursor-pointer"
-                    style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors cursor-pointer"
                   >
                     {TIMEZONES.map((tz) => (
                       <option key={tz} value={tz}>
@@ -370,70 +386,54 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
+            <div className="pt-3 border-t border-line flex items-center justify-end gap-3">
+              <Button
                 type="submit"
+                size="sm"
+                loading={updateMutation.isPending}
                 disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                {updateMutation.isPending ? (
-                  <LoadingSpinner size="sm" />
-                ) : isSaved ? (
+                {isSaved ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>Saved!</span>
+                    <CheckCircle2 className="size-4" />
+                    <span>Saved</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
+                    <Save className="size-4" />
+                    <span>Save changes</span>
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
 
         {/* Sidebar Info Card */}
-        <div className="space-y-6">
-          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs space-y-4">
-            <h3 className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+        <div className="space-y-4">
+          <div className="bg-surface border border-line rounded-[12px] p-5 shadow-2xs space-y-4">
+            <h3 className="text-[11px] font-medium text-fg-muted uppercase tracking-wider">
               Security & Access
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-brand-canvas border border-brand-border space-y-1">
-                <div className="flex items-center justify-between text-brand-navy font-medium">
-                  <span>Password Status</span>
-                  <span className="text-brand-primary">Protected</span>
+              <div className="p-3 rounded-[8px] bg-surface-subtle border border-line space-y-1">
+                <div className="flex items-center justify-between text-fg font-medium">
+                  <span>Password status</span>
+                  <span className="text-ok-text font-semibold">Active</span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-normal">
-                  Password was set on account registration.
+                <p className="text-[11px] text-fg-muted">
+                  Configured at account registration.
                 </p>
               </div>
 
-              <Link
-                to="/settings"
-                className="w-full py-2 px-3.5 bg-brand-surface hover:bg-brand-surface-hover border border-brand-border text-brand-navy text-xs font-medium rounded-xl transition-colors inline-flex items-center justify-center gap-2 no-underline"
-              >
-                <span>Change Password</span>
-              </Link>
+              <Button asChild variant="outline" size="sm" className="w-full">
+                <Link to="/settings">Change password</Link>
+              </Button>
             </div>
-          </div>
-
-          <div className="bg-brand-border/40 border border-brand-border rounded-2xl p-5 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-semibold text-brand-navy">
-              <ShieldCheck className="w-4 h-4 text-brand-primary" />
-              <span>Encrypted Data Storage</span>
-            </div>
-            <p className="text-[11px] text-brand-navy/70 leading-relaxed">
-              Your invoices, receipts, and personal data are stored in a private, encrypted environment.
-            </p>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Profile;
+}

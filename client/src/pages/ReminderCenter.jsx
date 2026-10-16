@@ -1,52 +1,37 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 import {
   Bell,
-  BellOff,
-  Send,
-  Clock,
-  ShieldCheck,
-  AlertTriangle,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Calendar,
-  Store,
   History,
-  Sliders,
+  AlertTriangle,
+  Mail,
+  Search,
+  X,
 } from 'lucide-react';
 import {
   useRemindersQuery,
   useUpdateReminderMutation,
   useTestReminderMutation,
 } from '../queries/useRemindersQuery';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import EmptyState from '../components/common/EmptyState';
-import { formatDate } from '../utils/formatters';
+import { PageHeader } from '../components/common/PageHeader';
+import { EmptyState } from '../components/common/EmptyState';
+import { DateCell } from '../components/data/DateCell';
+import { StatusBadge } from '../components/data/StatusBadge';
+import { Switch } from '../components/ui/switch';
+import { Button } from '../components/ui/button';
+import { Skeleton } from '../components/ui/skeleton';
+import RouteSkeleton from '@/components/common/RouteSkeleton';
+import PageContentTransition from '@/components/common/PageContentTransition';
+import * as m from 'motion/react-m';
+import { LayoutGroup } from 'motion/react';
+import { variants } from '@/lib/motion';
 
-const LEAD_DAYS_OPTIONS = [
-  { value: 7, label: '7 days before' },
-  { value: 14, label: '14 days before' },
-  { value: 30, label: '30 days before (Recommended)' },
-  { value: 60, label: '60 days before' },
-];
-
-const FILTER_TABS = [
-  { id: 'all', label: 'All Items' },
-  { id: 'due_soon', label: 'Expiring Soon' },
-  { id: 'active', label: 'Active Alerts' },
-  { id: 'disabled', label: 'Alerts Muted' },
-  { id: 'expired', label: 'Expired' },
-];
-
-const ReminderCenter = () => {
-  const [activeMainTab, setActiveMainTab] = useState('reminders'); // 'reminders' | 'logs'
-  const [statusFilter, setStatusFilter] = useState('all');
+export default function ReminderCenter() {
+  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'history'
   const [searchTerm, setSearchTerm] = useState('');
 
   const filters = {
-    status: statusFilter,
     search: searchTerm.trim(),
   };
 
@@ -54,10 +39,11 @@ const ReminderCenter = () => {
   const updateMutation = useUpdateReminderMutation();
   const testMutation = useTestReminderMutation();
 
-  const { stats = {}, items = [], logs = [] } = data || {};
+  const stats = data?.stats || {};
+  const items = Array.isArray(data?.items) ? data.items : [];
+  const logs = Array.isArray(data?.logs) ? data.logs : [];
 
-  const handleToggleReminder = (product) => {
-    const nextState = !product.reminderEnabled;
+  const handleToggleReminder = (product, nextState) => {
     updateMutation.mutate(
       {
         productId: product._id,
@@ -72,25 +58,7 @@ const ReminderCenter = () => {
           );
         },
         onError: () => {
-          toast.error('Failed to update reminder settings');
-        },
-      }
-    );
-  };
-
-  const handleLeadDaysChange = (product, newDays) => {
-    const daysNum = parseInt(newDays, 10);
-    updateMutation.mutate(
-      {
-        productId: product._id,
-        reminderLeadDays: daysNum,
-      },
-      {
-        onSuccess: () => {
-          toast.success(`Reminder alert lead time set to ${daysNum} days`);
-        },
-        onError: () => {
-          toast.error('Failed to update lead time');
+          toast.error('Failed to update reminder status.');
         },
       }
     );
@@ -99,7 +67,7 @@ const ReminderCenter = () => {
   const handleSendTestEmail = (product) => {
     testMutation.mutate(product._id, {
       onSuccess: () => {
-        toast.success(`Test reminder dispatched for ${product.productName}!`);
+        toast.success(`Test reminder sent for ${product.productName}!`);
       },
       onError: (err) => {
         const msg = err.response?.data?.message || 'Failed to send test reminder';
@@ -108,351 +76,346 @@ const ReminderCenter = () => {
     });
   };
 
-  if (isLoading) {
+  // Filter items locally if search is active
+  const filteredItems = items.filter((item) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
+      item.productName?.toLowerCase().includes(q) ||
+      item.brand?.toLowerCase().includes(q) ||
+      item.receipt?.storeName?.toLowerCase().includes(q)
     );
-  }
+  });
 
-  if (isError) {
-    return (
-      <EmptyState
-        title="Could not load Reminder Center"
-        description="Something went wrong loading your notification settings. Please refresh."
-      />
-    );
-  }
+  const hasAnimatedStagger = React.useRef(false);
+  const shouldStagger = !hasAnimatedStagger.current && filteredItems.length > 0;
+  React.useEffect(() => {
+    if (filteredItems.length > 0) {
+      hasAnimatedStagger.current = true;
+    }
+  }, [filteredItems.length]);
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
-      {/* 1. Page Header */}
-      <div className="flex items-center justify-between gap-4 pb-2">
-        <div>
-          <h1 className="text-3xl font-bold text-brand-navy tracking-tight leading-none">
-            Reminder Center
-          </h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            Manage automated email alerts and lead-time settings for upcoming warranty expirations.
-          </p>
+    <PageContentTransition
+      isLoading={isLoading && !data}
+      skeleton={<RouteSkeleton section="reminders" />}
+      className="space-y-6 font-sans"
+    >
+      {/* 1. Warn Banner: Email Delivery Not Configured */}
+      {!isLoading && stats.isEmailConfigured === false && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 p-3.5 rounded-[10px] border border-warn/30 bg-warn-tint text-warn-fg text-sm font-medium shadow-2xs"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertTriangle className="size-4 shrink-0 text-warn-fg" />
+            <span className="truncate">
+              Email delivery isn't configured. Reminders won't be sent.
+            </span>
+          </div>
+          <Link
+            to="/settings"
+            className="shrink-0 text-xs font-semibold underline hover:no-underline text-warn-fg"
+          >
+            Settings →
+          </Link>
         </div>
-      </div>
+      )}
 
-      {/* 2. KPI Summary Stat Tiles (4 Tiles) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-            WARRANTY TRACKERS
-          </span>
-          <span className="text-2xl font-bold text-brand-navy font-tabular">
-            {stats.totalTracked || 0}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Total warrantied items
-          </span>
-        </div>
+      {/* 2. Page Header */}
+      <PageHeader
+        title="Reminders"
+        description="Automated warranty expiration alerts and notification history."
+      />
 
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-            REMINDERS ACTIVE
-          </span>
-          <span className="text-2xl font-bold text-brand-primary font-tabular">
-            {stats.remindersEnabled || 0}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Notifications enabled
-          </span>
-        </div>
-
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-            DUE SOON (&le;30 DAYS)
-          </span>
-          <span className="text-2xl font-bold text-brand-primary font-tabular">
-            {stats.dueSoonCount || 0}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Approaching expiry
-          </span>
-        </div>
-
-        <div className="bg-brand-surface border border-brand-border rounded-xl p-5 shadow-2xs">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
-            NOTIFICATIONS SENT
-          </span>
-          <span className="text-2xl font-bold text-brand-navy font-tabular">
-            {stats.logsSentCount || 0}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Total email alerts logged
-          </span>
-        </div>
-      </div>
-
-      {/* 3. Main Tabs Navigation Strip */}
-      <div className="space-y-4 pt-2">
-        <div className="flex items-center gap-6 border-b border-brand-border text-xs font-semibold">
+      {/* 3. Search & Tabs Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-line pb-1">
+        {/* Tabs: Upcoming & History */}
+        <div className="flex items-center gap-6 text-sm font-semibold">
           <button
             type="button"
-            onClick={() => setActiveMainTab('reminders')}
-            className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
-              activeMainTab === 'reminders'
-                ? 'text-brand-primary border-b-2 border-brand-primary'
-                : 'text-slate-500 hover:text-brand-primary'
+            onClick={() => setActiveTab('upcoming')}
+            className={`pb-2.5 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-2 ${
+              activeTab === 'upcoming'
+                ? 'text-fg border-b-2 border-accent'
+                : 'text-fg-3 hover:text-fg'
             }`}
           >
-            <Bell className="w-3.5 h-3.5" />
-            <span>Active Reminders ({items.length})</span>
+            <Bell className="size-4" />
+            <span>Upcoming ({items.length})</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveMainTab('logs')}
-            className={`pb-3 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-1.5 ${
-              activeMainTab === 'logs'
-                ? 'text-brand-primary border-b-2 border-brand-primary'
-                : 'text-slate-500 hover:text-brand-primary'
+            onClick={() => setActiveTab('history')}
+            className={`pb-2.5 px-1 transition-colors relative cursor-pointer inline-flex items-center gap-2 ${
+              activeTab === 'history'
+                ? 'text-fg border-b-2 border-accent'
+                : 'text-fg-3 hover:text-fg'
             }`}
           >
-            <History className="w-3.5 h-3.5" />
-            <span>Sent Logs & History ({logs.length})</span>
+            <History className="size-4" />
+            <span>History ({logs.length})</span>
           </button>
         </div>
 
-        {/* Tab Content: Reminders Settings */}
-        {activeMainTab === 'reminders' && (
-          <div className="space-y-4">
-            {/* Search & Filter Pills Row */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search products or brands..."
-                  style={{ paddingLeft: '2.5rem', paddingRight: '2.25rem' }}
-                  className="w-full text-xs py-2 bg-brand-surface border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 font-sans"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+        {/* Search Input (for Upcoming tab) */}
+        {activeTab === 'upcoming' && (
+          <div className="relative w-full sm:w-64 mb-2 sm:mb-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-3 pointer-events-none" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filter products..."
+              className="w-full text-xs pl-9 pr-8 py-1.5 rounded-lg border border-line bg-surface text-fg placeholder:text-fg-3 focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-3 hover:text-fg p-0.5 cursor-pointer"
+                aria-label="Clear search"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
-              {/* Status Filter Tabs */}
-              <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs">
-                {FILTER_TABS.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setStatusFilter(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-                      statusFilter === tab.id
-                        ? 'bg-brand-primary text-white shadow-xs border border-brand-primary'
-                        : 'bg-brand-surface text-slate-700 hover:text-brand-primary border border-brand-border hover:bg-brand-primary/10'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+
+
+      {/* 4. Tab 1: Upcoming Reminders Table */}
+      {activeTab === 'upcoming' && (
+        <div className="rounded-[12px] border border-line bg-surface shadow-2xs overflow-hidden">
+          {isError ? (
+            <div className="p-8">
+              <EmptyState
+                icon={Bell}
+                title="Could not load reminders"
+                description="Something went wrong fetching your reminders. Please refresh."
+                actionLabel="Retry"
+                onAction={() => window.location.reload()}
+              />
             </div>
-
-            {/* Reminders List */}
-            {items.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
+            <div className="p-8">
               <EmptyState
-                title={searchTerm ? 'No items match your search' : 'No items under warranty'}
-                description="Products with active warranties will automatically appear here with notification controls."
+                icon={Bell}
+                title={searchTerm ? 'No matching products' : 'No upcoming reminders'}
+                description={
+                  searchTerm
+                    ? `No products match "${searchTerm}".`
+                    : 'Tracked products with active warranties will automatically appear here.'
+                }
               />
-            ) : (
-              <div className="divide-y divide-slate-100 border-b border-slate-100">
-                {items.map((prod) => {
-                  const daysLeft = prod.daysRemaining;
+            </div>
+          ) : (
+            <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+              <table className="w-full text-left border-collapse table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[35%] min-w-[200px]" />
+                  <col className="w-[20%] min-w-[130px]" />
+                  <col className="w-[20%] min-w-[130px]" />
+                  <col className="w-[15%] min-w-[100px]" />
+                  <col className="w-[10%] min-w-[80px]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                    <th className="py-2.5 px-4 font-semibold">Product</th>
+                    <th className="py-2.5 px-4 font-semibold">Expiry</th>
+                    <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
+                    <th className="py-2.5 px-4 font-semibold">Channel</th>
+                    <th className="py-2.5 px-4 font-semibold text-center">Alert</th>
+                  </tr>
+                </thead>
+                <m.tbody
+                  variants={variants.stagger(0.015)}
+                  initial={shouldStagger ? 'hidden' : false}
+                  animate="show"
+                  className="divide-y divide-line-subtle"
+                >
+                  <LayoutGroup id="billbox-reminders-rows">
+                    {filteredItems.map((prod, index) => {
+                        const isStaggered = index < 12;
+                        const enableLayout = filteredItems.length <= 50;
 
-                  let countdownPill = (
-                    <span className="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200 font-tabular">
-                      Expired
-                    </span>
-                  );
-
-                  if (daysLeft > 30) {
-                    countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30 font-tabular">
-                        <ShieldCheck className="w-3 h-3 text-brand-primary" />
-                        <span>{daysLeft} days left</span>
-                      </span>
-                    );
-                  } else if (daysLeft > 0) {
-                    countdownPill = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 font-tabular">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                        <span>{daysLeft} days left</span>
-                      </span>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={prod._id}
-                      className="py-4 md:py-4.5 px-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors rounded-lg"
-                    >
-                      {/* Left: Product Name, Brand, Expiry Info */}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <Link
-                            to={`/products/${prod._id}`}
-                            className="text-sm sm:text-base font-bold text-brand-navy hover:text-brand-primary transition-colors"
+                        return (
+                          <m.tr
+                            key={prod._id}
+                            layout={enableLayout ? 'position' : false}
+                            transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                            variants={shouldStagger && isStaggered ? variants.fade : undefined}
+                            className="group hover:bg-hover/60 transition-colors"
                           >
-                            {prod.productName}
-                          </Link>
-                          {prod.brand && (
-                            <span className="text-xs font-semibold text-brand-primary bg-brand-primary/10 border border-brand-primary/25 px-2 py-0.5 rounded">
-                              {prod.brand}
-                            </span>
-                          )}
-                          <span className="text-[11px] font-medium text-slate-600 bg-brand-border/40 border border-brand-border px-2 py-0.5 rounded">
-                            {prod.category}
-                          </span>
-                        </div>
+                            {/* Product Name, Brand & Merchant */}
+                            <td className="py-3 px-4">
+                              <div className="min-w-0">
+                                <Link
+                                  to={`/products/${prod._id}`}
+                                  className="font-medium text-fg hover:text-accent transition-colors truncate block"
+                                >
+                                  {prod.productName}
+                                </Link>
+                                <div className="flex items-center gap-1.5 text-xs text-fg-3 flex-wrap mt-0.5">
+                                  {prod.brand && <span>{prod.brand}</span>}
+                                  {prod.brand && prod.receipt?.storeName && <span>•</span>}
+                                  {prod.receipt?.storeName && (
+                                    <span>{prod.receipt.storeName}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
 
-                        <div className="text-xs text-slate-400 font-normal flex items-center gap-2 flex-wrap">
-                          {prod.receipt?.storeName && (
-                            <>
-                              <span className="font-semibold text-slate-700">{prod.receipt.storeName}</span>
-                              <span className="text-slate-300">•</span>
-                            </>
-                          )}
-                          <span>
-                            Expires: <strong className="text-slate-800 font-semibold font-tabular">{formatDate(prod.warrantyExpiryDate)}</strong>
-                          </span>
-                        </div>
-                      </div>
+                            {/* Expiry Date */}
+                            <td className="py-3 px-4">
+                              <DateCell
+                                value={prod.warrantyExpiryDate}
+                                relative
+                                daysRemaining={prod.daysRemaining}
+                              />
+                            </td>
 
-                      {/* Center: Countdown Status Pill */}
-                      <div className="shrink-0">{countdownPill}</div>
+                            {/* Next Reminder Date */}
+                            <td className="py-3 px-4">
+                              <DateCell value={prod.nextReminderDate} />
+                            </td>
 
-                      {/* Right: Controls Strip (Lead-time dropdown, Toggle, Test send) */}
-                      <div className="flex items-center gap-3 shrink-0 flex-wrap self-end md:self-auto">
-                        {/* Lead Time Dropdown */}
-                        <div className="flex items-center gap-1.5">
-                          <select
-                            value={prod.reminderLeadDays || 30}
-                            onChange={(e) => handleLeadDaysChange(prod, e.target.value)}
-                            disabled={!prod.reminderEnabled || daysLeft <= 0}
-                            className="text-xs py-1 px-2.5 bg-brand-surface border border-slate-200 rounded-lg text-slate-800 font-medium focus:outline-none focus:border-slate-400 disabled:opacity-40 transition-colors cursor-pointer"
-                          >
-                            {LEAD_DAYS_OPTIONS.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                            {/* Channel */}
+                            <td className="py-3 px-4">
+                              <span className="inline-flex items-center gap-1.5 text-xs text-fg-2 bg-subtle px-2 py-0.5 rounded border border-line">
+                                <Mail className="size-3 text-fg-3" />
+                                <span>Email</span>
+                              </span>
+                            </td>
 
-                        {/* Test Email Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleSendTestEmail(prod)}
-                          disabled={testMutation.isPending}
-                          title="Send test notification email now"
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-brand-surface border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer disabled:opacity-40"
-                        >
-                          <Send className="w-3 h-3 text-slate-500" />
-                          <span className="hidden sm:inline">Test Alert</span>
-                        </button>
+                            {/* Switch & Test Trigger */}
+                            <td className="py-3 px-4 text-center">
+                              <div className="inline-flex items-center justify-center gap-2">
+                                <Switch
+                                  checked={Boolean(prod.reminderEnabled)}
+                                  onCheckedChange={(checked) =>
+                                    handleToggleReminder(prod, checked)
+                                  }
+                                  aria-label={`Toggle reminder for ${prod.productName}`}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSendTestEmail(prod)}
+                                  disabled={testMutation.isPending || !prod.reminderEnabled}
+                                  className="h-6 px-1.5 text-[11px] text-fg-3 hover:text-accent font-normal"
+                                  title="Send a test reminder email"
+                                >
+                                  Test
+                                </Button>
+                              </div>
+                            </td>
+                          </m.tr>
+                        );
+                      })}
+                  </LayoutGroup>
+                </m.tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
-                        {/* Enable/Disable Toggle Switch */}
-                        <div className="flex items-center gap-2 pl-1 border-l border-slate-200">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleReminder(prod)}
-                            disabled={updateMutation.isPending}
-                            className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
-                              prod.reminderEnabled ? 'bg-brand-primary' : 'bg-slate-200'
-                            }`}
-                            title={prod.reminderEnabled ? 'Reminders active (click to mute)' : 'Reminders muted (click to activate)'}
-                          >
-                            <div
-                              className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${
-                                prod.reminderEnabled ? 'translate-x-4' : 'translate-x-0'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab Content: Sent Logs Audit History */}
-        {activeMainTab === 'logs' && (
-          <div className="space-y-4">
-            {logs.length === 0 ? (
+      {/* 5. Tab 2: History Table */}
+      {activeTab === 'history' && (
+        <div className="rounded-[12px] border border-line bg-surface shadow-2xs overflow-hidden">
+          {isLoading ? (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-line-subtle last:border-0">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-44" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="p-8">
               <EmptyState
-                title="No notifications sent yet"
-                description="When the background cron job or test alerts send reminder emails, their dispatch records will appear here."
+                icon={History}
+                title="No reminders sent yet"
+                description="Dispatched reminder records and test notification logs will appear here."
               />
-            ) : (
-              <div className="divide-y divide-slate-100 border-b border-slate-100 text-xs">
-                {logs.map((log) => (
-                  <div
-                    key={log._id}
-                    className="py-3.5 px-2 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <strong className="text-slate-900 font-semibold text-sm">
-                          {log.productName}
-                        </strong>
-                        {log.storeName && (
-                          <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-sans">
-                            {log.storeName}
-                          </span>
-                        )}
-                        <span className="text-slate-400 font-tabular">
-                          ({log.leadDays} days lead alert)
-                        </span>
-                      </div>
-                      <div className="text-slate-400 text-[11px] flex items-center gap-2">
-                        <span>Sent to: <strong className="text-slate-700">{log.recipientEmail}</strong></span>
-                        <span className="text-slate-300">•</span>
-                        <span className="font-tabular">{new Date(log.sentAt).toLocaleString()}</span>
-                      </div>
-                    </div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+              <table className="w-full text-left border-collapse table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[20%] min-w-[130px]" />
+                  <col className="w-[30%] min-w-[180px]" />
+                  <col className="w-[30%] min-w-[180px]" />
+                  <col className="w-[20%] min-w-[120px]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                    <th className="py-2.5 px-4 font-semibold">Sent at</th>
+                    <th className="py-2.5 px-4 font-semibold">Product</th>
+                    <th className="py-2.5 px-4 font-semibold">Recipient</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">Delivery status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line-subtle">
+                  {logs.map((log) => {
+                    let statusProp = 'reconciled';
+                    let statusLabel = 'Sent';
 
-                    <div className="shrink-0">
-                      {log.status === 'sent' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy bg-brand-border/60 border border-brand-border px-2.5 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3 text-brand-primary" />
-                          <span>Delivered</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-navy/80 bg-brand-canvas border border-brand-border px-2.5 py-0.5 rounded-full">
-                          <XCircle className="w-3 h-3 text-brand-navy/70" />
-                          <span>Failed</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+                    if (log.status === 'failed') {
+                      statusProp = 'failed';
+                      statusLabel = 'Failed';
+                    } else if (log.status === 'skipped' || log.status === 'not_configured') {
+                      statusProp = 'not_configured';
+                      statusLabel = 'Not configured';
+                    }
+
+                    return (
+                      <tr
+                        key={log._id}
+                        className="group hover:bg-hover/60 transition-colors"
+                      >
+                        {/* Sent At */}
+                        <td className="py-3 px-4 font-medium text-fg">
+                          <DateCell value={log.sentAt} />
+                        </td>
+
+                        {/* Product */}
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-fg truncate">
+                            {log.productName}
+                          </div>
+                          {log.storeName && (
+                            <div className="text-xs text-fg-3 truncate">
+                              {log.storeName}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Recipient */}
+                        <td className="py-3 px-4 text-xs font-mono text-fg-2 truncate">
+                          {log.recipientEmail}
+                        </td>
+
+                        {/* Delivery Status */}
+                        <td className="py-3 px-4 text-right">
+                          <StatusBadge status={statusProp} label={statusLabel} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </PageContentTransition>
   );
-};
-
-export default ReminderCenter;
+}

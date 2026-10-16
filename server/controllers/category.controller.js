@@ -1,15 +1,7 @@
 const Category = require('../models/Category.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
-const DEFAULT_CATEGORIES = [
-  'Electronics',
-  'Appliances',
-  'Medical',
-  'Fashion',
-  'Furniture',
-  'Groceries',
-  'Others',
-];
+const { DEFAULT_CATEGORIES } = require('../constants/category.constants');
 
 /**
  * GET /api/categories

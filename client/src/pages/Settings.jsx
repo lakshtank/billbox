@@ -1,31 +1,30 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 import {
-  Settings as SettingsIcon,
-  Globe,
+  User,
+  Sliders,
   Bell,
-  Lock,
   Download,
-  ShieldCheck,
-  CheckCircle2,
   AlertTriangle,
-  Save,
-  KeyRound,
+  Send,
   FileSpreadsheet,
   FileJson,
-  Trash2,
-  DollarSign,
-  Calendar,
-  Send,
-  Sparkles,
-  X,
+  Check,
 } from 'lucide-react';
 import api from '../api/axios';
-import { useUserProfileQuery, useUpdateProfileMutation, useChangePasswordMutation } from '../queries/useUserQueries';
+import {
+  useUserProfileQuery,
+  useUpdateProfileMutation,
+  useChangePasswordMutation,
+} from '../queries/useUserQueries';
 import { useReceiptsQuery } from '../queries/useReceiptsQuery';
+import { usePreferences } from '@/context/PreferencesContext';
 import { useQueryClient } from '@tanstack/react-query';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { PageHeader } from '../components/common/PageHeader';
+import { Switch } from '../components/ui/switch';
+import { Button } from '../components/ui/button';
+import { Skeleton } from '../components/ui/skeleton';
 
 const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
@@ -37,10 +36,10 @@ const CURRENCIES = [
 ];
 
 const DATE_FORMATS = [
-  { id: 'DD MMM YYYY', label: '26 Aug 2026 (DD MMM YYYY)' },
-  { id: 'MM/DD/YYYY', label: '08/26/2026 (MM/DD/YYYY)' },
-  { id: 'YYYY-MM-DD', label: '2026-08-26 (YYYY-MM-DD)' },
-  { id: 'DD/MM/YYYY', label: '26/08/2026 (DD/MM/YYYY)' },
+  { id: 'DD MMM YYYY', label: '12 Oct 2026 (DD MMM YYYY)' },
+  { id: 'MM/DD/YYYY', label: '10/12/2026 (MM/DD/YYYY)' },
+  { id: 'YYYY-MM-DD', label: '2026-10-12 (YYYY-MM-DD)' },
+  { id: 'DD/MM/YYYY', label: '12/10/2026 (DD/MM/YYYY)' },
 ];
 
 const TIMEZONES = [
@@ -54,121 +53,133 @@ const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-const TABS = [
-  { id: 'general', label: 'General & Preferences', icon: Globe },
-  { id: 'notifications', label: 'Notifications & Alerts', icon: Bell },
-  { id: 'security', label: 'Account Security', icon: Lock },
-  { id: 'data', label: 'Data & Export', icon: Download },
+const NAV_SECTIONS = [
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'preferences', label: 'Preferences', icon: Sliders },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'data', label: 'Data', icon: Download },
+  { id: 'danger', label: 'Danger zone', icon: AlertTriangle, isDanger: true },
 ];
 
-const Settings = () => {
+export default function Settings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeSection, setActiveSection] = useState('profile');
 
+  const { theme, setTheme, density, setDensity } = usePreferences();
   const { data: profileData, isLoading: loadingProfile } = useUserProfileQuery();
   const updateMutation = useUpdateProfileMutation();
   const passwordMutation = useChangePasswordMutation();
 
   const user = profileData?.user;
 
-  // General Settings State
-  const [generalForm, setGeneralForm] = useState({
-    defaultCurrency: 'INR',
-    dateFormat: 'DD MMM YYYY',
-    timezone: 'UTC',
-  });
+  // Receipts for export counts
+  const { data: receiptsData } = useReceiptsQuery({ limit: 1000 });
+  const receipts = receiptsData?.receipts || [];
+  const receiptCount = receiptsData?.total || receipts.length || 0;
 
-  // Notification Settings State
-  const [notificationForm, setNotificationForm] = useState({
-    emailAlerts: true,
-    expiryDaysNotice: 30,
-    monthlyDigest: true,
-  });
-
-  // Password Form State
+  // 1. Profile State
+  const [profileForm, setProfileForm] = useState({ name: '' });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
-  // Test Alert Loading
+  // 2. Preferences State
+  const [preferencesForm, setPreferencesForm] = useState({
+    defaultCurrency: 'INR',
+    dateFormat: 'DD MMM YYYY',
+    timezone: 'UTC',
+  });
+
+  // 3. Notifications State
+  const [notificationForm, setNotificationForm] = useState({
+    emailAlerts: true,
+  });
+
+  // 4. Danger Zone State
+  const [clearDataInput, setClearDataInput] = useState('');
+  const [deleteAccountInput, setDeleteAccountInput] = useState('');
+  const [isClearingData, setIsClearingData] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSendingTestAlert, setIsSendingTestAlert] = useState(false);
 
-  // Clear Data Modal State
-  const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
-  const [clearConfirmationText, setClearConfirmationText] = useState('');
-  const [isClearingData, setIsClearingData] = useState(false);
-
-  const { data: receiptsData } = useReceiptsQuery({ limit: 1000 });
-
+  // Sync initial values from loaded user profile
   useEffect(() => {
     if (user) {
-      setGeneralForm({
+      setProfileForm({ name: user.name || '' });
+      setPreferencesForm({
         defaultCurrency: user.defaultCurrency || 'INR',
         dateFormat: user.dateFormat || 'DD MMM YYYY',
         timezone: user.timezone || 'UTC',
       });
-      if (user.notificationPreferences) {
-        setNotificationForm({
-          emailAlerts: user.notificationPreferences.emailAlerts ?? true,
-          expiryDaysNotice: user.notificationPreferences.expiryDaysNotice || 30,
-          monthlyDigest: user.notificationPreferences.monthlyDigest ?? true,
-        });
-      }
+      setNotificationForm({
+        emailAlerts: user.notificationPreferences?.emailAlerts ?? true,
+      });
     }
   }, [user]);
 
-  const handleSaveGeneral = (e) => {
-    e.preventDefault();
-    localStorage.setItem('billbox_date_format', generalForm.dateFormat);
-    localStorage.setItem('billbox_default_currency', generalForm.defaultCurrency);
+  // Dirty checks
+  const isProfileDirty = useMemo(() => {
+    if (!user) return false;
+    return profileForm.name !== (user.name || '');
+  }, [user, profileForm]);
 
-    updateMutation.mutate(generalForm, {
-      onSuccess: () => {
-        toast.success('General preferences saved successfully!');
-        queryClient.invalidateQueries();
-      },
-      onError: (err) => {
-        toast.error(err.response?.data?.message || 'Failed to save preferences.');
-      },
-    });
-  };
+  const isPasswordFilled = useMemo(() => {
+    return Boolean(
+      passwordForm.currentPassword &&
+        passwordForm.newPassword &&
+        passwordForm.confirmPassword
+    );
+  }, [passwordForm]);
 
-  const handleSaveNotifications = (e) => {
+  const isPreferencesDirty = useMemo(() => {
+    if (!user) return false;
+    return (
+      preferencesForm.defaultCurrency !== (user.defaultCurrency || 'INR') ||
+      preferencesForm.dateFormat !== (user.dateFormat || 'DD MMM YYYY') ||
+      preferencesForm.timezone !== (user.timezone || 'UTC')
+    );
+  }, [user, preferencesForm]);
+
+  const isNotificationDirty = useMemo(() => {
+    if (!user) return false;
+    const initialEmailAlerts = user.notificationPreferences?.emailAlerts ?? true;
+    return notificationForm.emailAlerts !== initialEmailAlerts;
+  }, [user, notificationForm]);
+
+  // Password strength score (0 to 100)
+  const passwordStrength = useMemo(() => {
+    const p = passwordForm.newPassword;
+    if (!p) return 0;
+    let s = 0;
+    if (p.length >= 6) s += 25;
+    if (p.length >= 10) s += 25;
+    if (/[A-Z]/.test(p) && /[0-9]/.test(p)) s += 25;
+    if (/[^A-Za-z0-9]/.test(p)) s += 25;
+    return s;
+  }, [passwordForm.newPassword]);
+
+  // Save Handlers
+  const handleSaveProfile = (e) => {
     e.preventDefault();
+    if (!isProfileDirty) return;
+
     updateMutation.mutate(
-      { notificationPreferences: notificationForm },
+      { name: profileForm.name },
       {
-        onSuccess: () => {
-          toast.success('Notification preferences updated!');
-          queryClient.invalidateQueries();
-        },
-        onError: (err) => {
-          toast.error(err.response?.data?.message || 'Failed to save notifications.');
-        },
+        onSuccess: () => toast.success('Profile updated successfully.'),
+        onError: (err) =>
+          toast.error(err.response?.data?.message || 'Failed to update profile.'),
       }
     );
-  };
-
-  const handleSendTestAlert = async () => {
-    try {
-      setIsSendingTestAlert(true);
-      const res = await api.post('/reminders/test-alert');
-      toast.success(res.data?.message || 'Test reminder notification sent!');
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send test alert.');
-    } finally {
-      setIsSendingTestAlert(false);
-    }
   };
 
   const handleSavePassword = (e) => {
     e.preventDefault();
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
-      toast.error('Please enter current and new password.');
+      toast.error('Please enter your current and new password.');
       return;
     }
     if (passwordForm.newPassword.length < 6) {
@@ -194,58 +205,118 @@ const Settings = () => {
             confirmPassword: '',
           });
         },
-        onError: (err) => {
-          toast.error(err.response?.data?.message || 'Failed to change password.');
-        },
+        onError: (err) =>
+          toast.error(err.response?.data?.message || 'Failed to change password.'),
       }
     );
   };
 
-  // Export Data Handlers
-  const handleExportJSON = () => {
-    const receipts = receiptsData?.receipts || [];
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(receipts, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `BillBox_Export_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    toast.success('Exported JSON successfully.');
+  const handleSavePreferences = (e) => {
+    e.preventDefault();
+    if (!isPreferencesDirty) return;
+
+    localStorage.setItem('billbox_date_format', preferencesForm.dateFormat);
+    localStorage.setItem('billbox_default_currency', preferencesForm.defaultCurrency);
+
+    updateMutation.mutate(preferencesForm, {
+      onSuccess: () => {
+        toast.success('Preferences saved.');
+        queryClient.invalidateQueries();
+      },
+      onError: (err) =>
+        toast.error(err.response?.data?.message || 'Failed to save preferences.'),
+    });
   };
 
+  const handleSaveNotifications = (e) => {
+    e.preventDefault();
+    if (!isNotificationDirty) return;
+
+    updateMutation.mutate(
+      { notificationPreferences: notificationForm },
+      {
+        onSuccess: () => {
+          toast.success('Notification preferences updated.');
+          queryClient.invalidateQueries();
+        },
+        onError: (err) =>
+          toast.error(
+            err.response?.data?.message || 'Failed to save notification settings.'
+          ),
+      }
+    );
+  };
+
+  const handleSendTestAlert = async () => {
+    try {
+      setIsSendingTestAlert(true);
+      const res = await api.post('/reminders/test-alert');
+      toast.success(res.data?.message || 'Test reminder email dispatched.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send test email.');
+    } finally {
+      setIsSendingTestAlert(false);
+    }
+  };
+
+  // Export handlers
   const handleExportCSV = () => {
-    const receipts = receiptsData?.receipts || [];
     if (receipts.length === 0) {
       toast.error('No receipts available to export.');
       return;
     }
-
-    const headers = ['Store Name', 'Purchase Date', 'Category', 'Total Amount', 'Currency', 'Invoice Number', 'Warranty Status'];
+    const headers = [
+      'Store Name',
+      'Purchase Date',
+      'Category',
+      'Total Amount',
+      'Currency',
+      'Invoice Number',
+      'Warranty Status',
+    ];
     const rows = receipts.map((r) => [
       `"${(r.storeName || '').replace(/"/g, '""')}"`,
       `"${r.purchaseDate ? new Date(r.purchaseDate).toISOString().split('T')[0] : ''}"`,
-      `"${(r.products?.[0]?.category || 'General').replace(/"/g, '""')}"`,
-      `"${r.grandTotal != null ? r.grandTotal : (r.totalAmount || 0)}"`,
+      `"${(r.products?.[0]?.category || r.category || 'General').replace(/"/g, '""')}"`,
+      `"${r.grandTotal != null ? r.grandTotal : r.totalAmount || 0}"`,
       `"${r.currency || 'INR'}"`,
       `"${(r.invoiceNumber || '').replace(/"/g, '""')}"`,
       `"${r.products?.[0]?.warrantyStatus || 'none'}"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `BillBox_Receipts_${new Date().toISOString().split('T')[0]}.csv`);
+    link.href = encodeURI(csvContent);
+    link.download = `BillBox_Receipts_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
-    toast.success('Exported CSV successfully.');
+    toast.success('CSV exported successfully.');
   };
 
+  const handleExportJSON = () => {
+    if (receipts.length === 0) {
+      toast.error('No receipts available to export.');
+      return;
+    }
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(receipts, null, 2));
+    const link = document.createElement('a');
+    link.href = dataStr;
+    link.download = `BillBox_Export_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('JSON exported successfully.');
+  };
+
+  // Danger zone handlers
   const handleClearAllData = async () => {
-    if (clearConfirmationText.trim() !== 'DELETE') {
-      toast.error('Please type DELETE to confirm data reset.');
+    if (clearDataInput.trim() !== 'DELETE') {
+      toast.error('Type DELETE exactly to confirm.');
       return;
     }
 
@@ -253,8 +324,7 @@ const Settings = () => {
       setIsClearingData(true);
       await api.delete('/auth/clear-data');
       toast.success('All receipts and product data cleared.');
-      setIsClearDataModalOpen(false);
-      setClearConfirmationText('');
+      setClearDataInput('');
       queryClient.invalidateQueries();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to clear data.');
@@ -263,486 +333,735 @@ const Settings = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteAccountInput.trim().toLowerCase() !== (user?.email || '').toLowerCase()) {
+      toast.error('Type your email address exactly to confirm account deletion.');
+      return;
+    }
+
+    try {
+      setIsDeletingAccount(true);
+      await api.delete('/auth/account');
+      toast.success('Account permanently deleted.');
+      localStorage.clear();
+      navigate('/login');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete account.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   if (loadingProfile) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6 font-sans">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
+          <Skeleton className="h-48 rounded-[12px]" />
+          <Skeleton className="h-96 rounded-[12px]" />
+        </div>
       </div>
     );
   }
 
-  // Password strength helper
-  const getPasswordStrength = (pwd) => {
-    if (!pwd) return 0;
-    let score = 0;
-    if (pwd.length >= 6) score += 25;
-    if (pwd.length >= 10) score += 25;
-    if (/[A-Z]/.test(pwd) && /[0-9]/.test(pwd)) score += 25;
-    if (/[^A-Za-z0-9]/.test(pwd)) score += 25;
-    return score;
-  };
-
-  const pwdScore = getPasswordStrength(passwordForm.newPassword);
+  const userInitial = (user?.name || user?.email || '?').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
-      {/* 1. Page Header */}
-      <div className="flex items-center justify-between gap-4 pb-1">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-            Settings & Preferences
-          </h1>
-          <p className="text-xs text-slate-500 font-normal mt-1">
-            Configure system defaults, expiration notices, security, and account data exports.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6 font-sans">
+      {/* Page Header */}
+      <PageHeader
+        title="Settings"
+        description="Manage your profile, preferences, notifications, data export, and security."
+      />
 
-      {/* 2. Settings Tabs Navigation */}
-      <div className="flex items-center gap-1.5 border-b border-brand-border overflow-x-auto pb-1">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium transition-colors cursor-pointer shrink-0 ${
-                isActive
-                  ? 'bg-brand-border/60 text-brand-navy border border-brand-primary/40 shadow-2xs'
-                  : 'text-slate-600 hover:bg-brand-border/30 hover:text-brand-navy border border-transparent'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-brand-primary' : 'text-slate-400'}`} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 3. Tab Contents */}
-      {/* TAB 1: General & Localization */}
-      {activeTab === 'general' && (
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
-              General & Regional Preferences
-            </h3>
-            <p className="text-xs text-slate-500 font-normal mt-0.5">
-              Set default currencies, date conventions, and timezones for the whole system.
-            </p>
-          </div>
-
-          <form onSubmit={handleSaveGeneral} className="space-y-5 max-w-2xl">
-            {/* Preferred Currency */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Default Currency & Auto-Conversion
-              </label>
-              <select
-                value={generalForm.defaultCurrency}
-                onChange={(e) => setGeneralForm({ ...generalForm, defaultCurrency: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} ({c.symbol}) — {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Date Format */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Display Date Format
-              </label>
-              <select
-                value={generalForm.dateFormat}
-                onChange={(e) => setGeneralForm({ ...generalForm, dateFormat: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
-              >
-                {DATE_FORMATS.map((df) => (
-                  <option key={df.id} value={df.id}>
-                    {df.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Timezone */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Account Timezone
-              </label>
-              <select
-                value={generalForm.timezone}
-                onChange={(e) => setGeneralForm({ ...generalForm, timezone: e.target.value })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
-              >
-                {TIMEZONES.map((tz) => (
-                  <option key={tz} value={tz}>
-                    {tz}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+      {/* Main Layout: Left Sub-Nav (200px) + Content (max 720px) */}
+      <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 items-start">
+        {/* Left Sub-Nav */}
+        <nav
+          className="flex md:flex-col overflow-x-auto no-scrollbar gap-1 border-b md:border-b-0 md:border-r border-line pb-2 md:pb-0 md:pr-3 shrink-0"
+          aria-label="Settings sections"
+        >
+          {NAV_SECTIONS.map((sec) => {
+            const Icon = sec.icon;
+            const isActive = activeSection === sec.id;
+            return (
               <button
-                type="submit"
-                disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                key={sec.id}
+                type="button"
+                onClick={() => setActiveSection(sec.id)}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? sec.isDanger
+                      ? 'bg-bad-tint text-bad-fg font-semibold'
+                      : 'bg-selected text-accent font-semibold'
+                    : sec.isDanger
+                    ? 'text-bad-fg hover:bg-bad-tint/50'
+                    : 'text-fg-2 hover:bg-hover hover:text-fg'
+                }`}
               >
-                <Save className="w-4 h-4" />
-                <span>Save Preferences</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* TAB 2: Notifications & Alerts */}
-      {activeTab === 'notifications' && (
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
-          <div className="border-b border-slate-100 pb-4 flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-brand-navy tracking-tight">
-                Notification & Expiration Alert Preferences
-              </h3>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">
-                Control email alerts and when you are notified prior to warranty expirations.
-              </p>
-            </div>
-
-            {/* Live Test Alert Button */}
-            <button
-              type="button"
-              onClick={handleSendTestAlert}
-              disabled={isSendingTestAlert}
-              className="px-3.5 py-2 text-xs font-medium text-brand-navy bg-brand-border/60 hover:bg-brand-border border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {isSendingTestAlert ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <Send className="w-3.5 h-3.5 text-brand-primary" />
-              )}
-              <span>Send Test Notification</span>
-            </button>
-          </div>
-
-          <form onSubmit={handleSaveNotifications} className="space-y-5 max-w-2xl">
-            {/* Email Notifications Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div className="space-y-0.5">
-                <span className="text-xs font-medium text-slate-900 block">
-                  Email Notifications
-                </span>
-                <p className="text-[11px] text-slate-500">
-                  Receive automated reminders for upcoming warranty expirations.
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={notificationForm.emailAlerts}
-                onChange={(e) => setNotificationForm({ ...notificationForm, emailAlerts: e.target.checked })}
-                className="w-4 h-4 text-brand-primary rounded border-brand-border focus:ring-brand-primary cursor-pointer"
-              />
-            </div>
-
-            {/* Expiry Advance Notice */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Warranty Expiry Advance Notice
-              </label>
-              <select
-                value={notificationForm.expiryDaysNotice}
-                onChange={(e) => setNotificationForm({ ...notificationForm, expiryDaysNotice: Number(e.target.value) })}
-                className="w-full text-xs py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 font-medium focus:bg-brand-surface focus:outline-none focus:border-slate-400 font-sans cursor-pointer"
-              >
-                <option value={45}>45 Days Before Expiry</option>
-                <option value={30}>30 Days Before Expiry (Recommended)</option>
-                <option value={15}>15 Days Before Expiry</option>
-                <option value={7}>7 Days Before Expiry</option>
-              </select>
-            </div>
-
-            {/* Monthly Summary Toggle */}
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-              <div className="space-y-0.5">
-                <span className="text-xs font-medium text-slate-900 block">
-                  Monthly Spending Digest
-                </span>
-                <p className="text-[11px] text-slate-500">
-                  Receive a concise monthly breakdown of new receipts and active warranty statuses.
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                checked={notificationForm.monthlyDigest}
-                onChange={(e) => setNotificationForm({ ...notificationForm, monthlyDigest: e.target.checked })}
-                className="w-4 h-4 text-brand-primary rounded border-brand-border focus:ring-brand-primary cursor-pointer"
-              />
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
-              <button
-                type="submit"
-                disabled={updateMutation.isPending}
-                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                <span>Update Notifications</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* TAB 3: Account Security */}
-      {activeTab === 'security' && (
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-150">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-semibold text-brand-navy tracking-tight">
-              Change Account Password
-            </h3>
-            <p className="text-xs text-slate-500 font-normal mt-0.5">
-              Ensure your account is protected with a secure, strong password.
-            </p>
-          </div>
-
-          <form onSubmit={handleSavePassword} className="space-y-4 max-w-xl">
-            {/* Current Password */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Current Password
-              </label>
-              <div className="relative">
-                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
-                  style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
-                  placeholder="••••••••"
-                  required
+                <Icon
+                  className={`size-4 shrink-0 ${
+                    isActive
+                      ? sec.isDanger
+                        ? 'text-bad-fg'
+                        : 'text-accent'
+                      : sec.isDanger
+                      ? 'text-bad-fg'
+                      : 'text-fg-3'
+                  }`}
                 />
-              </div>
-            </div>
+                <span>{sec.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
-            {/* New Password */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                New Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
-                  style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
-                  placeholder="At least 6 characters"
-                  required
-                />
-              </div>
+        {/* Content Column (max-w-[720px]) */}
+        <div className="max-w-[720px] w-full space-y-6">
+          {/* SECTION 1: PROFILE */}
+          {activeSection === 'profile' && (
+            <div className="space-y-6">
+              {/* Card 1: User Profile */}
+              <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-5">
+                <div className="border-b border-line-subtle pb-3">
+                  <h2 className="text-base font-semibold text-fg">Profile</h2>
+                  <p className="text-xs text-fg-3 mt-0.5">
+                    Your personal details and account representation.
+                  </p>
+                </div>
 
-              {/* Strength meter bar */}
-              {passwordForm.newPassword && (
-                <div className="mt-2 space-y-1">
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        pwdScore <= 25
-                          ? 'bg-brand-navy/40 w-1/4'
-                          : pwdScore <= 50
-                          ? 'bg-brand-primary/50 w-2/4'
-                          : pwdScore <= 75
-                          ? 'bg-brand-primary/80 w-3/4'
-                          : 'bg-brand-primary w-full'
-                      }`}
+                <form onSubmit={handleSaveProfile} className="space-y-4">
+                  {/* Avatar & Email Display */}
+                  <div className="flex items-center gap-4">
+                    <div className="size-14 rounded-full bg-subtle border border-line flex items-center justify-center font-bold text-lg text-fg shrink-0 shadow-2xs">
+                      {userInitial}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-fg truncate">
+                        {user?.name || 'BillBox User'}
+                      </div>
+                      <div className="text-xs text-fg-3 truncate">{user?.email}</div>
+                    </div>
+                  </div>
+
+                  {/* Name Input */}
+                  <div>
+                    <label className="text-xs font-medium text-fg block mb-1">
+                      Full name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.name}
+                      onChange={(e) =>
+                        setProfileForm({ ...profileForm, name: e.target.value })
+                      }
+                      placeholder="Your full name"
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400">
-                    Strength: {pwdScore <= 25 ? 'Weak' : pwdScore <= 50 ? 'Fair' : pwdScore <= 75 ? 'Good' : 'Strong'}
+
+                  {/* Email Read-only */}
+                  <div>
+                    <label className="text-xs font-medium text-fg block mb-1">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      value={user?.email || ''}
+                      disabled
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-subtle text-fg-3 cursor-not-allowed"
+                    />
+                    <span className="text-[11px] text-fg-3 mt-1 block">
+                      Email address is tied to your login credentials.
+                    </span>
+                  </div>
+
+                  {/* Right-aligned Save Button (Active only when dirty) */}
+                  <div className="flex justify-end pt-2 border-t border-line-subtle">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!isProfileDirty || updateMutation.isPending}
+                    >
+                      {updateMutation.isPending ? 'Saving...' : 'Save changes'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Card 2: Change Password */}
+              <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-5">
+                <div className="border-b border-line-subtle pb-3">
+                  <h2 className="text-base font-semibold text-fg">Change password</h2>
+                  <p className="text-xs text-fg-3 mt-0.5">
+                    Update your account password with a strong combination.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSavePassword} className="space-y-4">
+                  {/* Current Password */}
+                  <div>
+                    <label className="text-xs font-medium text-fg block mb-1">
+                      Current password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) =>
+                        setPasswordForm({
+                          ...passwordForm,
+                          currentPassword: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                    />
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="text-xs font-medium text-fg block mb-1">
+                      New password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) =>
+                        setPasswordForm({
+                          ...passwordForm,
+                          newPassword: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                    />
+                    {/* Password Strength Indicator */}
+                    {passwordForm.newPassword && (
+                      <div className="mt-2 space-y-1">
+                        <div className="w-full bg-subtle rounded-full h-1.5 overflow-hidden border border-line-subtle">
+                          <div
+                            className={`h-full transition-all duration-300 ${
+                              passwordStrength <= 25
+                                ? 'bg-bad w-1/4'
+                                : passwordStrength <= 50
+                                ? 'bg-warn w-1/2'
+                                : passwordStrength <= 75
+                                ? 'bg-accent w-3/4'
+                                : 'bg-ok w-full'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-[11px] text-fg-3 block">
+                          {passwordStrength <= 25
+                            ? 'Weak password'
+                            : passwordStrength <= 50
+                            ? 'Moderate password'
+                            : passwordStrength <= 75
+                            ? 'Good password'
+                            : 'Strong password'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="text-xs font-medium text-fg block mb-1">
+                      Confirm new password
+                    </label>
+                    <input
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordForm({
+                          ...passwordForm,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                    />
+                  </div>
+
+                  {/* Right-aligned Save Button */}
+                  <div className="flex justify-end pt-2 border-t border-line-subtle">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!isPasswordFilled || passwordMutation.isPending}
+                    >
+                      {passwordMutation.isPending ? 'Updating...' : 'Change password'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: PREFERENCES */}
+          {activeSection === 'preferences' && (
+            <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-6">
+              <div className="border-b border-line-subtle pb-3">
+                <h2 className="text-base font-semibold text-fg">Preferences</h2>
+                <p className="text-xs text-fg-3 mt-0.5">
+                  Display currency, formatting options, and appearance.
+                </p>
+              </div>
+
+              <form onSubmit={handleSavePreferences} className="space-y-5">
+                {/* 1. Display Currency */}
+                <div>
+                  <label className="text-xs font-medium text-fg block mb-1">
+                    Display currency
+                  </label>
+                  <select
+                    value={preferencesForm.defaultCurrency}
+                    onChange={(e) =>
+                      setPreferencesForm({
+                        ...preferencesForm,
+                        defaultCurrency: e.target.value,
+                      })
+                    }
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name} ({c.code} {c.symbol})
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[11px] text-fg-3 mt-1.5 block">
+                    Display only. Receipts keep their original currency.
                   </span>
                 </div>
-              )}
-            </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Confirm New Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full text-xs py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-900 focus:bg-brand-surface focus:outline-none focus:border-slate-400 transition-colors font-sans"
-                  style={{ paddingLeft: '2.5rem', paddingRight: '1rem' }}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
-              <button
-                type="submit"
-                disabled={passwordMutation.isPending}
-                className="px-5 py-2.5 text-xs font-medium text-white bg-brand-primary hover:bg-brand-primary-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {passwordMutation.isPending ? <LoadingSpinner size="sm" /> : <Save className="w-4 h-4" />}
-                <span>Update Password</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* TAB 4: Data & Export & Danger Zone */}
-      {activeTab === 'data' && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
-            <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-base font-semibold text-brand-navy tracking-tight">
-                Data Portability & Archives
-              </h3>
-              <p className="text-xs text-slate-500 font-normal mt-0.5">
-                Export your structured receipts and registered asset records at any time.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-              <div className="p-5 rounded-2xl border border-brand-border bg-brand-canvas/60 space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border text-brand-primary flex items-center justify-center">
-                    <FileSpreadsheet className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-semibold text-brand-navy">Export as CSV</span>
+                {/* 2. Date Format */}
+                <div>
+                  <label className="text-xs font-medium text-fg block mb-1">
+                    Date format
+                  </label>
+                  <select
+                    value={preferencesForm.dateFormat}
+                    onChange={(e) =>
+                      setPreferencesForm({
+                        ...preferencesForm,
+                        dateFormat: e.target.value,
+                      })
+                    }
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                  >
+                    {DATE_FORMATS.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Download a spreadsheet containing store names, dates, amounts, categories, and warranty statuses.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
-                  className="px-4 py-2 text-xs font-medium text-brand-navy bg-brand-surface hover:bg-brand-surface-hover border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5 text-brand-primary" />
-                  <span>Download CSV</span>
-                </button>
-              </div>
 
-              <div className="p-5 rounded-2xl border border-brand-border bg-brand-canvas/60 space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-border/60 border border-brand-border text-brand-primary flex items-center justify-center">
-                    <FileJson className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-semibold text-brand-navy">Export as JSON</span>
+                {/* 3. Timezone */}
+                <div>
+                  <label className="text-xs font-medium text-fg block mb-1">
+                    Timezone
+                  </label>
+                  <select
+                    value={preferencesForm.timezone}
+                    onChange={(e) =>
+                      setPreferencesForm({
+                        ...preferencesForm,
+                        timezone: e.target.value,
+                      })
+                    }
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                  >
+                    {TIMEZONES.map((tz) => (
+                      <option key={tz} value={tz}>
+                        {tz}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Full structured JSON payload of all invoices, line items, and product associations.
+
+                {/* 4. Theme Selector with Mini Preview Tiles */}
+                <div>
+                  <label className="text-xs font-medium text-fg block mb-2">
+                    Theme
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* Light Tile */}
+                    <button
+                      type="button"
+                      onClick={() => setTheme('light')}
+                      className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
+                        theme === 'light'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="h-14 rounded-md border border-slate-200 bg-white p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                        <div className="h-2 w-10 bg-slate-200 rounded-xs" />
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-14 bg-slate-100 rounded-xs" />
+                          <div className="h-1.5 w-8 bg-slate-100 rounded-xs" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-fg">Light</span>
+                        {theme === 'light' && (
+                          <Check className="size-3.5 text-accent" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Dark Tile */}
+                    <button
+                      type="button"
+                      onClick={() => setTheme('dark')}
+                      className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
+                        theme === 'dark'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="h-14 rounded-md border border-slate-700 bg-slate-900 p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                        <div className="h-2 w-10 bg-slate-700 rounded-xs" />
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-14 bg-slate-800 rounded-xs" />
+                          <div className="h-1.5 w-8 bg-slate-800 rounded-xs" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-fg">Dark</span>
+                        {theme === 'dark' && (
+                          <Check className="size-3.5 text-accent" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* System Tile */}
+                    <button
+                      type="button"
+                      onClick={() => setTheme('system')}
+                      className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
+                        theme === 'system'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="h-14 rounded-md border border-slate-300 overflow-hidden flex mb-2 shadow-2xs">
+                        <div className="w-1/2 bg-white p-1.5 flex flex-col justify-between border-r border-slate-200">
+                          <div className="h-2 w-6 bg-slate-200 rounded-xs" />
+                          <div className="h-1.5 w-6 bg-slate-100 rounded-xs" />
+                        </div>
+                        <div className="w-1/2 bg-slate-900 p-1.5 flex flex-col justify-between">
+                          <div className="h-2 w-6 bg-slate-700 rounded-xs" />
+                          <div className="h-1.5 w-6 bg-slate-800 rounded-xs" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-fg">System</span>
+                        {theme === 'system' && (
+                          <Check className="size-3.5 text-accent" />
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 5. Interface Density */}
+                <div>
+                  <label className="text-xs font-medium text-fg block mb-2">
+                    Table & layout density
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setDensity('comfortable')}
+                      className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
+                        density === 'comfortable'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="font-medium text-xs text-fg">Comfortable</div>
+                      <div className="text-[11px] text-fg-3 mt-0.5">
+                        Standard table rows (40px) with spacious padding
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDensity('compact')}
+                      className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${
+                        density === 'compact'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="font-medium text-xs text-fg">Compact</div>
+                      <div className="text-[11px] text-fg-3 mt-0.5">
+                        High-density data rows (32px) for maximum rows
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right-aligned Save Button (Active only when dirty) */}
+                <div className="flex justify-end pt-3 border-t border-line-subtle">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!isPreferencesDirty || updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? 'Saving...' : 'Save preferences'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* SECTION 3: NOTIFICATIONS */}
+          {activeSection === 'notifications' && (
+            <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-6">
+              <div className="border-b border-line-subtle pb-3">
+                <h2 className="text-base font-semibold text-fg">Notifications</h2>
+                <p className="text-xs text-fg-3 mt-0.5">
+                  Email reminders and upcoming warranty alert dispatch.
                 </p>
-                <button
+              </div>
+
+              <form onSubmit={handleSaveNotifications} className="space-y-6">
+                {/* Email alerts switch */}
+                <div className="flex items-center justify-between gap-4 py-2">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium text-fg">Email alerts</div>
+                    <div className="text-xs text-fg-3">
+                      Receive automated email notifications before warranties expire.
+                    </div>
+                  </div>
+                  <Switch
+                    checked={notificationForm.emailAlerts}
+                    onCheckedChange={(checked) =>
+                      setNotificationForm({
+                        ...notificationForm,
+                        emailAlerts: checked,
+                      })
+                    }
+                    aria-label="Toggle email alerts"
+                  />
+                </div>
+
+                {/* Send Test Email Button with Real Result */}
+                <div className="pt-4 border-t border-line-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-medium text-fg">Test delivery</div>
+                    <div className="text-xs text-fg-3">
+                      Send a sample reminder to verify server email delivery.
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSendTestAlert}
+                    disabled={isSendingTestAlert}
+                    className="gap-1.5 shrink-0"
+                  >
+                    <Send className="size-3.5" />
+                    <span>
+                      {isSendingTestAlert ? 'Sending...' : 'Send test email'}
+                    </span>
+                  </Button>
+                </div>
+
+                {/* Right-aligned Save Button (Active only when dirty) */}
+                <div className="flex justify-end pt-3 border-t border-line-subtle">
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!isNotificationDirty || updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? 'Saving...' : 'Save changes'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* SECTION 4: DATA & EXPORT */}
+          {activeSection === 'data' && (
+            <div className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-6">
+              <div className="border-b border-line-subtle pb-3">
+                <h2 className="text-base font-semibold text-fg">Data & Export</h2>
+                <p className="text-xs text-fg-3 mt-0.5">
+                  Export, backup, or download your receipt records and document files.
+                </p>
+              </div>
+
+              {/* Exact Count Display */}
+              <div className="p-3.5 rounded-lg bg-subtle border border-line text-xs text-fg-2">
+                Exporting <span className="font-semibold text-fg font-tabular">{receiptCount}</span> receipts
+              </div>
+
+              {/* Export Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Export CSV */}
+                <div className="p-4 rounded-[10px] border border-line bg-surface flex flex-col justify-between space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 font-medium text-sm text-fg">
+                      <FileSpreadsheet className="size-4 text-accent" />
+                      <span>Export CSV</span>
+                    </div>
+                    <p className="text-xs text-fg-3">
+                      Tabular spreadsheet formatted for Excel, Numbers, and Google Sheets.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    className="w-full gap-1.5"
+                  >
+                    <Download className="size-3.5" />
+                    <span>Download CSV</span>
+                  </Button>
+                </div>
+
+                {/* Export JSON */}
+                <div className="p-4 rounded-[10px] border border-line bg-surface flex flex-col justify-between space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 font-medium text-sm text-fg">
+                      <FileJson className="size-4 text-accent" />
+                      <span>Export JSON</span>
+                    </div>
+                    <p className="text-xs text-fg-3">
+                      Complete machine-readable JSON archive with full line-item breakdowns.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportJSON}
+                    className="w-full gap-1.5"
+                  >
+                    <Download className="size-3.5" />
+                    <span>Download JSON</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Documents Archive Download */}
+              <div className="pt-2 border-t border-line-subtle flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium text-fg">
+                    Documents archive
+                  </div>
+                  <div className="text-xs text-fg-3">
+                    Download attached PDF receipts and invoice images.
+                  </div>
+                </div>
+                <Button
                   type="button"
-                  onClick={handleExportJSON}
-                  className="px-4 py-2 text-xs font-medium text-slate-800 bg-brand-surface hover:bg-brand-surface-hover border border-slate-200 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => toast.info('Documents archive preparation scheduled.')}
+                  className="gap-1.5 shrink-0"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download JSON</span>
-                </button>
+                  <Download className="size-3.5" />
+                  <span>Download archive</span>
+                </Button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Danger Zone: Reset Account Data */}
-          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 sm:p-8 shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 text-brand-navy">
-              <AlertTriangle className="w-5 h-5 text-brand-primary" />
-              <h3 className="text-base font-semibold tracking-tight">Danger Zone: Reset Account Data</h3>
-            </div>
-            <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-              Permanently erase all logged receipts, tracked products, and reminder activity history for this account. This action cannot be undone.
-            </p>
-            <div>
-              <button
-                type="button"
-                onClick={() => setIsClearDataModalOpen(true)}
-                className="px-4 py-2.5 text-xs font-semibold text-brand-navy bg-brand-canvas hover:bg-brand-border/50 border border-brand-border rounded-xl transition-colors shadow-2xs inline-flex items-center gap-2 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Reset All Receipt Data</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal for Resetting Account Data */}
-      {isClearDataModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2 text-brand-navy">
-                <AlertTriangle className="w-5 h-5 text-brand-primary" />
-                <h4 className="text-base font-semibold text-brand-navy">Confirm Data Reset</h4>
+          {/* SECTION 5: DANGER ZONE */}
+          {activeSection === 'danger' && (
+            <div className="rounded-[12px] border border-bad/30 bg-bad-tint/10 p-6 shadow-2xs space-y-6">
+              <div className="border-b border-bad/20 pb-3">
+                <h2 className="text-base font-semibold text-bad-fg flex items-center gap-2">
+                  <AlertTriangle className="size-4 text-bad-fg" />
+                  <span>Danger zone</span>
+                </h2>
+                <p className="text-xs text-fg-3 mt-0.5">
+                  Irreversible actions. Please proceed with caution.
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsClearDataModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              This will permanently delete all your stored receipts, products, store analytics, and warranty logs.
-            </p>
+              {/* Explicit List of What is Removed */}
+              <div className="space-y-2 text-xs text-fg-2 bg-surface/70 p-4 rounded-lg border border-bad/20">
+                <span className="font-semibold text-bad-fg block">
+                  Actions in this section permanently remove:
+                </span>
+                <ul className="list-disc pl-5 space-y-1 text-fg-3">
+                  <li>All scanned receipts, document uploads, and extracted metadata</li>
+                  <li>All tracked products, serial numbers, and warranty timelines</li>
+                  <li>All automated reminder schedules and dispatch logs</li>
+                  <li>All merchant purchase histories and spending analytics</li>
+                </ul>
+              </div>
 
-            <div>
-              <label className="text-xs font-medium text-slate-700 block mb-1.5">
-                Type <span className="text-brand-navy font-bold">DELETE</span> to confirm:
-              </label>
-              <input
-                type="text"
-                value={clearConfirmationText}
-                onChange={(e) => setClearConfirmationText(e.target.value)}
-                placeholder="DELETE"
-                className="w-full text-xs py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-brand-surface focus:outline-none focus:border-brand-primary font-sans"
-              />
-            </div>
+              {/* Action 1: Clear All Data */}
+              <div className="p-4 rounded-lg border border-bad/20 bg-surface space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-fg">Clear all data</h3>
+                  <p className="text-xs text-fg-3">
+                    Permanently delete all receipts, products, and analytics while keeping your account active.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    type="text"
+                    value={clearDataInput}
+                    onChange={(e) => setClearDataInput(e.target.value)}
+                    placeholder="Type DELETE to confirm"
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-bad"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={clearDataInput.trim() !== 'DELETE' || isClearingData}
+                    onClick={handleClearAllData}
+                    className="shrink-0"
+                  >
+                    {isClearingData ? 'Clearing...' : 'Clear all data'}
+                  </Button>
+                </div>
+              </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsClearDataModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={clearConfirmationText !== 'DELETE' || isClearingData}
-                onClick={handleClearAllData}
-                className="px-4 py-2 text-xs font-semibold text-white bg-brand-navy hover:bg-brand-navy-hover rounded-xl transition-colors shadow-xs inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {isClearingData ? <LoadingSpinner size="sm" /> : <Trash2 className="w-3.5 h-3.5" />}
-                <span>Permanently Reset</span>
-              </button>
+              {/* Action 2: Delete Account */}
+              <div className="p-4 rounded-lg border border-bad/20 bg-surface space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-bad-fg">Delete account</h3>
+                  <p className="text-xs text-fg-3">
+                    Permanently erase your BillBox user account and all associated data.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <input
+                    type="text"
+                    value={deleteAccountInput}
+                    onChange={(e) => setDeleteAccountInput(e.target.value)}
+                    placeholder={`Type ${user?.email || 'your email'} to confirm`}
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-bad"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={
+                      deleteAccountInput.trim().toLowerCase() !==
+                        (user?.email || '').toLowerCase() || isDeletingAccount
+                    }
+                    onClick={handleDeleteAccount}
+                    className="shrink-0"
+                  >
+                    {isDeletingAccount ? 'Deleting...' : 'Delete account'}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
-};
-
-export default Settings;
+}

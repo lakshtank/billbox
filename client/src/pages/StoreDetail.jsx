@@ -1,367 +1,475 @@
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Store,
-  FileText,
-  ShoppingBag,
-  Calendar,
-  DollarSign,
-  ArrowRight,
-  ExternalLink,
-  ShieldCheck,
-  Clock,
-  AlertTriangle,
-  Receipt as ReceiptIcon,
+  ArrowLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useStoreDetailQuery } from '../queries/useStoresQuery';
-import ReceiptViewer from '../components/receipts/ReceiptViewer';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import EmptyState from '../components/common/EmptyState';
-import { formatDate, formatCurrency } from '../utils/formatters';
+import { EmptyState } from '../components/common/EmptyState';
+import { Money } from '../components/data/Money';
+import { DateCell } from '../components/data/DateCell';
+import { KpiTile } from '../components/data/KpiTile';
+import { SpendingChart } from '../components/data/SpendingChart';
+import { StatusBadge } from '../components/data/StatusBadge';
+import { Button } from '../components/ui/button';
+import { Skeleton } from '../components/ui/skeleton';
 
-const StoreDetail = () => {
-  const { storeName } = useParams();
+export default function StoreDetail() {
+  const params = useParams();
+  const rawStoreName = params['*'] ? `${params.storeName}/${params['*']}` : params.storeName;
+  const storeName = decodeURIComponent(rawStoreName || '');
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useStoreDetailQuery(storeName);
+
+  // Pagination for receipts table (10 per page per Step 18)
+  const [receiptPage, setReceiptPage] = useState(1);
   const [activeTab, setActiveTab] = useState('receipts'); // 'receipts' | 'products'
-  const [activeViewerReceipt, setActiveViewerReceipt] = useState(null);
+
+  const RECEIPT_PAGE_SIZE = 10;
+
+  const { stats, receipts = [], products = [] } = data || {};
+  const currency = stats?.currency || 'INR';
+
+  // Format monthly spend data for SpendingChart
+  const spendChartData = useMemo(() => {
+    if (!receipts || receipts.length === 0) return [];
+
+    const sorted = [...receipts].sort(
+      (a, b) => new Date(a.purchaseDate || 0) - new Date(b.purchaseDate || 0)
+    );
+
+    const monthMap = new Map();
+    sorted.forEach((r) => {
+      const d = new Date(r.purchaseDate || r.createdAt);
+      const key = `${d.toLocaleString('default', { month: 'short' })} '${String(d.getFullYear()).slice(-2)}`;
+      const amt = r.grandTotal != null ? r.grandTotal : r.totalAmount || 0;
+      monthMap.set(key, (monthMap.get(key) || 0) + amt);
+    });
+
+    return Array.from(monthMap.entries()).map(([label, amount]) => ({
+      label,
+      amount: Math.round(amount),
+    }));
+  }, [receipts]);
+
+  // Aggregate category spend for bar list
+  const categorySpendData = useMemo(() => {
+    if (!receipts || receipts.length === 0) return [];
+    const map = new Map();
+    receipts.forEach((r) => {
+      const cat = r.category || 'General';
+      const amt = r.grandTotal != null ? r.grandTotal : r.totalAmount || 0;
+      map.set(cat, (map.get(cat) || 0) + amt);
+    });
+
+    const total = stats?.totalSpent || 1;
+    return Array.from(map.entries())
+      .map(([name, spend]) => ({
+        name,
+        spend,
+        percentage: Math.min(100, Math.round((spend / total) * 100)),
+      }))
+      .sort((a, b) => b.spend - a.spend)
+      .slice(0, 6);
+  }, [receipts, stats?.totalSpent]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
+      <div className="space-y-6 font-sans">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-12 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-[12px]" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (isError || !data?.stats) {
+  if (isError || !stats) {
     return (
-      <EmptyState
-        title="Merchant not found"
-        description="Could not find transaction history for this merchant."
-        actionLabel="Back to Stores"
-        onAction={() => navigate('/stores')}
-      />
+      <div className="py-12">
+        <EmptyState
+          icon={Store}
+          title="Merchant not found"
+          description="We couldn't find transaction history for this merchant."
+          actionLabel="Back to Merchants"
+          onAction={() => navigate('/stores')}
+        />
+      </div>
     );
   }
 
-  const { stats, receipts = [], products = [] } = data;
-  const currency = stats.currency || 'INR';
+  // Paginated receipts
+  const totalReceiptPages = Math.ceil(receipts.length / RECEIPT_PAGE_SIZE) || 1;
+  const paginatedReceipts = receipts.slice(
+    (receiptPage - 1) * RECEIPT_PAGE_SIZE,
+    receiptPage * RECEIPT_PAGE_SIZE
+  );
+
+  const initial = (stats.storeName || '?').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-brand-canvas px-6 md:px-8 lg:px-10 py-8 w-full space-y-6 text-brand-navy font-sans pb-24">
-      {/* Receipt Viewer Modal */}
-      {activeViewerReceipt && (
-        <ReceiptViewer
-          fileUrl={activeViewerReceipt.publicToken ? `/api/public/receipts/${activeViewerReceipt.publicToken}/file` : activeViewerReceipt.fileUrl}
-          fileName={`${stats.storeName} Receipt`}
-          fileType={activeViewerReceipt.fileType}
-          onClose={() => setActiveViewerReceipt(null)}
-        />
-      )}
-
-      {/* 1. Breadcrumb Row */}
-      <div className="flex items-center gap-1.5 text-xs font-normal text-slate-500">
-        <Link to="/stores" className="hover:text-slate-900 transition-colors font-medium">
-          Stores
+    <div className="space-y-6 font-sans">
+      {/* 1. Back Link & Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-fg-3">
+        <Link
+          to="/stores"
+          className="hover:text-fg transition-colors inline-flex items-center gap-1 font-medium"
+        >
+          <ArrowLeft className="size-3.5" />
+          <span>Merchants</span>
         </Link>
-        <span className="text-slate-300">/</span>
-        <span className="text-slate-900 font-semibold truncate">{stats.storeName}</span>
+        <span>/</span>
+        <span className="text-fg font-semibold truncate">{stats.storeName}</span>
       </div>
 
-      {/* 2. Store Header Row Card */}
-      <div className="bg-brand-surface border border-brand-border rounded-2xl p-6 shadow-xs flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {stats.categories && stats.categories.map((cat) => (
+      {/* 2. Header: Avatar, Name, Caption "Grouped by merchant name" */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-line">
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="size-12 rounded-xl bg-subtle border border-line flex items-center justify-center font-bold text-xl text-fg shrink-0 shadow-2xs">
+            {initial}
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-fg truncate">
+              {stats.storeName}
+            </h1>
+            <p className="text-xs text-fg-3 font-normal mt-0.5">
+              Grouped by merchant name
+            </p>
+          </div>
+        </div>
+
+        {/* Categories as Neutral Badges */}
+        {Array.isArray(stats?.categories) && stats.categories.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {stats.categories.map((cat) => (
               <span
                 key={cat}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/25"
+                className="text-xs font-medium text-fg-2 bg-subtle px-2.5 py-1 rounded-md border border-line"
               >
                 {cat}
               </span>
             ))}
           </div>
+        )}
+      </div>
 
-          <h1 className="text-2xl sm:text-3xl font-semibold text-brand-navy tracking-tight leading-tight">
-            {stats.storeName}
-          </h1>
+      {/* 3. 4 Stat Tiles: Total spend, Receipts, Average basket, First → last purchase */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiTile
+          label="Total spend"
+          value={<Money value={stats.totalSpent} currency={currency} />}
+          deltaLabel="All-time spend"
+        />
+        <KpiTile
+          label="Receipts"
+          value={stats.receiptCount}
+          unit={stats.receiptCount === 1 ? 'receipt' : 'receipts'}
+          deltaLabel="Transactions"
+        />
+        <KpiTile
+          label="Average basket"
+          value={<Money value={stats.averageSpend} currency={currency} />}
+          deltaLabel="Per receipt"
+        />
+        <KpiTile
+          label="First → last purchase"
+          value={
+            stats.latestPurchaseDate ? (
+              <DateCell value={stats.latestPurchaseDate} />
+            ) : (
+              '—'
+            )
+          }
+          hint={
+            stats.firstPurchaseDate
+              ? `First: ${new Date(stats.firstPurchaseDate).toLocaleDateString()}`
+              : 'No purchase records'
+          }
+        />
+      </div>
 
-          <p className="text-xs text-slate-500 font-normal mt-1.5 flex items-center gap-2 flex-wrap">
-            {stats.firstPurchaseDate && (
-              <span>First purchase: <strong className="font-medium text-slate-800 font-tabular">{formatDate(stats.firstPurchaseDate)}</strong></span>
-            )}
-            {stats.latestPurchaseDate && (
-              <>
-                <span className="text-slate-300">•</span>
-                <span>Latest purchase: <strong className="font-medium text-slate-800 font-tabular">{formatDate(stats.latestPurchaseDate)}</strong></span>
-              </>
-            )}
-          </p>
+      {/* 4. Chart: spend over time & Bar list: spend by category */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Spend over time chart (7 cols on desktop) */}
+        <div className="lg:col-span-7">
+          <SpendingChart
+            data={spendChartData}
+            title="Spend over time"
+            height={260}
+          />
         </div>
 
-        <div className="text-right">
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-            Total Spend at Store
-          </span>
-          <span className="text-2xl sm:text-3xl font-semibold text-slate-900 font-tabular tracking-tight">
-            {formatCurrency(stats.totalSpent, 'INR')}
-          </span>
+        {/* Spend by category bar list (5 cols on desktop) */}
+        <div className="lg:col-span-5 rounded-[12px] border border-line bg-surface p-4 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3 border-b border-line-subtle pb-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-fg-3">
+              Spend by category
+            </span>
+            <span className="text-xs text-fg-3 font-normal">
+              {categorySpendData.length} categories
+            </span>
+          </div>
+
+          {categorySpendData.length === 0 ? (
+            <div className="py-8 text-center text-xs text-fg-3">
+              No category breakdown available
+            </div>
+          ) : (
+            <div className="space-y-3.5 flex-1 justify-center flex flex-col">
+              {categorySpendData.map((item) => (
+                <div key={item.name} className="space-y-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-fg truncate">{item.name}</span>
+                    <span className="tnum font-semibold text-fg">
+                      <Money value={item.spend} currency={currency} />
+                    </span>
+                  </div>
+                  {/* Horizontal Bar (8px tall, radius 4) */}
+                  <div className="w-full bg-subtle rounded-full h-2 overflow-hidden border border-line-subtle">
+                    <div
+                      className="bg-accent h-full rounded-full transition-all duration-300"
+                      style={{ width: `${Math.max(item.percentage, 4)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 3. Metric Summary Cards (4 Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-            TOTAL RECEIPTS
-          </span>
-          <span className="text-2xl font-semibold text-brand-navy font-tabular">
-            {stats.receiptCount}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Verified bills
-          </span>
-        </div>
-
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-            PRODUCTS BOUGHT
-          </span>
-          <span className="text-2xl font-semibold text-brand-navy font-tabular">
-            {stats.productCount}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Tracked items
-          </span>
-        </div>
-
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-            AVG. BILL AMOUNT
-          </span>
-          <span className="text-2xl font-semibold text-brand-navy font-tabular">
-            {formatCurrency(stats.averageSpend, 'INR')}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Per receipt average
-          </span>
-        </div>
-
-        <div className="bg-brand-surface border border-brand-border rounded-2xl p-5 shadow-2xs font-sans">
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-            ACTIVE WARRANTIES
-          </span>
-          <span className="text-2xl font-semibold text-brand-primary font-tabular">
-            {stats.activeWarrantyCount || products.filter((p) => p.warrantyStatus === 'active').length}
-          </span>
-          <span className="text-xs text-slate-400 block mt-1">
-            Covered items
-          </span>
-        </div>
-      </div>
-
-      {/* 4. Tab Navigation Strip */}
+      {/* 5. Receipts & Products Tabs */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-brand-border text-xs">
+        <div className="flex items-center gap-3 border-b border-line text-sm">
           <button
             type="button"
-            onClick={() => setActiveTab('receipts')}
-            className={`pb-3 px-1 font-semibold transition-colors relative cursor-pointer ${
+            onClick={() => {
+              setActiveTab('receipts');
+              setReceiptPage(1);
+            }}
+            className={`pb-2.5 px-1 font-semibold transition-colors relative cursor-pointer ${
               activeTab === 'receipts'
-                ? 'text-brand-navy border-b-2 border-brand-navy'
-                : 'text-slate-500 hover:text-brand-navy'
+                ? 'text-fg border-b-2 border-accent'
+                : 'text-fg-3 hover:text-fg'
             }`}
           >
             Receipts ({receipts.length})
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('products')}
-            className={`pb-3 px-1 font-semibold transition-colors relative cursor-pointer ml-4 ${
-              activeTab === 'products'
-                ? 'text-brand-navy border-b-2 border-brand-navy'
-                : 'text-slate-500 hover:text-brand-navy'
-            }`}
-          >
-            Products & Warranties ({products.length})
-          </button>
+          {products.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('products')}
+              className={`pb-2.5 px-1 font-semibold transition-colors relative cursor-pointer ml-3 ${
+                activeTab === 'products'
+                  ? 'text-fg border-b-2 border-accent'
+                : 'text-fg-3 hover:text-fg'
+              }`}
+            >
+              Products & Warranties ({products.length})
+            </button>
+          )}
         </div>
 
-        {/* Tab 1: Receipts List */}
+        {/* Tab 1: Receipts Table (paginated 10 per page) */}
         {activeTab === 'receipts' && (
-          <div className="divide-y divide-slate-100 border-b border-slate-100">
-            {receipts.map((rcpt) => {
-              const amt = rcpt.grandTotal != null ? rcpt.grandTotal : rcpt.totalAmount || 0;
-              const rcptCurrency = rcpt.currency || currency;
+          <div className="rounded-[12px] border border-line bg-surface shadow-2xs overflow-hidden">
+            {receipts.length === 0 ? (
+              <div className="p-8 text-center text-sm text-fg-3">
+                No receipts recorded for this merchant.
+              </div>
+            ) : (
+              <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+                <table className="w-full text-left border-collapse table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-[20%] min-w-[130px]" />
+                    <col className="w-[20%] min-w-[120px]" />
+                    <col className="w-[20%] min-w-[120px]" />
+                    <col className="w-[15%] min-w-[90px]" />
+                    <col className="w-[15%] min-w-[110px]" />
+                    <col className="w-[10%] min-w-[60px]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                      <th className="py-2.5 px-4 font-semibold">Date</th>
+                      <th className="py-2.5 px-4 font-semibold">Invoice</th>
+                      <th className="py-2.5 px-4 font-semibold">Category</th>
+                      <th className="py-2.5 px-4 font-semibold">Items</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Amount</th>
+                      <th className="py-2.5 px-4 font-semibold text-right"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line-subtle">
+                    {paginatedReceipts.map((rcpt) => {
+                      const amt =
+                        rcpt.grandTotal != null ? rcpt.grandTotal : rcpt.totalAmount || 0;
+                      const rcptCurrency = rcpt.currency || currency;
 
-              return (
-                <div
-                  key={rcpt._id}
-                  className="py-4 px-2 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors group"
-                >
-                  <div
-                    onClick={() => navigate(`/receipts/${rcpt._id}`)}
-                    className="min-w-0 flex-1 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-brand-navy group-hover:text-brand-primary transition-colors font-tabular">
-                        {formatDate(rcpt.purchaseDate)}
-                      </span>
-                      {rcpt.invoiceNumber && (
-                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-mono">
-                          #{rcpt.invoiceNumber}
-                        </span>
-                      )}
-                    </div>
+                      return (
+                        <tr
+                          key={rcpt._id}
+                          onClick={() => navigate(`/receipts/${rcpt._id}`)}
+                          className="group hover:bg-hover/60 transition-colors cursor-pointer"
+                        >
+                          <td className="py-3 px-4 font-medium text-fg">
+                            <DateCell value={rcpt.purchaseDate} />
+                          </td>
 
-                    <div className="text-xs text-slate-400 font-normal mt-1 flex items-center gap-2">
-                      <span>{rcpt.products?.length || 1} {rcpt.products?.length === 1 ? 'item' : 'items'}</span>
-                      {rcpt.category && (
-                        <>
-                          <span className="text-slate-300">•</span>
-                          <span>{rcpt.category}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                          <td className="py-3 px-4 font-mono text-xs text-fg-3">
+                            {rcpt.invoiceNumber ? `#${rcpt.invoiceNumber}` : '—'}
+                          </td>
 
-                  {/* Actions & Total */}
-                  <div className="flex items-center gap-4 shrink-0">
-                    {rcpt.fileUrl && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveViewerReceipt(rcpt);
-                        }}
-                        className="text-xs font-medium text-slate-600 hover:text-slate-900 bg-brand-surface border border-slate-200 hover:bg-slate-50 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
-                      >
-                        <FileText className="w-3.5 h-3.5 text-slate-500" />
-                        <span className="hidden sm:inline">View Doc</span>
-                      </button>
-                    )}
+                          <td className="py-3 px-4">
+                            <span className="text-xs text-fg-2 bg-subtle px-2 py-0.5 rounded border border-line-subtle">
+                              {rcpt.category || 'General'}
+                            </span>
+                          </td>
 
-                    <div
-                      onClick={() => navigate(`/receipts/${rcpt._id}`)}
-                      className="text-right cursor-pointer"
-                    >
-                      <span className="text-base sm:text-lg font-medium text-slate-900 font-tabular block">
-                        {formatCurrency(amt, rcptCurrency)}
-                      </span>
-                    </div>
+                          <td className="py-3 px-4 text-fg-2 tnum">
+                            {rcpt.products?.length || 1}{' '}
+                            {rcpt.products?.length === 1 ? 'item' : 'items'}
+                          </td>
 
-                    <ArrowRight
-                      onClick={() => navigate(`/receipts/${rcpt._id}`)}
-                      className="w-4 h-4 text-slate-300 group-hover:text-slate-700 transition-colors cursor-pointer"
-                    />
-                  </div>
+                          <td className="py-3 px-4 text-right">
+                            <Money
+                              value={amt}
+                              currency={rcptCurrency}
+                              className="font-semibold text-fg"
+                            />
+                          </td>
+
+                          <td className="py-3 px-4 text-right">
+                            <ChevronRight className="size-4 text-fg-3 group-hover:text-fg group-hover:translate-x-0.5 transition-all inline-block" />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {receipts.length > RECEIPT_PAGE_SIZE && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-line bg-subtle/50 text-xs text-fg-3">
+                <div>
+                  Showing{' '}
+                  <span className="font-medium text-fg tnum">
+                    {(receiptPage - 1) * RECEIPT_PAGE_SIZE + 1}
+                  </span>
+                  –
+                  <span className="font-medium text-fg tnum">
+                    {Math.min(receiptPage * RECEIPT_PAGE_SIZE, receipts.length)}
+                  </span>{' '}
+                  of <span className="font-medium text-fg tnum">{receipts.length}</span> receipts
                 </div>
-              );
-            })}
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReceiptPage((p) => p - 1)}
+                    disabled={receiptPage <= 1}
+                    className="h-7 text-xs px-2.5"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setReceiptPage((p) => p + 1)}
+                    disabled={receiptPage >= totalReceiptPages}
+                    className="h-7 text-xs px-2.5"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Tab 2: Products List */}
         {activeTab === 'products' && (
-          <div className="divide-y divide-slate-100 border-b border-slate-100">
-            {products.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                No individual products recorded for this merchant yet.
-              </div>
-            ) : (
-              products.map((prod) => {
-                const price = prod.lineTotal || prod.unitPrice;
+          <div className="rounded-[12px] border border-line bg-surface shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
+              <table className="w-full text-left border-collapse table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[35%] min-w-[200px]" />
+                  <col className="w-[15%] min-w-[100px]" />
+                  <col className="w-[20%] min-w-[120px]" />
+                  <col className="w-[15%] min-w-[100px]" />
+                  <col className="w-[15%] min-w-[90px]" />
+                </colgroup>
+                <thead>
+                  <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                    <th className="py-2.5 px-4 font-semibold">Product</th>
+                    <th className="py-2.5 px-4 font-semibold">Category</th>
+                    <th className="py-2.5 px-4 font-semibold">Warranty</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">Price</th>
+                    <th className="py-2.5 px-4 font-semibold text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line-subtle">
+                  {products.map((prod) => {
+                    const price = prod.lineTotal || prod.unitPrice;
 
-                let warrantyBadge = (
-                  <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                    No warranty
-                  </span>
-                );
+                    return (
+                      <tr
+                        key={prod._id}
+                        onClick={() => navigate(`/products/${prod._id}`)}
+                        className="group hover:bg-hover/60 transition-colors cursor-pointer"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="font-medium text-fg group-hover:text-accent transition-colors truncate">
+                            {prod.productName}
+                          </div>
+                          {prod.brand && (
+                            <div className="text-xs text-fg-3">{prod.brand}</div>
+                          )}
+                        </td>
 
-                if (prod.warrantyStatus === 'active') {
-                  warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-primary/10 text-brand-primary border border-brand-primary/30">
-                      <ShieldCheck className="w-3 h-3 text-brand-primary" />
-                      <span>Under Warranty</span>
-                    </span>
-                  );
-                } else if (prod.warrantyStatus === 'expiring_soon') {
-                  warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-                      <Clock className="w-3 h-3 text-amber-600" />
-                      <span>Expiring Soon</span>
-                    </span>
-                  );
-                } else if (prod.warrantyStatus === 'expired') {
-                  warrantyBadge = (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                      <AlertTriangle className="w-3 h-3 text-rose-600" />
-                      <span>Expired</span>
-                    </span>
-                  );
-                }
+                        <td className="py-3 px-4 text-xs text-fg-2">
+                          {prod.category || '—'}
+                        </td>
 
-                return (
-                  <div
-                    key={prod._id}
-                    onClick={() => navigate(`/products/${prod._id}`)}
-                    className="py-4 px-2 flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/70 transition-colors group"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm sm:text-base font-medium text-brand-navy group-hover:text-brand-primary transition-colors truncate">
-                          {prod.productName}
-                        </h3>
-                        {prod.brand && (
-                          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded font-sans">
-                            {prod.brand}
-                          </span>
-                        )}
-                        <span className="text-[11px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded">
-                          {prod.category}
-                        </span>
-                      </div>
+                        <td className="py-3 px-4">
+                          <StatusBadge status={prod.warrantyStatus || 'none'} />
+                        </td>
 
-                      <div className="text-xs text-slate-400 font-normal mt-1 flex items-center gap-2">
-                        {prod.quantity > 1 && (
-                          <span className="font-tabular">Qty: {prod.quantity}</span>
-                        )}
-                        {prod.warrantyExpiryDate && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <span>Expires: <strong className="font-medium text-slate-700 font-tabular">{formatDate(prod.warrantyExpiryDate)}</strong></span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                        <td className="py-3 px-4 text-right">
+                          <Money
+                            value={price}
+                            currency={currency}
+                            className="font-medium text-fg"
+                          />
+                        </td>
 
-                    <div className="hidden sm:block shrink-0">
-                      {warrantyBadge}
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0 text-right">
-                      <div>
-                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
-                          Spend
-                        </span>
-                        <span className="text-base sm:text-lg font-medium text-slate-900 font-tabular tracking-tight leading-none block">
-                          {price != null ? formatCurrency(price, currency) : '—'}
-                        </span>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-700 transition-colors shrink-0" />
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                        <td className="py-3 px-4 text-right">
+                          <ChevronRight className="size-4 text-fg-3 group-hover:text-fg group-hover:translate-x-0.5 transition-all inline-block" />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
-};
-
-export default StoreDetail;
+}

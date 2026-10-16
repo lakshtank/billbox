@@ -5,15 +5,18 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-const ATLAS_FALLBACK_URI =
-  'mongodb+srv://billbox_admin:1234567890@cluster0.dqtzwto.mongodb.net/billbox?retryWrites=true&w=majority&appName=Cluster0';
-
 const connectDB = async () => {
   const uri =
     process.env.MONGODB_URI ||
     process.env.MONGODB_URL ||
-    process.env.MONGO_URI ||
-    ATLAS_FALLBACK_URI;
+    process.env.MONGO_URI;
+
+  if (!uri) {
+    const errorMsg =
+      'FATAL: MongoDB connection URI is missing. Please define MONGODB_URI or MONGODB_URL in your server/.env file.';
+    console.error(`[DB Config] ${errorMsg}`);
+    throw new Error(errorMsg);
+  }
 
   if (cached.conn) {
     return cached.conn;

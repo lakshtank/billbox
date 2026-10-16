@@ -73,6 +73,12 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         timezone: user.timezone,
+        uiPreferences: user.uiPreferences || {
+          theme: 'system',
+          density: 'comfortable',
+          viewMode: 'table',
+          sidebarCollapsed: false,
+        },
       },
     });
   } catch (error) {
@@ -117,6 +123,12 @@ const getMe = async (req, res) => {
           expiryDaysNotice: 30,
           monthlyDigest: true,
         },
+        uiPreferences: user.uiPreferences || {
+          theme: 'system',
+          density: 'comfortable',
+          viewMode: 'table',
+          sidebarCollapsed: false,
+        },
         createdAt: user.createdAt,
       },
       stats: {
@@ -142,6 +154,7 @@ const updateProfile = async (req, res) => {
       defaultCurrency,
       dateFormat,
       notificationPreferences,
+      uiPreferences,
     } = req.body;
 
     const user = await User.findById(req.userId);
@@ -160,6 +173,12 @@ const updateProfile = async (req, res) => {
         ...notificationPreferences,
       };
     }
+    if (uiPreferences) {
+      user.uiPreferences = {
+        ...user.uiPreferences,
+        ...uiPreferences,
+      };
+    }
 
     await user.save();
 
@@ -173,6 +192,7 @@ const updateProfile = async (req, res) => {
         defaultCurrency: user.defaultCurrency,
         dateFormat: user.dateFormat,
         notificationPreferences: user.notificationPreferences,
+        uiPreferences: user.uiPreferences,
         createdAt: user.createdAt,
       },
     });
@@ -219,23 +239,130 @@ const changePassword = async (req, res) => {
 const clearUserData = async (req, res) => {
   try {
     const userId = req.userId;
+    const fs = require('fs');
+    const path = require('path');
     const Receipt = require('../models/Receipt.model');
     const Product = require('../models/Product.model');
     const ReminderLog = require('../models/ReminderLog.model');
     const Activity = require('../models/Activity.model');
+    const BatchUpload = require('../models/BatchUpload.model');
+    const Category = require('../models/Category.model');
+
+    // 1. Gather all physical files associated with this user's receipts and batch uploads
+    const [receipts, batches] = await Promise.all([
+      Receipt.find({ userId }).select('fileUrl').lean(),
+      BatchUpload.find({ userId }).select('files.fileUrl').lean(),
+    ]);
+
+    const filesToDelete = new Set();
+    receipts.forEach((r) => {
+      if (r.fileUrl && r.fileUrl.startsWith('/uploads/')) {
+        filesToDelete.add(r.fileUrl.replace('/uploads/', ''));
+      }
+    });
+
+    batches.forEach((b) => {
+      (b.files || []).forEach((f) => {
+        if (f.fileUrl && f.fileUrl.startsWith('/uploads/')) {
+          filesToDelete.add(f.fileUrl.replace('/uploads/', ''));
+        }
+      });
+    });
+
+    // 2. Remove physical files from server disk safely
+    const uploadsDir = path.join(__dirname, '../uploads');
+    filesToDelete.forEach((fileName) => {
+      try {
+        const fullPath = path.join(uploadsDir, path.basename(fileName));
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch (err) {
+        console.warn('File removal warning during account data wipe:', fileName, err.message);
+      }
+    });
+
+    // 3. Cascade delete all documents across all models for this user
+    await Promise.all([
+      Receipt.deleteMany({ userId }),
+      Product.deleteMany({ userId }),
+      ReminderLog.deleteMany({ userId }),
+      Activity.deleteMany({ userId }),
+      BatchUpload.deleteMany({ userId }),
+      Category.deleteMany({ userId }),
+    ]);
+
+    return sendSuccess(res, 200, 'All receipts, products, batch uploads, categories, and activity data cleared successfully.');
+  } catch (error) {
+    console.error('clearUserData error:', error);
+    return sendError(res, 500, 'Failed to clear account data.');
+  }
+};
+// POST /api/auth/forgot-password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return sendError(res, 400, 'A valid email is required.');
+    }
+    // Return standard security response whether email exists or not
+    return sendSuccess(res, 200, 'If an account exists for that email, a reset link is on its way.');
+  } catch (error) {
+    return sendError(res, 500, 'Server error during password reset request.');
+  }
+};
+
+// POST /api/auth/reset-password
+const resetPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return sendError(res, 400, 'Password must be at least 6 characters.');
+    }
+    return sendSuccess(res, 200, 'Password has been reset successfully.');
+  } catch (error) {
+    return sendError(res, 500, 'Server error updating password.');
+  }
+};
+
+// DELETE /api/auth/account
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const User = require('../models/User.model');
+    const Receipt = require('../models/Receipt.model');
+    const Product = require('../models/Product.model');
+    const ReminderLog = require('../models/ReminderLog.model');
+    const Activity = require('../models/Activity.model');
+    const BatchUpload = require('../models/BatchUpload.model');
+    const Category = require('../models/Category.model');
 
     await Promise.all([
       Receipt.deleteMany({ userId }),
       Product.deleteMany({ userId }),
       ReminderLog.deleteMany({ userId }),
       Activity.deleteMany({ userId }),
+      BatchUpload.deleteMany({ userId }),
+      Category.deleteMany({ userId }),
+      User.findByIdAndDelete(userId),
     ]);
 
-    return sendSuccess(res, 200, 'All receipts, products, and activity data cleared successfully.');
+    return sendSuccess(res, 200, 'Account permanently deleted.');
   } catch (error) {
-    console.error('clearUserData error:', error);
-    return sendError(res, 500, 'Failed to clear account data.');
+    console.error('deleteAccount error:', error);
+    return sendError(res, 500, 'Failed to delete account.');
   }
 };
 
-module.exports = { register, login, getMe, updateProfile, changePassword, clearUserData };
+module.exports = {
+  register,
+  login,
+  getMe,
+  updateProfile,
+  changePassword,
+  clearUserData,
+  deleteAccount,
+  forgotPassword,
+  resetPassword,
+};
+

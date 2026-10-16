@@ -6,9 +6,15 @@ const {
   updateReminderSettings,
   testSendReminder,
   sendTestAlert,
+  triggerCronReminderCheck,
 } = require('../controllers/reminder.controller');
 
-// All reminder routes are protected
+// External/Vercel Cron webhook endpoint (protected via CRON_SECRET)
+// Placed before user auth middleware so serverless schedulers can trigger it
+router.get('/cron-check', triggerCronReminderCheck);
+router.post('/cron-check', triggerCronReminderCheck);
+
+// All subsequent user reminder routes are protected by user auth middleware
 router.use(auth);
 
 // GET /api/reminders
