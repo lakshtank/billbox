@@ -125,3 +125,37 @@
   --color-ring: var(--line-focus);
 }
 
+/* Step 12: Toast status rail + countdown timer */
+.toast::before {
+  content: "";
+  position: absolute;
+  inset-block: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.toast-ok::before   { background: var(--ok-solid); }
+.toast-bad::before  { background: var(--bad-solid); }
+.toast-warn::before { background: var(--warn-solid); }
+.toast-info::before { background: var(--accent); }
+
+/* Toast countdown bar (transform only) */
+.toast .countdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  transform-origin: left;
+  background: var(--line-strong);
+  animation: toast-countdown var(--toast-duration, 5s) linear forwards;
+}
+.toast:hover .countdown {
+  animation-play-state: paused;
+}
+@keyframes toast-countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+

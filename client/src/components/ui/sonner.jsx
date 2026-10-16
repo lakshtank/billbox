@@ -1,49 +1,115 @@
-"use client"
-
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "@/context/ThemeContext"
+import * as React from "react";
+import { useTheme } from "@/context/ThemeContext";
 import { Toaster as Sonner } from "sonner";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import * as m from "motion/react-m";
+import {
+  AlertTriangle,
+  XCircle,
+  Info,
+  Loader2,
+} from "lucide-react";
 
-const Toaster = ({
-  ...props
-}) => {
+/**
+ * Animated Check Icon for Success Toasts:
+ * Draws SVG pathLength over 220ms and springs from scale 0.6 -> 1
+ */
+function SuccessToastIcon() {
+  return (
+    <m.span
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="flex items-center justify-center shrink-0"
+    >
+      <svg
+        className="size-4 text-ok-solid"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <m.path
+          d="M20 6L9 17L4 12"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        />
+      </svg>
+    </m.span>
+  );
+}
+
+function SpringIcon({ children }) {
+  return (
+    <m.span
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className="flex items-center justify-center shrink-0"
+    >
+      {children}
+    </m.span>
+  );
+}
+
+export function Toaster({ ...props }) {
   const { theme = "system" } = useTheme();
+  const isMobile = useMediaQuery("(max-width: 639px)");
 
   return (
     <Sonner
       theme={theme}
-      position="bottom-right"
+      position={isMobile ? "top-center" : "bottom-right"}
+      /* position="bottom-right" on desktop, top-center on mobile */
       visibleToasts={3}
+      gap={8}
+      offset={{ bottom: 24, right: 24 }}
+      mobileOffset={{ top: "calc(env(safe-area-inset-top) + 8px)", left: 12, right: 12 }}
+      closeButton
+      expand={false}
       duration={5000}
+      swipeDirections={isMobile ? ["up"] : ["right"]}
       className="toaster group"
       toastOptions={{
+        unstyled: true,
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-surface group-[.toaster]:text-fg group-[.toaster]:border-line group-[.toaster]:shadow-[var(--elevation-2)] group-[.toaster]:rounded-lg group-[.toaster]:p-3.5 group-[.toaster]:gap-2.5 group-[.toaster]:w-[360px] group-[.toaster]:text-sm",
-          title: "text-[14px] font-medium text-fg",
-          description: "text-[13px] text-fg-2",
+            "toast group relative flex w-full items-start gap-3 rounded-lg border border-line bg-surface p-3 pr-9 shadow-[var(--elevation-2)] text-sm text-fg",
+          title: "font-medium leading-5 text-fg",
+          description: "mt-0.5 text-[13px] leading-[18px] text-fg-2",
           actionButton:
-            "group-[.toast]:bg-accent group-[.toast]:text-on-accent text-xs font-medium px-3 py-1.5 rounded-md hover:bg-accent-hover transition-colors",
+            "ml-auto shrink-0 rounded-md px-2.5 h-7 text-[13px] font-medium text-accent hover:bg-accent-tint transition-colors cursor-pointer",
           cancelButton:
-            "group-[.toast]:bg-hover group-[.toast]:text-fg-2 text-xs font-medium px-3 py-1.5 rounded-md transition-colors",
-          success: "group-[.toaster]:border-l-[3px] group-[.toaster]:border-l-ok-solid",
-          error: "group-[.toaster]:border-l-[3px] group-[.toaster]:border-l-bad-solid",
-          warning: "group-[.toaster]:border-l-[3px] group-[.toaster]:border-l-warn-solid",
-          info: "group-[.toaster]:border-l-[3px] group-[.toaster]:border-l-accent",
+            "rounded-md px-2.5 h-7 text-[13px] text-fg-2 hover:bg-hover transition-colors cursor-pointer",
+          closeButton:
+            "absolute right-2 top-2 size-6 rounded-md text-fg-3 hover:text-fg hover:bg-hover flex items-center justify-center transition-colors cursor-pointer",
+          success: "toast-ok border-l-[3px] border-l-ok-solid",
+          error: "toast-bad border-l-[3px] border-l-bad-solid",
+          warning: "toast-warn border-l-[3px] border-l-warn-solid",
+          info: "toast-info border-l-[3px] border-l-accent",
         },
       }}
       icons={{
-        success: <CircleCheckIcon className="size-4 text-ok-solid" />,
-        info: <InfoIcon className="size-4 text-accent" />,
-        warning: <TriangleAlertIcon className="size-4 text-warn-solid" />,
-        error: <OctagonXIcon className="size-4 text-bad-solid" />,
-        loading: <Loader2Icon className="size-4 animate-spin text-accent" />,
+        success: <SuccessToastIcon />,
+        info: (
+          <SpringIcon>
+            <Info className="size-4 text-accent" />
+          </SpringIcon>
+        ),
+        warning: (
+          <SpringIcon>
+            <AlertTriangle className="size-4 text-warn-solid" />
+          </SpringIcon>
+        ),
+        error: (
+          <SpringIcon>
+            <XCircle className="size-4 text-bad-solid" />
+          </SpringIcon>
+        ),
+        loading: <Loader2 className="size-4 animate-spin text-accent" />,
       }}
       style={{
         "--normal-bg": "var(--bg-surface)",
@@ -54,6 +120,6 @@ const Toaster = ({
       {...props}
     />
   );
-};
+}
 
-export { Toaster };
+export default Toaster;
