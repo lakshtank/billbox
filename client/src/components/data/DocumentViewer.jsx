@@ -107,6 +107,13 @@ export function DocumentViewer({
     return authenticatedDirectUrl || localBlobUrl || inlineDataUri || '';
   }, [useFallback, authenticatedDirectUrl, localBlobUrl, inlineDataUri]);
 
+  // Optimized PDF view URL with Chrome PDF engine parameters for full fit without scrollbar
+  const pdfViewUrl = React.useMemo(() => {
+    if (!activeUrl || !isPdf) return activeUrl;
+    if (activeUrl.includes('#')) return activeUrl;
+    return `${activeUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+  }, [activeUrl, isPdf]);
+
   // URL for new tab navigation (prefer authenticated direct link, otherwise blob)
   const tabNavigationUrl = authenticatedDirectUrl || localBlobUrl || inlineDataUri || '';
 
@@ -505,16 +512,17 @@ export function DocumentViewer({
               </div>
             ) : isPdf ? (
               <object
-                data={activeUrl}
+                data={pdfViewUrl}
                 type="application/pdf"
-                className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs"
+                className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs overflow-hidden"
                 onLoad={() => setIsLoaded(true)}
                 onError={handleMediaError}
               >
                 <iframe
-                  src={activeUrl}
+                  src={pdfViewUrl}
                   title={resolvedFilename}
-                  className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs"
+                  scrolling="no"
+                  className="w-full h-full min-h-[420px] rounded-[8px] border-0 bg-surface shadow-2xs overflow-hidden"
                   onLoad={() => setIsLoaded(true)}
                   onError={handleMediaError}
                 >
