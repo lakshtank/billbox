@@ -11,13 +11,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "text-white border border-white/20 hover:border-white/30 active:brightness-95 shadow-xs",
-        default: "text-white border border-white/20 hover:border-white/30 active:brightness-95 shadow-xs",
-        secondary: "text-fg border border-line hover:border-line-strong active:bg-subtle",
-        outline: "text-fg border border-line hover:border-line-strong active:bg-subtle",
+        primary: "bg-accent text-white border border-white/20 hover:border-white/30 active:brightness-95 shadow-xs",
+        default: "bg-accent text-white border border-white/20 hover:border-white/30 active:brightness-95 shadow-xs",
+        secondary: "bg-surface text-fg border border-line hover:border-line-strong active:bg-subtle",
+        outline: "bg-surface text-fg border border-line hover:border-line-strong active:bg-subtle",
         ghost: "bg-transparent text-fg-2 hover:bg-hover hover:text-fg active:bg-subtle border-none rounded-[8px]",
-        danger: "text-white border border-white/20 hover:brightness-110 active:brightness-95 shadow-2xs",
-        destructive: "text-white border border-white/20 hover:brightness-110 active:brightness-95 shadow-2xs",
+        danger: "bg-bad-solid text-white border border-white/20 hover:brightness-110 active:brightness-95 shadow-2xs",
+        destructive: "bg-bad-solid text-white border border-white/20 hover:brightness-110 active:brightness-95 shadow-2xs",
         "danger-ghost": "bg-transparent text-bad-fg hover:bg-bad-bg active:bg-bad-tint border-none rounded-[8px]",
         link: "bg-transparent text-accent p-0 h-auto hover:underline border-none rounded-none",
       },
