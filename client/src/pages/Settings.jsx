@@ -732,7 +732,32 @@ export default function Settings() {
                       </div>
                     </button>
 
-                    {/* Dark Tile */}
+                    {/* Gentle Tile (formerly Dark) */}
+                    <button
+                      type="button"
+                      onClick={() => setTheme('gentle')}
+                      className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
+                        theme === 'gentle'
+                          ? 'border-accent ring-1 ring-accent bg-selected/20'
+                          : 'border-line hover:border-line-strong bg-surface'
+                      }`}
+                    >
+                      <div className="h-14 rounded-md border border-[#2E3944] bg-[#212A31] p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                        <div className="h-2 w-10 bg-[#3C4A51] rounded-xs" />
+                        <div className="space-y-1">
+                          <div className="h-1.5 w-14 bg-[#2E3944] rounded-xs" />
+                          <div className="h-1.5 w-8 bg-[#2E3944] rounded-xs" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-fg">Gentle</span>
+                        {theme === 'gentle' && (
+                          <Check className="size-3.5 text-accent" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Dark Tile (Deep Pitch Obsidian) */}
                     <button
                       type="button"
                       onClick={() => setTheme('dark')}
@@ -742,11 +767,11 @@ export default function Settings() {
                           : 'border-line hover:border-line-strong bg-surface'
                       }`}
                     >
-                      <div className="h-14 rounded-md border border-slate-700 bg-slate-900 p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
-                        <div className="h-2 w-10 bg-slate-700 rounded-xs" />
+                      <div className="h-14 rounded-md border border-[#222D34] bg-[#080B0D] p-1.5 flex flex-col justify-between mb-2 shadow-2xs">
+                        <div className="h-2 w-10 bg-[#1FA2C1] rounded-xs" />
                         <div className="space-y-1">
-                          <div className="h-1.5 w-14 bg-slate-800 rounded-xs" />
-                          <div className="h-1.5 w-8 bg-slate-800 rounded-xs" />
+                          <div className="h-1.5 w-14 bg-[#11161A] rounded-xs" />
+                          <div className="h-1.5 w-8 bg-[#171E24] rounded-xs" />
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -756,34 +781,7 @@ export default function Settings() {
                         )}
                       </div>
                     </button>
-
-                    {/* System Tile */}
-                    <button
-                      type="button"
-                      onClick={() => setTheme('system')}
-                      className={`p-2.5 rounded-[10px] border text-left cursor-pointer transition-all ${
-                        theme === 'system'
-                          ? 'border-accent ring-1 ring-accent bg-selected/20'
-                          : 'border-line hover:border-line-strong bg-surface'
-                      }`}
-                    >
-                      <div className="h-14 rounded-md border border-slate-300 overflow-hidden flex mb-2 shadow-2xs">
-                        <div className="w-1/2 bg-white p-1.5 flex flex-col justify-between border-r border-slate-200">
-                          <div className="h-2 w-6 bg-slate-200 rounded-xs" />
-                          <div className="h-1.5 w-6 bg-slate-100 rounded-xs" />
-                        </div>
-                        <div className="w-1/2 bg-slate-900 p-1.5 flex flex-col justify-between">
-                          <div className="h-2 w-6 bg-slate-700 rounded-xs" />
-                          <div className="h-1.5 w-6 bg-slate-800 rounded-xs" />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-fg">System</span>
-                        {theme === 'system' && (
-                          <Check className="size-3.5 text-accent" />
-                        )}
-                      </div>
-                    </button>
+                    {/* System theme removed in favor of Light, Gentle, and Dark options */}
                   </div>
                 </div>
 

@@ -14,7 +14,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  Laptop,
   Command,
   ChevronsUpDown,
   PanelLeftClose,
@@ -359,15 +358,15 @@ export function Sidebar() {
               <span>Light</span>
               {theme === 'light' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('dark')}>
+            <DropdownMenuItem onClick={() => setTheme('gentle')}>
               <Moon className="w-4 h-4 mr-2 text-fg-3" />
+              <span>Gentle</span>
+              {theme === 'gentle' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')}>
+              <Moon className="w-4 h-4 mr-2 text-fg-3 fill-current" />
               <span>Dark</span>
               {theme === 'dark' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('system')}>
-              <Laptop className="w-4 h-4 mr-2 text-fg-3" />
-              <span>System</span>
-              {theme === 'system' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

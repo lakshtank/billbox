@@ -14,20 +14,33 @@
     <script>
       (function () {
         try {
-          var t = localStorage.getItem('billbox.theme') || 'system';
-          var dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          var t = localStorage.getItem('billbox.theme') || 'light';
+          // System theme permanently removed; support legacy prefers-color-scheme: dark migration
+          if (t === 'system') {
+            t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'gentle' : 'light';
+          }
+          var active = (t === 'dark' || t === 'gentle') ? t : 'light';
+          document.documentElement.dataset.theme = active;
+          if (active === 'dark' || active === 'gentle') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
         } catch (e) { document.documentElement.dataset.theme = 'light'; }
       })();
     </script>
     <style>
       :root {
-        --bg-app-initial: #F8FAFC;
-        --fg-app-initial: #0F172A;
+        --bg-app-initial: #F6F8F8;
+        --fg-app-initial: #212A31;
+      }
+      [data-theme="gentle"] {
+        --bg-app-initial: #182026;
+        --fg-app-initial: #F6F8F8;
       }
       [data-theme="dark"] {
-        --bg-app-initial: #0B0F17;
-        --fg-app-initial: #F1F5F9;
+        --bg-app-initial: #080B0D;
+        --fg-app-initial: #FFFFFF;
       }
       html, body {
         margin: 0;

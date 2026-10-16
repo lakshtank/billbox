@@ -13,7 +13,6 @@ import {
   Upload,
   Sun,
   Moon,
-  Laptop,
   ArrowRight,
   Loader2,
 } from "lucide-react";
@@ -46,7 +45,7 @@ export function CommandPalette() {
   const [isSearching, setIsSearching] = React.useState(false);
 
   const navigate = useNavigate();
-  const { theme, resolvedTheme, setTheme } = usePreferences();
+  const { theme, setTheme } = usePreferences();
 
   // Keyboard shortcut listener: ⌘K, Ctrl+K, or '/' (when not in an input/textarea)
   React.useEffect(() => {
@@ -125,9 +124,9 @@ export function CommandPalette() {
 
   const cycleTheme = () => {
     if (theme === "light") {
+      setTheme("gentle");
+    } else if (theme === "gentle") {
       setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
     } else {
       setTheme("light");
     }
@@ -204,14 +203,14 @@ export function CommandPalette() {
             <span>Upload Batch Receipts</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(cycleTheme)}>
-            {theme === "system" ? (
-              <Laptop className="size-4 text-fg-2" />
-            ) : resolvedTheme === "dark" ? (
-              <Moon className="size-4 text-accent" />
+            {theme === "gentle" ? (
+              <Moon className="size-4 text-sky-400" />
+            ) : theme === "dark" ? (
+              <Moon className="size-4 text-accent fill-current" />
             ) : (
               <Sun className="size-4 text-amber-500" />
             )}
-            <span>Toggle Theme ({theme})</span>
+            <span>Toggle Theme ({theme === 'gentle' ? 'Gentle' : theme === 'dark' ? 'Dark' : 'Light'})</span>
           </CommandItem>
         </CommandGroup>
 

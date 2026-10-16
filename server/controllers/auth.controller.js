@@ -74,7 +74,7 @@ const login = async (req, res) => {
         email: user.email,
         timezone: user.timezone,
         uiPreferences: user.uiPreferences || {
-          theme: 'system',
+          theme: 'light',
           density: 'comfortable',
           viewMode: 'table',
           sidebarCollapsed: false,
@@ -124,7 +124,7 @@ const getMe = async (req, res) => {
           monthlyDigest: true,
         },
         uiPreferences: user.uiPreferences || {
-          theme: 'system',
+          theme: 'light',
           density: 'comfortable',
           viewMode: 'table',
           sidebarCollapsed: false,

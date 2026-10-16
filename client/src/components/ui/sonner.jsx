@@ -56,12 +56,13 @@ function SpringIcon({ children }) {
 }
 
 export function Toaster({ ...props }) {
-  const { theme = "system" } = useTheme();
+  const { theme = "light" } = useTheme();
   const isMobile = useMediaQuery("(max-width: 639px)");
+  const sonnerTheme = theme === 'dark' || theme === 'gentle' ? 'dark' : 'light';
 
   return (
     <Sonner
-      theme={theme}
+      theme={sonnerTheme}
       position={isMobile ? "top-center" : "bottom-right"}
       /* position="bottom-right" on desktop, top-center on mobile */
       visibleToasts={3}

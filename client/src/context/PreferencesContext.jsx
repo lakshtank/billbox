@@ -3,7 +3,7 @@ import { useTheme } from './ThemeContext';
 import api from '../api/axios';
 
 const PreferencesContext = createContext({
-  theme: 'system',
+  theme: 'light',
   resolvedTheme: 'light',
   setTheme: () => {},
   density: 'comfortable',
@@ -126,11 +126,11 @@ export const PreferencesProvider = ({ children }) => {
     });
   }, [syncToProfile]);
 
-  // Called when user logs in or profile loads from API
   const syncFromUser = useCallback((uiPreferences) => {
     if (!uiPreferences) return;
-    if (uiPreferences.theme && ['light', 'dark', 'system'].includes(uiPreferences.theme)) {
-      setBaseTheme(uiPreferences.theme);
+    if (uiPreferences.theme) {
+      const validTheme = uiPreferences.theme === 'dark' || uiPreferences.theme === 'gentle' ? uiPreferences.theme : 'light';
+      setBaseTheme(validTheme);
     }
     if (uiPreferences.density && ['comfortable', 'compact'].includes(uiPreferences.density)) {
       try {

@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
     monthlyDigest: { type: Boolean, default: true },
   },
   uiPreferences: {
-    theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+    theme: { type: String, enum: ['light', 'gentle', 'dark', 'system'], default: 'light' },
     density: { type: String, enum: ['comfortable', 'compact'], default: 'comfortable' },
     viewMode: { type: String, enum: ['table', 'grid'], default: 'table' },
     sidebarCollapsed: { type: Boolean, default: false },

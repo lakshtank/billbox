@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { Sun, Moon, Laptop } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
 
 /**
@@ -55,19 +55,19 @@ export async function setThemeAnimated(next, originEl, applyThemeFn) {
 
 /**
  * Step 7.4 Theme Toggle
- * Cycles through: light -> dark -> system -> light
+ * Cycles through: light -> gentle -> dark -> light (system theme removed permanently)
  * Accessible, keyboard navigable, with proper tooltip / aria label.
  */
 export const ThemeToggle = ({ className = '', variant = 'outline' }) => {
-  const { theme, resolvedTheme, setTheme } = usePreferences();
+  const { theme, setTheme } = usePreferences();
   const buttonRef = useRef(null);
 
   const cycleTheme = (e) => {
     let nextTheme;
     if (theme === 'light') {
+      nextTheme = 'gentle';
+    } else if (theme === 'gentle') {
       nextTheme = 'dark';
-    } else if (theme === 'dark') {
-      nextTheme = 'system';
     } else {
       nextTheme = 'light';
     }
@@ -77,17 +77,17 @@ export const ThemeToggle = ({ className = '', variant = 'outline' }) => {
   };
 
   const getIcon = () => {
-    if (theme === 'system') {
-      return <Laptop className="w-4 h-4 text-fg-2" />;
+    if (theme === 'gentle') {
+      return <Moon className="w-4 h-4 text-sky-400" />;
     }
-    if (resolvedTheme === 'dark') {
-      return <Moon className="w-4 h-4 text-accent" />;
+    if (theme === 'dark') {
+      return <Moon className="w-4 h-4 text-accent fill-current" />;
     }
     return <Sun className="w-4 h-4 text-amber-500" />;
   };
 
   const getLabel = () => {
-    if (theme === 'system') return 'Theme: System';
+    if (theme === 'gentle') return 'Theme: Gentle';
     if (theme === 'dark') return 'Theme: Dark';
     return 'Theme: Light';
   };

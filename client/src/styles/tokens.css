@@ -103,7 +103,8 @@
   --elevation-3: 0 24px 56px -16px rgb(33 42 49 / 0.22), 0 0 0 1px var(--line-default);
 }
 
-[data-theme="dark"] {
+/* Gentle Theme (formerly Dark) — Calm, slate-tinted dark aesthetic */
+[data-theme="gentle"] {
   color-scheme: dark;
 
   --bg-app:        #182026;
@@ -140,9 +141,55 @@
   --chart-1: #3E97B0; --chart-2: #1FB783; --chart-3: #E8A026;
   --chart-4: #748D92; --chart-5: #D3D9D4; --chart-6: #909EA1;
 
-  /* Elevation (Dark) */
+  /* Elevation (Gentle) */
   --elevation-0: none;
   --elevation-1: none;
   --elevation-2: 0 8px 24px -8px rgb(0 0 0 / 0.60), 0 0 0 1px var(--line-default);
   --elevation-3: 0 24px 56px -16px rgb(0 0 0 / 0.70), 0 0 0 1px var(--line-default);
 }
+
+/* Dark Theme — Deep Midnight Obsidian Pitch Dark */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-app:        #080B0D;              /* Deep ink obsidian black */
+  --bg-surface:    #11161A;              /* Charcoal obsidian card elevation */
+  --bg-sidebar:    #06080A;              /* Pitch black sidebar */
+  --bg-subtle:     #171E24;              /* Deep slate mineral wash for wells/chips */
+  --bg-hover:      #1D262D;              /* Interactive hover elevation */
+  --bg-pressed:    #243039;
+  --bg-selected:   rgb(31 162 193 / 0.22);
+  --bg-scrim:      rgb(0 0 0 / 0.85);
+
+  --fg-primary:    #FFFFFF;              /* >18:1 contrast on surface — ultra crisp */
+  --fg-secondary:  #CBD5D5;              /* >12:1 contrast */
+  --fg-tertiary:   #88989B;              /* >6:1 contrast */
+  --fg-disabled:   #55686B;
+  --fg-on-accent:  #FFFFFF;
+  --fg-link:       #4EB7D4;
+
+  --line-subtle:   #182026;
+  --line-default:  #222D34;
+  --line-strong:   #313F48;
+  --line-focus:    #38B3D6;
+
+  --accent:        #1FA2C1;              /* Luminous Cosmic Cyan/Teal */
+  --accent-hover:  #28B6D8;
+  --accent-press:  #1887A1;
+  --accent-tint:   rgb(31 162 193 / 0.18);
+  --accent-line:   rgb(56 179 214 / 0.45);
+
+  --ok-bg: rgb(16 185 129 / 0.14);  --ok-line: rgb(16 185 129 / 0.42);  --ok-fg: #34D399;  --ok-solid: #10B981;
+  --warn-bg: rgb(245 158 11 / 0.14); --warn-line: rgb(245 158 11 / 0.42); --warn-fg: #FBBF24; --warn-solid: #F59E0B;
+  --bad-bg: rgb(239 68 68 / 0.16);  --bad-line: rgb(239 68 68 / 0.45);  --bad-fg: #F87171;  --bad-solid: #EF4444;
+
+  --chart-1: #38B3D6; --chart-2: #34D399; --chart-3: #FBBF24;
+  --chart-4: #748D92; --chart-5: #CBD5D5; --chart-6: #88989B;
+
+  /* Elevation (Dark) */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgb(0 0 0 / 0.70);
+  --elevation-2: 0 8px 24px -6px rgb(0 0 0 / 0.85), 0 0 0 1px var(--line-default);
+  --elevation-3: 0 24px 56px -12px rgb(0 0 0 / 0.95), 0 0 0 1px var(--line-default);
+}
+

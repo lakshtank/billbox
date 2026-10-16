@@ -1,19 +1,21 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 
 const ThemeContext = createContext({
-  theme: 'system',
+  theme: 'light',
   resolvedTheme: 'light',
   setTheme: () => {},
 });
 
 export const ThemeProvider = ({
   children,
-  defaultTheme = 'system',
+  defaultTheme = 'light',
   storageKey = 'billbox.theme',
 }) => {
   const [theme, setThemeState] = useState(() => {
     try {
-      return localStorage.getItem(storageKey) || defaultTheme;
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'gentle') return saved;
+      return 'light'; // Default theme for all users, system theme permanently removed
     } catch {
       return defaultTheme;
     }
@@ -22,22 +24,18 @@ export const ThemeProvider = ({
   const [resolvedTheme, setResolvedTheme] = useState(() => {
     if (typeof window === 'undefined') return 'light';
     if (theme === 'dark') return 'dark';
-    if (theme === 'light') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (theme === 'gentle') return 'gentle';
+    return 'light';
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const applyTheme = () => {
-      let active = theme;
-      if (theme === 'system') {
-        active = mediaQuery.matches ? 'dark' : 'light';
-      }
+      const active = theme === 'dark' || theme === 'gentle' ? theme : 'light';
       setResolvedTheme(active);
       root.dataset.theme = active;
-      if (active === 'dark') {
+      if (active === 'dark' || active === 'gentle') {
         root.classList.add('dark');
       } else {
         root.classList.remove('dark');
@@ -45,24 +43,16 @@ export const ThemeProvider = ({
     };
 
     applyTheme();
-
-    const handler = () => {
-      if (theme === 'system') {
-        applyTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
   }, [theme]);
 
   const setTheme = useCallback((newTheme) => {
+    const validTheme = newTheme === 'dark' || newTheme === 'gentle' ? newTheme : 'light';
     try {
-      localStorage.setItem(storageKey, newTheme);
+      localStorage.setItem(storageKey, validTheme);
     } catch (e) {
       console.warn('Failed to save theme to localStorage:', e);
     }
-    setThemeState(newTheme);
+    setThemeState(validTheme);
   }, [storageKey]);
 
   const value = useMemo(
@@ -83,3 +73,4 @@ export const ThemeProvider = ({
 
 export const useTheme = () => useContext(ThemeContext);
 export default ThemeProvider;
+

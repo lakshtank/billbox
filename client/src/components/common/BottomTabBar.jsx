@@ -16,7 +16,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  Laptop,
   Command,
 } from 'lucide-react';
 import { useRemindersQuery } from '../../queries/useRemindersQuery';
@@ -325,25 +324,25 @@ export function BottomTabBar() {
                   </button>
                   <button
                     type="button"
+                    onClick={() => setTheme('gentle')}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-1 rounded-[4px] text-xs font-medium transition-colors cursor-pointer',
+                      theme === 'gentle' ? 'bg-accent text-on-accent' : 'text-fg-2 hover:text-fg'
+                    )}
+                  >
+                    <Moon className="w-3.5 h-3.5" />
+                    <span>Gentle</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setTheme('dark')}
                     className={cn(
                       'flex items-center gap-1 px-2 py-1 rounded-[4px] text-xs font-medium transition-colors cursor-pointer',
                       theme === 'dark' ? 'bg-accent text-on-accent' : 'text-fg-2 hover:text-fg'
                     )}
                   >
-                    <Moon className="w-3.5 h-3.5" />
+                    <Moon className="w-3.5 h-3.5 fill-current" />
                     <span>Dark</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTheme('system')}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-1 rounded-[4px] text-xs font-medium transition-colors cursor-pointer',
-                      theme === 'system' ? 'bg-accent text-on-accent' : 'text-fg-2 hover:text-fg'
-                    )}
-                  >
-                    <Laptop className="w-3.5 h-3.5" />
-                    <span>System</span>
                   </button>
                 </div>
               </div>
