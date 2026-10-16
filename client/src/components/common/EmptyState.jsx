@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
-import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { Button } from '@/components/ui/button';
 
 /**
  * Step 6: EmptyState
@@ -15,7 +15,7 @@ const EmptyState = ({
   actionLabel,
   onAction,
   icon: CustomIcon,
-  useShimmer = false,
+  _useShimmer,
 }) => {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center border border-line bg-surface rounded-lg">
@@ -36,24 +36,15 @@ const EmptyState = ({
       </p>
 
       {actionLabel && onAction && (
-        useShimmer ? (
-          <ShimmerButton
-            onClick={onAction}
-            className="h-9 px-4 text-xs font-semibold rounded-[8px]"
-            background="var(--accent)"
-            shimmerColor="#ffffff"
-          >
-            {actionLabel}
-          </ShimmerButton>
-        ) : (
-          <button
-            type="button"
-            onClick={onAction}
-            className="btn-primary inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer"
-          >
-            {actionLabel}
-          </button>
-        )
+        <Button
+          type="button"
+          onClick={onAction}
+          variant="primary"
+          size="sm"
+          className="h-9 px-4 text-xs font-semibold rounded-[8px]"
+        >
+          {actionLabel}
+        </Button>
       )}
     </div>
   );
