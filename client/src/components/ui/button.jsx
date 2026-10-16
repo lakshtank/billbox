@@ -3,6 +3,8 @@ import { cva } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "cn";
 import { Slot } from "radix-ui";
+import * as m from "motion/react-m";
+import { spring } from "@/lib/motion";
 
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-colors duration-fast rounded-[8px] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed select-none [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -68,18 +70,20 @@ const Button = React.forwardRef(function Button(
   }
 
   return (
-    <button
+    <m.button
       ref={ref}
       data-slot="button"
       data-variant={variant}
       data-size={size}
       disabled={disabled || loading}
+      whileTap={disabled || loading ? undefined : { scale: 0.97 }}
+      transition={spring.snappy}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     >
       {loading && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
       {children}
-    </button>
+    </m.button>
   );
 });
 

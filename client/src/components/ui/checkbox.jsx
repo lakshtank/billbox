@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "cn";
-import { Check } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
+import * as m from "motion/react-m";
 
 function Checkbox({ className, ...props }) {
   return (
@@ -22,7 +22,19 @@ function Checkbox({ className, ...props }) {
           data-slot="checkbox-indicator"
           className="grid place-content-center text-current"
         >
-          <Check className="size-3 text-white stroke-[2.5]" />
+          <svg viewBox="0 0 16 16" className="size-3 text-white">
+            <m.path
+              d="M3.5 8.5l3 3 6-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            />
+          </svg>
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
     </div>
@@ -30,3 +42,4 @@ function Checkbox({ className, ...props }) {
 }
 
 export { Checkbox };
+export default Checkbox;
