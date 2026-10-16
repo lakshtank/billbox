@@ -589,10 +589,12 @@ export default function BatchReview() {
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 md:p-6 animate-in fade-in-0 duration-200"
           role="dialog"
           aria-modal="true"
+          data-lenis-prevent
         >
           <div
             className="bg-surface border border-line rounded-[16px] shadow-2xl w-full max-w-6xl h-[92vh] max-h-[900px] flex flex-col overflow-hidden text-fg font-sans"
             onClick={(e) => e.stopPropagation()}
+            data-lenis-prevent
           >
             {/* Modal Header */}
             <div className="h-14 px-5 border-b border-line flex items-center justify-between gap-3 bg-surface shrink-0">
@@ -684,8 +686,15 @@ export default function BatchReview() {
               </div>
 
               {/* Right Pane: Editable Fields & Line Items */}
-              <div className="w-full lg:w-1/2 h-full overflow-y-auto p-5 sm:p-6 space-y-5 bg-surface flex flex-col justify-between">
-                <div className="space-y-5">
+              <div
+                className="w-full lg:w-1/2 h-full min-h-0 flex flex-col overflow-hidden bg-surface"
+                data-lenis-prevent
+              >
+                {/* Scrollable Form Content */}
+                <div
+                  className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 space-y-5"
+                  data-lenis-prevent
+                >
                   {/* Core Receipt Fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     {/* Merchant Name */}
@@ -1025,8 +1034,8 @@ export default function BatchReview() {
                   </div>
                 </div>
 
-                {/* Sticky Modal Bottom Controls */}
-                <div className="sticky bottom-0 pt-4 pb-1 border-t border-line bg-surface flex items-center justify-between gap-3">
+                {/* Docked Modal Bottom Controls */}
+                <div className="p-4 border-t border-line bg-surface flex items-center justify-between gap-3 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
@@ -1067,8 +1076,14 @@ export default function BatchReview() {
 
       {/* 5. Standalone Document Viewer Modal */}
       {viewingFile && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface rounded-[16px] max-w-4xl w-full h-[85vh] border border-line shadow-2xl flex flex-col overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          data-lenis-prevent
+        >
+          <div
+            className="bg-surface rounded-[16px] max-w-4xl w-full h-[85vh] border border-line shadow-2xl flex flex-col overflow-hidden"
+            data-lenis-prevent
+          >
             <div className="flex items-center justify-between px-4 py-3 border-b border-line bg-surface-subtle">
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="size-4 text-fg-muted" />

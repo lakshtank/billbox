@@ -20,8 +20,8 @@ export function SmoothScroll({ children }) {
   const [lenisState, setLenisState] = React.useState(null);
 
   const isSmoothDisabled = React.useMemo(() => {
-    // Disable smooth scrolling on virtualized batch review table if present
-    return location.pathname.includes('/batch-review');
+    // Disable smooth scrolling on virtualized batch review table and batch modal if present
+    return location.pathname.includes('/batch-review') || location.pathname.includes('/batch');
   }, [location.pathname]);
 
   React.useEffect(() => {
