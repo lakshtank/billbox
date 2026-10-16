@@ -550,7 +550,7 @@ export function ReceiptDetail() {
   const isTrueMismatch = receipt.needsReview && products.length > 0 && !matchesGrand && !matchesSub && !matchesReconciled;
 
   return (
-    <div className="space-y-4 w-full font-sans pb-16 relative">
+    <div className={cn("space-y-4 w-full font-sans relative", isEditing && "pb-16")}>
       {/* Step 14.2: 2px accent scroll-linked progress line */}
       <m.div
         style={{ scaleX: smoothProgress, transformOrigin: 'left' }}
@@ -789,7 +789,7 @@ export function ReceiptDetail() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.18, ease: ease.out }}
               className={cn(
-                "lg:col-span-6 lg:sticky lg:top-4 h-[500px] lg:h-[calc(100vh-140px)] rounded-[12px] overflow-hidden border border-line bg-surface",
+                "lg:col-span-6 lg:sticky lg:top-4 h-[460px] lg:h-[min(560px,calc(100vh-160px))] rounded-[12px] overflow-hidden border border-line bg-surface",
                 mobileReviewTab !== 'document' && "hidden lg:block"
               )}
             >
