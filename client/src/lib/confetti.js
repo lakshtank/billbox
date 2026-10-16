@@ -19,8 +19,10 @@ export async function firstReceiptMoment(el) {
       originY = (r.top + r.height / 2) / window.innerHeight;
     }
 
+    const isMobile = window.innerWidth < 768;
+
     confetti({
-      particleCount: 70,
+      particleCount: isMobile ? 40 : 70,
       spread: 60,
       startVelocity: 28,
       ticks: 140,

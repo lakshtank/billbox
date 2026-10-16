@@ -165,6 +165,8 @@ export function SpendingChart({
   }, [seriesVisibility.total]);
 
   const isAnimationActive = tier === 'full' && (hasRevealed || inView);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const chartAnimationDuration = isMobile ? 500 : 800;
 
   return (
     <div
@@ -313,7 +315,7 @@ export function SpendingChart({
                 strokeWidth={1.5}
                 fill="url(#fillSpend)"
                 isAnimationActive={isAnimationActive}
-                animationDuration={800}
+                animationDuration={chartAnimationDuration}
                 animationEasing="ease-out"
                 dot={false}
                 style={{

@@ -45,6 +45,7 @@ import { formatDate, formatCurrency, formatDateForInput, getCurrencySymbol } fro
 import { getAuthenticatedFileUrl } from '../utils/fileUrl';
 import { useViewTransitionNavigate } from '@/context/ViewTransitionContext';
 import { DEFAULT_CATEGORIES } from '../constants/category.constants';
+import { cn } from '@/lib/utils';
 import { spring, ease } from '@/lib/motion';
 
 const sectionVariants = {
@@ -79,6 +80,17 @@ export function ReceiptDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFullFormModal, setShowFullFormModal] = useState(false);
   const [copiedInvoice, setCopiedInvoice] = useState(false);
+
+  // Step 16.3: Mobile review tabs: Document | Details (< lg)
+  const [mobileReviewTab, setMobileReviewTab] = useState('details');
+  const [tabDirection, setTabDirection] = useState(1);
+
+  const handleTabChange = useCallback((nextTab) => {
+    if (nextTab === mobileReviewTab) return;
+    const tabOrder = { document: 0, details: 1 };
+    setTabDirection((tabOrder[nextTab] ?? 0) > (tabOrder[mobileReviewTab] ?? 0) ? 1 : -1);
+    setMobileReviewTab(nextTab);
+  }, [mobileReviewTab]);
 
   const { data, isLoading, isError } = useReceiptQuery(id);
   const { data: userCategories = [] } = useCategoriesQuery();
@@ -740,24 +752,64 @@ export function ReceiptDetail() {
 
       {/* 2. Main Workspace: Two-pane on desktop when document exists, otherwise full width */}
       {hasDocument ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Left Pane: Document Viewer with layoutId="doc-thumb" morph */}
-          <m.div
-            layoutId="doc-thumb"
-            className="lg:col-span-6 lg:sticky lg:top-4 h-[500px] lg:h-[calc(100vh-140px)] rounded-[12px] overflow-hidden border border-line bg-surface"
-          >
-            <DocumentViewer
-              url={documentUrl}
-              fileUrl={documentUrl}
-              fileData={receipt.fileData}
-              mimeType={receipt.mimeType}
-              fileName={`${vendorName} Receipt`}
-              fileType={receipt.fileType}
-            />
-          </m.div>
+        <div className="space-y-4">
+          {/* Step 16.3: Mobile review tabs: Document | Details (< lg) */}
+          <div className="lg:hidden flex items-center p-1 bg-subtle border border-line rounded-[8px] select-none">
+            <button
+              type="button"
+              onClick={() => handleTabChange('details')}
+              className={cn(
+                'flex-1 py-1.5 px-3 text-xs font-medium rounded-[6px] transition-all cursor-pointer text-center',
+                mobileReviewTab === 'details'
+                  ? 'bg-surface text-fg font-semibold shadow-xs'
+                  : 'text-fg-3 hover:text-fg'
+              )}
+            >
+              Details
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTabChange('document')}
+              className={cn(
+                'flex-1 py-1.5 px-3 text-xs font-medium rounded-[6px] transition-all cursor-pointer text-center',
+                mobileReviewTab === 'document'
+                  ? 'bg-surface text-fg font-semibold shadow-xs'
+                  : 'text-fg-3 hover:text-fg'
+              )}
+            >
+              Document
+            </button>
+          </div>
 
-          {/* Right Pane: Staggered sections entrance with 40ms stagger & inline edit swap */}
-          <div className="lg:col-span-6 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Left Pane: Document Viewer with layoutId="doc-thumb" morph */}
+            <m.div
+              layoutId="doc-thumb"
+              initial={{ opacity: 0, x: tabDirection === 1 ? -16 : 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.18, ease: ease.out }}
+              className={cn(
+                "lg:col-span-6 lg:sticky lg:top-4 h-[500px] lg:h-[calc(100vh-140px)] rounded-[12px] overflow-hidden border border-line bg-surface",
+                mobileReviewTab !== 'document' && "hidden lg:block"
+              )}
+            >
+              <DocumentViewer
+                url={documentUrl}
+                fileUrl={documentUrl}
+                fileData={receipt.fileData}
+                mimeType={receipt.mimeType}
+                fileName={`${vendorName} Receipt`}
+                fileType={receipt.fileType}
+              />
+            </m.div>
+
+            {/* Right Pane: Staggered sections entrance with 40ms stagger & inline edit swap */}
+            <m.div
+              initial={{ opacity: 0, x: tabDirection === 1 ? 16 : -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.18, ease: ease.out }}
+              className={cn("lg:col-span-6 space-y-4", mobileReviewTab !== 'details' && "hidden lg:block")}
+            >
             {/* Section 0: Grand Total & Key Facts Card */}
             <m.div
               custom={0}
@@ -1325,8 +1377,9 @@ export function ReceiptDetail() {
                 )}
               </div>
             </m.div>
-          </div>
+          </m.div>
         </div>
+      </div>
       ) : (
         /* Full-Width Workspace when no document file attached */
         <div className="space-y-5 w-full">

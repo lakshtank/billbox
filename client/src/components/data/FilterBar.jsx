@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/popover';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ResponsiveModal } from '@/components/ui/responsive-modal';
 import * as m from 'motion/react-m';
 import { spring } from '@/lib/motion';
 
@@ -51,6 +52,11 @@ export function FilterBar({
   className,
 }) {
   const { viewMode, setViewMode } = usePreferences();
+  const [mobileFilterOpen, setMobileFilterOpen] = React.useState(false);
+  const activeFilterCount =
+    (selectedCategories.length || 0) +
+    (warrantyStatus && warrantyStatus !== 'all' ? 1 : 0) +
+    (status && status !== 'all' ? 1 : 0);
 
   return (
     <div className={cn('flex flex-col gap-2.5 w-full', className)}>
@@ -68,6 +74,26 @@ export function FilterBar({
               placeholder="Search..."
             />
           </div>
+
+          {/* Step 16.3: Mobile Filter Sheet Trigger (< sm) */}
+          <Button
+            type="button"
+            variant={hasActiveFilters ? 'default' : 'secondary'}
+            size="sm"
+            onClick={() => setMobileFilterOpen(true)}
+            className={cn(
+              'sm:hidden h-9 text-xs gap-1.5 cursor-pointer',
+              hasActiveFilters && 'bg-accent text-on-accent'
+            )}
+          >
+            <Filter className="size-3.5" />
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="rounded-full bg-on-accent/20 px-1.5 py-0.2 text-[10px] font-semibold tnum">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
 
           {/* Select Mode Toggle Button (near left side of list) */}
           {onToggleSelectMode && (
@@ -101,7 +127,8 @@ export function FilterBar({
             </Button>
           )}
 
-          {/* Category Filter Popover */}
+          <div className="hidden sm:flex items-center gap-2">
+            {/* Category Filter Popover */}
           {categories.length > 0 && (
             <Popover>
               <PopoverTrigger asChild>
@@ -228,6 +255,7 @@ export function FilterBar({
               </PopoverContent>
             </Popover>
           )}
+          </div>
 
           {/* Reset Filters Button */}
           {hasActiveFilters && (
@@ -320,6 +348,128 @@ export function FilterBar({
       <div className="sr-only" aria-live="polite">
         {hasActiveFilters && <span>Active filters:</span>}
       </div>
+
+      {/* Step 16.3: Mobile Filters Vaul Sheet (snap points [0.5, 1], sticky Apply) */}
+      <ResponsiveModal
+        open={mobileFilterOpen}
+        onOpenChange={setMobileFilterOpen}
+        title="Filter & Refine"
+        description="Filter by category, warranty status, or view mode"
+        snapPoints={[0.5, 1]}
+      >
+        <div className="flex flex-col gap-4 py-2 font-sans text-left">
+          {/* Categories */}
+          {categories.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-fg-3 uppercase tracking-wider block">
+                Category
+              </span>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-0.5">
+                {categories.map((cat) => {
+                  const isChecked = selectedCategories.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => onCategoryToggle?.(cat)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-xs border transition-colors capitalize cursor-pointer',
+                        isChecked
+                          ? 'bg-accent text-on-accent border-accent font-medium'
+                          : 'bg-subtle text-fg border-line hover:border-line-strong'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Warranty Status */}
+          {onWarrantyStatusChange && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-fg-3 uppercase tracking-wider block">
+                Warranty Status
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { value: 'all', label: 'All Warranties' },
+                  { value: 'active', label: 'Covered' },
+                  { value: 'expiring', label: 'Expiring Soon' },
+                  { value: 'expired', label: 'Expired' },
+                  { value: 'none', label: 'No Warranty' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onWarrantyStatusChange(opt.value)}
+                    className={cn(
+                      'px-2.5 py-1.5 text-xs rounded-md border text-left transition-colors cursor-pointer',
+                      warrantyStatus === opt.value
+                        ? 'bg-accent/10 border-accent text-accent font-semibold'
+                        : 'border-line hover:bg-hover text-fg'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Status */}
+          {onStatusChange && statusOptions.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-fg-3 uppercase tracking-wider block">
+                Status
+              </span>
+              <div className="grid grid-cols-2 gap-1.5">
+                {statusOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onStatusChange(opt.value)}
+                    className={cn(
+                      'px-2.5 py-1.5 text-xs rounded-md border text-left transition-colors cursor-pointer',
+                      status === opt.value
+                        ? 'bg-accent/10 border-accent text-accent font-semibold'
+                        : 'border-line hover:bg-hover text-fg'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sticky Apply & Reset Actions at bottom */}
+          <div className="sticky bottom-0 bg-surface pt-3 border-t border-line-subtle flex items-center justify-between gap-3 mt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                onResetFilters?.();
+              }}
+              disabled={!hasActiveFilters}
+              className="text-xs text-fg-3 hover:text-fg"
+            >
+              Reset all
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setMobileFilterOpen(false)}
+              className="px-6 h-9 text-xs bg-accent text-on-accent hover:bg-accent-hover font-semibold cursor-pointer"
+            >
+              Apply filters
+            </Button>
+          </div>
+        </div>
+      </ResponsiveModal>
     </div>
   );
 }

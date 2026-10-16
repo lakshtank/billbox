@@ -95,7 +95,7 @@ export function BottomTabBar() {
         aria-label="Mobile Navigation"
         animate={{ y: hidden ? 'calc(100% + env(safe-area-inset-bottom))' : 0 }}
         transition={spring.soft}
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line pb-[env(safe-area-inset-bottom)] select-none font-sans"
+        className="tabbar md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line pb-[env(safe-area-inset-bottom)] select-none font-sans"
       >
         <div className="grid grid-cols-5 h-14 items-center px-1">
           {/* 1. Overview */}

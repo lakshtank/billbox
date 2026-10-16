@@ -595,6 +595,36 @@ export function Receipts() {
 
   const selectedCount = Object.keys(rowSelection).filter((k) => rowSelection[k]).length;
 
+  // Step 16.3: Mobile stacked row rendering
+  const renderMobileReceiptRow = useCallback((r) => {
+    const products = r.products || [];
+    const cat = products[0]?.category || r.category || 'General';
+    const amt = r.grandTotal != null ? r.grandTotal : (r.totalAmount != null ? r.totalAmount : 0);
+    const statusKey = r.needsReview
+      ? 'needs_review'
+      : r.status === 'archived'
+      ? 'expired'
+      : 'reconciled';
+    const vendorName = r.storeName?.trim() || 'Merchant';
+
+    return (
+      <div className="flex flex-col justify-center min-h-[56px] py-2.5 px-3 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-fg truncate">{vendorName}</span>
+          <span className="font-semibold text-fg tnum shrink-0">
+            <Money value={amt} currency={r.currency || 'INR'} />
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-1 text-xs text-fg-3">
+          <span className="truncate">
+            <DateCell value={r.purchaseDate || r.createdAt} /> · {cat}
+          </span>
+          <StatusBadge status={statusKey} className="shrink-0 scale-90 origin-right" />
+        </div>
+      </div>
+    );
+  }, []);
+
   // Bulk actions passed to DataTable
   const renderBulkActions = useCallback((selectedItems) => (
     <div className="flex items-center gap-2">
@@ -820,6 +850,7 @@ export function Receipts() {
           bulkActions={renderBulkActions}
           onClearSelection={() => setRowSelection({})}
           isSelectMode={isSelectMode}
+          renderMobileRow={renderMobileReceiptRow}
           emptyTitle={hasActiveFilters ? 'No matching receipts' : 'No receipts yet'}
           emptyDescription={
             hasActiveFilters

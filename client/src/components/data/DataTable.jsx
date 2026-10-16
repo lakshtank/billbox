@@ -65,6 +65,7 @@ export function DataTable({
   variant = 'seamless',
   isSelectMode = false,
   className,
+  renderMobileRow,
 }) {
   const { density: userDensity } = usePreferences();
   const density = userDensity || 'comfortable';
@@ -112,13 +113,15 @@ export function DataTable({
 
   const handleRowClick = (row, e) => {
     // Prevent navigation if user clicked checkbox, link, or action button
-    if (
-      e.target.closest('input[type="checkbox"]') ||
-      e.target.closest('button') ||
-      e.target.closest('a') ||
-      e.target.closest('[role="menuitem"]')
-    ) {
-      return;
+    if (e?.target) {
+      if (
+        e.target.closest('input[type="checkbox"]') ||
+        e.target.closest('button') ||
+        e.target.closest('a') ||
+        e.target.closest('[role="menuitem"]')
+      ) {
+        return;
+      }
     }
     if (isSelectMode) {
       row.toggleSelected();
@@ -207,7 +210,50 @@ export function DataTable({
             : 'border-b border-line-subtle'
         )}
       >
-        <div className="w-full overflow-x-auto overflow-y-hidden no-scrollbar">
+        {/* Step 16.3: Mobile stacked list rows (< sm) */}
+        {renderMobileRow && (
+          <div className="sm:hidden divide-y divide-line-subtle border-b border-line-subtle">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, rIdx) => (
+                <div key={`skel-m-${rIdx}`} className="h-14 px-3 flex flex-col justify-center gap-1.5">
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              ))
+            ) : rows.length === 0 ? (
+              <div className="py-8 text-center">
+                <EmptyState title={emptyTitle} description={emptyDescription} />
+              </div>
+            ) : (
+              rows.map((row, index) => {
+                const isSelected = row.getIsSelected();
+                const rowKey = row.original?._id || row.original?.id || row.id;
+                return (
+                  <m.div
+                    key={`mobile-${rowKey}`}
+                    layout="position"
+                    variants={variants.fade}
+                    initial={shouldStagger && index < 12 ? 'hidden' : false}
+                    animate="show"
+                    onClick={(e) => handleRowClick(row, e)}
+                    className={cn(
+                      'min-h-[56px] transition-colors duration-fast active:bg-hover/80 cursor-pointer',
+                      isSelected && 'bg-selected/60 border-l-2 border-l-accent'
+                    )}
+                  >
+                    {renderMobileRow(row.original, {
+                      isSelected,
+                      row,
+                      onRowClick: (e) => handleRowClick(row, e),
+                    })}
+                  </m.div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        <div className={cn("w-full overflow-x-auto overflow-y-hidden no-scrollbar", renderMobileRow && "hidden sm:block")}>
           {/* Step 14.3: 1px sentinel above sticky header */}
           <div ref={headerSentinelRef} className="h-px -mt-px pointer-events-none w-full" aria-hidden="true" />
           <LayoutGroup id="billbox-datatable-rows">

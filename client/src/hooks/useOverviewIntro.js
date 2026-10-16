@@ -35,19 +35,28 @@ export function useOverviewIntro(scopeRef, ready) {
         const panels = container.querySelectorAll('[data-intro="panel"]');
         const rows = container.querySelectorAll('[data-intro="row"]');
 
+        const isMobile = window.innerWidth < 768;
         const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-        if (headers.length) {
-          tl.from(headers, { y: 8, opacity: 0, duration: 0.35 });
-        }
-        if (kpis.length) {
-          tl.from(kpis, { y: 14, opacity: 0, duration: 0.45, stagger: 0.06 }, '-=0.15');
-        }
-        if (panels.length) {
-          tl.from(panels, { y: 16, opacity: 0, duration: 0.5, stagger: 0.08 }, '-=0.25');
-        }
-        if (rows.length) {
-          tl.from(rows, { x: -8, opacity: 0, duration: 0.3, stagger: 0.03 }, '-=0.3');
+        if (isMobile) {
+          // Step 16.4: Mobile shortened intro: KPIs stagger only, 500ms
+          if (kpis.length) {
+            tl.from(kpis, { y: 12, opacity: 0, duration: 0.5, stagger: 0.05 });
+          }
+        } else {
+          // Desktop full choreography (<900ms total)
+          if (headers.length) {
+            tl.from(headers, { y: 8, opacity: 0, duration: 0.35 });
+          }
+          if (kpis.length) {
+            tl.from(kpis, { y: 14, opacity: 0, duration: 0.45, stagger: 0.06 }, '-=0.15');
+          }
+          if (panels.length) {
+            tl.from(panels, { y: 16, opacity: 0, duration: 0.5, stagger: 0.08 }, '-=0.25');
+          }
+          if (rows.length) {
+            tl.from(rows, { x: -8, opacity: 0, duration: 0.3, stagger: 0.03 }, '-=0.3');
+          }
         }
       });
     });

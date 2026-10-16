@@ -94,7 +94,7 @@ export function KpiTile({
       onPointerMove={handlePointerMove}
       data-intro={dataIntro}
       className={cn(
-        'spotlight group relative flex flex-col justify-between h-full rounded-[12px] border border-line bg-surface p-4 shadow-2xs transition-colors duration-fast text-left select-none overflow-hidden',
+        'kpi spotlight group relative flex flex-col justify-between h-full rounded-[12px] border border-line bg-surface p-4 shadow-2xs transition-colors duration-fast text-left select-none overflow-hidden',
         isInteractive && 'hover:border-line-strong hover:bg-hover/50 cursor-pointer',
         className
       )}
@@ -112,7 +112,7 @@ export function KpiTile({
 
       {/* Main Metric Value */}
       <div className="my-2 flex items-baseline gap-2">
-        <div className="text-[28px] font-bold tracking-tight text-fg tnum leading-tight">
+        <div className="value text-[28px] font-bold tracking-tight text-fg tnum leading-tight">
           {renderValue()}
         </div>
         {unit && <span className="text-xs text-fg-3 font-normal">{unit}</span>}
@@ -121,7 +121,7 @@ export function KpiTile({
       {/* Delta Line / Footer */}
       <div className="mt-auto flex items-center justify-between gap-2 pt-1 border-t border-line-subtle text-[13px]">
         {delta !== undefined && delta !== null && delta !== '' ? (
-          <div className="flex items-center gap-1.5 line-clamp-1">
+          <div className="delta flex items-center gap-1.5 line-clamp-1">
             <span className={cn('inline-flex items-center font-medium tnum gap-0.5', deltaColor)}>
               <DeltaIcon className="size-3.5 shrink-0" />
               <span>{typeof delta === 'number' && delta > 0 ? `+${delta}%` : delta}</span>

@@ -184,3 +184,72 @@ thead::after {
   transition: opacity 180ms cubic-bezier(.2, 0, 0, 1);
 }
 
+/* ==========================================================================
+   Step 16: Mobile Responsiveness, Safe Area Insets & Container Queries
+   ========================================================================== */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-root {
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+}
+
+.tabbar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+main {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+/* iOS zooms inputs under 16px. Fix on mobile only */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+button, [role="button"], a {
+  touch-action: manipulation;
+}
+
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+
+.long-list > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 56px;
+}
+
+/* 16.5 Container queries for cards */
+.kpi {
+  container-type: inline-size;
+}
+
+@container (max-width: 180px) {
+  .kpi .delta {
+    display: none;
+  }
+  .kpi .value {
+    font-size: 24px;
+  }
+}
+
+/* Orientation: tab bar hides in landscape under 500px height */
+@media (max-height: 500px) and (orientation: landscape) {
+  .tabbar {
+    display: none !important;
+  }
+}
+
+

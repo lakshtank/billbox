@@ -72,6 +72,26 @@ const AppLayout = () => {
     preloadAllRoutes();
   }, []);
 
+  // Step 16.3: Scroll focused field into view on mobile virtual keyboard open
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const handleViewportResize = () => {
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === 'INPUT' ||
+          active.tagName === 'TEXTAREA' ||
+          active.tagName === 'SELECT')
+      ) {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    };
+    window.visualViewport.addEventListener('resize', handleViewportResize);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+    };
+  }, []);
+
   // Register global keyboard navigation (g+o, g+r, n, ?, etc.)
   useGlobalShortcuts();
 
@@ -85,7 +105,7 @@ const AppLayout = () => {
 
   if (isPublicPage) {
     return (
-      <div className="h-full w-full overflow-y-auto bg-surface">
+      <div className="app-root h-full w-full overflow-y-auto bg-surface">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/public/r/:publicToken" element={<PublicReceipt />} />
@@ -98,7 +118,7 @@ const AppLayout = () => {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-dvh h-full w-full overflow-y-auto bg-bg-app font-sans">
+      <div className="app-root min-h-dvh h-full w-full overflow-y-auto bg-bg-app font-sans">
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -115,7 +135,7 @@ const AppLayout = () => {
 
   return (
     <ScrollContainerContext.Provider value={mainRef}>
-      <div data-vaul-drawer-wrapper className="fixed inset-0 overflow-hidden flex bg-bg-app font-sans">
+      <div data-vaul-drawer-wrapper className="app-root fixed inset-0 overflow-hidden flex bg-bg-app font-sans">
         {/* Step 10.1 Desktop/Tablet Sidebar (Full Height Left Frame) */}
         {showSidebar && <Sidebar />}
 

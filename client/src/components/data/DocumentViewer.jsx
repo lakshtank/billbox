@@ -261,8 +261,8 @@ export function DocumentViewer({
           {resolvedFilename}
         </span>
 
-        {/* Toolbar Controls */}
-        <div className="flex items-center gap-1">
+        {/* Desktop Toolbar Controls */}
+        <div className="hidden sm:flex items-center gap-1">
           {!isPdf && activeUrl && (
             <>
               <Button
@@ -342,6 +342,22 @@ export function DocumentViewer({
             </>
           )}
         </div>
+
+        {/* Mobile Download/Open icon in top bar */}
+        {tabNavigationUrl && (
+          <div className="sm:hidden flex items-center gap-1">
+            <a
+              href={tabNavigationUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex size-7 items-center justify-center rounded-md text-fg-3 hover:text-fg hover:bg-hover transition-colors"
+              title="Open in new tab"
+              aria-label="Open in new tab"
+            >
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Main Document Content Canvas with Mouse Wheel Zoom & Drag Pan */}
@@ -356,6 +372,65 @@ export function DocumentViewer({
           !isPdf && currentScale > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
         )}
       >
+        {/* Step 16.3: Mobile Floating Pill Toolbar (< sm) */}
+        {!isPdf && activeUrl && (
+          <div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 rounded-full border border-line bg-surface/90 px-2.5 py-1 shadow-lg backdrop-blur-md">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 p-0 cursor-pointer"
+              onClick={handleZoomOut}
+              disabled={currentScale <= 0.5}
+              aria-label="Zoom out"
+            >
+              <ZoomOut className="size-3.5" />
+            </Button>
+            <span
+              className="text-[11px] font-mono text-fg-3 px-1 tnum w-11 text-center cursor-pointer"
+              onClick={handleResetZoom}
+            >
+              {Math.round(currentScale * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 p-0 cursor-pointer"
+              onClick={handleZoomIn}
+              disabled={currentScale >= 4}
+              aria-label="Zoom in"
+            >
+              <ZoomIn className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 p-0 cursor-pointer"
+              onClick={handleResetZoom}
+              aria-label="Fit to screen"
+            >
+              <Maximize2 className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 p-0 cursor-pointer"
+              onClick={handleRotate}
+              aria-label="Rotate"
+            >
+              <RotateCw className="size-3.5" />
+            </Button>
+            {tabNavigationUrl && (
+              <a
+                href={tabNavigationUrl}
+                download={resolvedFilename}
+                className="inline-flex size-7 items-center justify-center rounded-md text-fg-3 hover:text-fg"
+                aria-label="Download"
+              >
+                <Download className="size-3.5" />
+              </a>
+            )}
+          </div>
+        )}
         {!activeUrl ? (
           <div className="flex flex-col items-center justify-center gap-2 text-center p-8 text-fg-3">
             <FileText className="size-8 text-fg-3" />
