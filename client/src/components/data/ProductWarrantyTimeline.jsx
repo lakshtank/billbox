@@ -20,29 +20,7 @@ export function ProductWarrantyTimeline({
   className = '',
 }) {
   const tier = useMotionTier();
-
-  // "once per visit" guard using sessionStorage
-  const [hasPlayed, setHasPlayed] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    try {
-      return Boolean(sessionStorage.getItem(`billbox_timeline_${productId}`));
-    } catch {
-      return false;
-    }
-  });
-
-  const shouldAnimate = tier !== 'none' && !hasPlayed;
-
-  useEffect(() => {
-    if (shouldAnimate && productId) {
-      try {
-        sessionStorage.setItem(`billbox_timeline_${productId}`, '1');
-      } catch {
-        // storage disabled or quota exceeded
-      }
-      setHasPlayed(true);
-    }
-  }, [shouldAnimate, productId]);
+  const shouldAnimate = tier !== 'none';
 
   const {
     daysLeft,
@@ -66,21 +44,28 @@ export function ProductWarrantyTimeline({
     return 'bg-accent';
   }, [statusKey]);
 
-  // Rolling start value for days left
+  const clampedElapsed = Math.min(100, Math.max(0, elapsedPercent));
   const targetDays = daysLeft != null ? Math.abs(daysLeft) : 0;
-  const initialRoll = shouldAnimate && targetDays > 0 ? Math.ceil(targetDays * 1.25) + 3 : targetDays;
-  const [animatedDays, setAnimatedDays] = useState(initialRoll);
+  const initialRoll = targetDays > 0 ? Math.ceil(targetDays * 1.3) + 4 : 0;
+
+  // Animate numbers from initial roll / 0 to target on every mount or product change
+  const [animatedDays, setAnimatedDays] = useState(shouldAnimate ? initialRoll : targetDays);
+  const [animatedElapsed, setAnimatedElapsed] = useState(shouldAnimate ? 0 : clampedElapsed);
 
   useEffect(() => {
     if (shouldAnimate) {
-      const raf = requestAnimationFrame(() => setAnimatedDays(targetDays));
-      return () => cancelAnimationFrame(raf);
+      setAnimatedDays(initialRoll);
+      setAnimatedElapsed(0);
+      const timer = setTimeout(() => {
+        setAnimatedDays(targetDays);
+        setAnimatedElapsed(clampedElapsed);
+      }, 50);
+      return () => clearTimeout(timer);
     } else {
       setAnimatedDays(targetDays);
+      setAnimatedElapsed(clampedElapsed);
     }
-  }, [shouldAnimate, targetDays]);
-
-  const clampedElapsed = Math.min(100, Math.max(0, elapsedPercent));
+  }, [shouldAnimate, targetDays, clampedElapsed, initialRoll, productId]);
 
   return (
     <div className={`p-5 rounded-[12px] bg-surface border border-line space-y-4 shadow-2xs font-sans select-none ${className}`}>
@@ -131,7 +116,7 @@ export function ProductWarrantyTimeline({
           <span className="font-mono text-sm font-semibold text-fg tnum">
             {tier !== 'none' ? (
               <NumberFlow
-                value={clampedElapsed}
+                value={animatedElapsed}
                 suffix="%"
                 transformTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
                 spinTiming={{ duration: 700, easing: 'cubic-bezier(.16, 1, .3, 1)' }}
@@ -149,6 +134,7 @@ export function ProductWarrantyTimeline({
           {/* Base track line + Solid Active drawing bar */}
           <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-subtle overflow-hidden">
             <m.div
+              key={`bar-${productId}-${clampedElapsed}`}
               className={`h-full rounded-full ${dotBg}`}
               style={{
                 transformOrigin: 'left',
@@ -157,7 +143,7 @@ export function ProductWarrantyTimeline({
               }}
               initial={shouldAnimate ? { scaleX: 0 } : { scaleX: 1 }}
               animate={{ scaleX: 1 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
 
@@ -170,6 +156,7 @@ export function ProductWarrantyTimeline({
             style={{ left: `${clampedElapsed}%` }}
           >
             <m.div
+              key={`today-${productId}-${clampedElapsed}`}
               className="flex flex-col items-center"
               initial={shouldAnimate ? { y: -24, opacity: 0 } : { y: 0, opacity: 1 }}
               animate={{ y: 0, opacity: 1 }}
@@ -186,9 +173,9 @@ export function ProductWarrantyTimeline({
                 <div className={`size-1.5 rounded-full ${dotBg}`} />
               </div>
               <m.span
-                initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: shouldAnimate ? 0.35 : 0, duration: 0.18 }}
+                initial={shouldAnimate ? { opacity: 0, y: -4 } : { opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: shouldAnimate ? 0.35 : 0, duration: 0.2 }}
                 className="absolute -top-5 text-[10px] font-semibold text-fg bg-surface/90 border border-line-subtle px-1.5 py-0.2 rounded-full shadow-2xs whitespace-nowrap"
               >
                 Today
@@ -206,9 +193,10 @@ export function ProductWarrantyTimeline({
 
         {/* Milestone Labels with 140ms fade-in */}
         <m.div
+          key={`labels-${productId}`}
           initial={shouldAnimate ? { opacity: 0 } : { opacity: 1 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.14, delay: shouldAnimate ? 0.25 : 0 }}
+          transition={{ duration: 0.2, delay: shouldAnimate ? 0.25 : 0 }}
           className="flex items-center justify-between text-[11px] font-mono text-fg-3 pt-1"
         >
           <span>Purchased: {purchaseFormatted}</span>
