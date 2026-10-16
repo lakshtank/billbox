@@ -24,6 +24,7 @@ import { Logo } from '../brand/Logo';
 import { usePreferences } from '../../context/PreferencesContext';
 import useAuth from '../../hooks/useAuth';
 import { useRemindersQuery } from '../../queries/useRemindersQuery';
+import { useReceiptsQuery } from '../../queries/useReceiptsQuery';
 import {
   Tooltip,
   TooltipTrigger,
@@ -66,20 +67,34 @@ export function Sidebar() {
     return items.filter((i) => i.daysRemaining > 0 && i.daysRemaining <= 30).length;
   }, [remindersData]);
 
-  const navItems = [
-    { to: '/', label: 'Overview', icon: LayoutDashboard, routeKey: 'dashboard' },
-    { to: '/receipts', label: 'Receipts', icon: ReceiptText, routeKey: 'receipts' },
-    { to: '/products', label: 'Products', icon: Package, routeKey: 'products' },
+  // Fetch receipts total for badge counter
+  const { data: receiptsData } = useReceiptsQuery({ limit: 1 });
+  const receiptsCount = receiptsData?.total ?? 0;
+
+  const navSections = [
     {
-      to: '/warranties',
-      label: 'Warranties',
-      icon: ShieldCheck,
-      hasDot: expiringCount > 0,
-      dotCount: expiringCount,
-      routeKey: 'warranties',
+      title: 'Vault',
+      items: [
+        { to: '/', label: 'Overview', icon: LayoutDashboard, routeKey: 'dashboard' },
+        { to: '/receipts', label: 'Receipts', icon: ReceiptText, routeKey: 'receipts', count: receiptsCount },
+        { to: '/products', label: 'Products', icon: Package, routeKey: 'products' },
+      ],
     },
-    { to: '/stores', label: 'Merchants', icon: Store, routeKey: 'stores' },
-    { to: '/reminders', label: 'Reminders', icon: Bell, routeKey: 'reminders' },
+    {
+      title: 'Manage',
+      items: [
+        {
+          to: '/warranties',
+          label: 'Warranties',
+          icon: ShieldCheck,
+          hasDot: expiringCount > 0,
+          dotCount: expiringCount,
+          routeKey: 'warranties',
+        },
+        { to: '/stores', label: 'Merchants', icon: Store, routeKey: 'stores' },
+        { to: '/reminders', label: 'Reminders', icon: Bell, routeKey: 'reminders' },
+      ],
+    },
   ];
 
   const handleOpenShortcuts = () => {
@@ -113,7 +128,7 @@ export function Sidebar() {
       {/* 10.2 Top Block: 56px (h-14) mark + wordmark & collapse button */}
       <div
         className={cn(
-          'h-14 shrink-0 flex items-center border-b border-line px-3',
+          'h-14 shrink-0 flex items-center border-b border-line px-3.5',
           sidebarCollapsed ? 'justify-center' : 'justify-between'
         )}
       >
@@ -123,11 +138,11 @@ export function Sidebar() {
               <button
                 type="button"
                 onClick={toggleSidebarCollapse}
-                className="relative group size-10 rounded-lg flex items-center justify-center hover:bg-hover transition-colors cursor-pointer"
+                className="relative group size-10 rounded-xl flex items-center justify-center hover:bg-hover transition-colors cursor-pointer"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <div className="transition-all duration-200 group-hover:scale-90 group-hover:opacity-0">
+                <div className="transition-all duration-200 group-hover:scale-90 group-hover:opacity-0 flex items-center justify-center">
                   <Logo size="md" showWordmark={false} />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 text-fg">
@@ -147,7 +162,7 @@ export function Sidebar() {
                 <button
                   type="button"
                   onClick={toggleSidebarCollapse}
-                  className="p-1.5 rounded-[6px] text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer shrink-0"
+                  className="p-1.5 rounded-[8px] text-fg-3 hover:text-fg hover:bg-hover border border-transparent hover:border-line/70 transition-all cursor-pointer shrink-0"
                   aria-label="Collapse sidebar"
                   title="Collapse sidebar"
                 >
@@ -163,78 +178,116 @@ export function Sidebar() {
       </div>
 
       {/* 10.2 & 4.1 Navigation Items with gliding layoutId="nav-active" */}
-      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const link = (
-            <NavLink
-              to={item.to}
-              end={item.to === '/'}
-              onMouseEnter={() => item.routeKey && prefetchRoute(item.routeKey)}
-              onTouchStart={() => item.routeKey && prefetchRoute(item.routeKey)}
-              onFocus={() => item.routeKey && prefetchRoute(item.routeKey)}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center h-10 rounded-[8px] text-sm font-medium transition-colors',
-                  sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-3 w-full',
-                  isActive ? 'text-accent font-semibold' : 'text-fg-2 hover:text-fg hover:bg-hover'
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <m.span
-                      layoutId="nav-active"
-                      className="absolute inset-0 rounded-[8px] bg-selected border border-accent/30 shadow-xs"
-                      transition={spring.snappy}
-                    />
-                  )}
-                  <div className="relative flex items-center justify-center shrink-0 w-5 h-5">
-                    <Icon
-                      className={cn(
-                        'w-[18px] h-[18px] shrink-0 transition-colors',
-                        isActive ? 'text-accent stroke-[2.25]' : 'text-fg-3 group-hover:text-fg'
+      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-4">
+        {navSections.map((section, sIdx) => (
+          <div key={section.title} className="space-y-1">
+            {!sidebarCollapsed && (
+              <div className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-fg-3/60 select-none">
+                {section.title}
+              </div>
+            )}
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              const link = (
+                <NavLink
+                  to={item.to}
+                  end={item.to === '/'}
+                  onMouseEnter={() => item.routeKey && prefetchRoute(item.routeKey)}
+                  onTouchStart={() => item.routeKey && prefetchRoute(item.routeKey)}
+                  onFocus={() => item.routeKey && prefetchRoute(item.routeKey)}
+                  className={({ isActive }) =>
+                    cn(
+                      'group relative flex items-center h-10 rounded-[10px] text-sm font-medium transition-all duration-150',
+                      sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-3 w-full',
+                      isActive
+                        ? 'text-accent font-semibold'
+                        : 'text-fg-2 hover:text-fg hover:bg-hover/80'
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <>
+                          <m.span
+                            layoutId="nav-active"
+                            className="absolute inset-0 rounded-[10px] bg-selected border border-accent/25 shadow-xs"
+                            transition={spring.snappy}
+                          />
+                          <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />
+                        </>
                       )}
-                    />
-                    {item.hasDot && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-warn-solid ring-2 ring-sidebar" />
-                    )}
-                  </div>
-                  <AnimatePresence initial={false}>
-                    {!sidebarCollapsed && (
-                      <m.span
-                        className="relative text-sm font-medium whitespace-nowrap truncate overflow-hidden"
-                        initial={{ opacity: 0, width: 0, x: -6 }}
-                        animate={{ opacity: 1, width: 'auto', x: 0 }}
-                        exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
-                        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                      >
-                        {item.label}
-                      </m.span>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
-            </NavLink>
-          );
+                      <div className="relative flex items-center justify-center shrink-0 w-5 h-5">
+                        <Icon
+                          className={cn(
+                            'w-[18px] h-[18px] shrink-0 transition-all duration-150',
+                            isActive
+                              ? 'text-accent stroke-[2.35] scale-105'
+                              : 'text-fg-3 group-hover:text-fg group-hover:scale-105'
+                          )}
+                        />
+                        {item.hasDot && (
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-warn-solid ring-2 ring-sidebar" />
+                        )}
+                      </div>
+                      <AnimatePresence initial={false}>
+                        {!sidebarCollapsed && (
+                          <m.div
+                            className="relative flex-1 flex items-center justify-between min-w-0 overflow-hidden"
+                            initial={{ opacity: 0, width: 0, x: -6 }}
+                            animate={{ opacity: 1, width: 'auto', x: 0 }}
+                            exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
+                            transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                          >
+                            <span className="truncate text-sm font-medium">
+                              {item.label}
+                            </span>
 
-          return (
-            <Tooltip key={item.to} disableHoverableContent={!sidebarCollapsed}>
-              <TooltipTrigger asChild>{link}</TooltipTrigger>
-              {sidebarCollapsed && (
-                <TooltipContent side="right">
-                  {item.label}
-                  {item.hasDot ? ` (${item.dotCount} expiring)` : ''}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          );
-        })}
+                            {/* Live Count Pill */}
+                            {item.count !== undefined && item.count > 0 && (
+                              <span className="ml-auto text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-subtle text-fg-3 border border-line/60 tabular-nums">
+                                {item.count}
+                              </span>
+                            )}
+
+                            {/* Expiring items warning pill */}
+                            {item.hasDot && item.dotCount > 0 && (
+                              <span className="ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full bg-warn-tint text-warn-solid border border-warn-line/70 flex items-center gap-1 font-mono">
+                                <span className="w-1.5 h-1.5 rounded-full bg-warn-solid animate-pulse" />
+                                {item.dotCount}
+                              </span>
+                            )}
+                          </m.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  )}
+                </NavLink>
+              );
+
+              return (
+                <Tooltip key={item.to} disableHoverableContent={!sidebarCollapsed}>
+                  <TooltipTrigger asChild>{link}</TooltipTrigger>
+                  {sidebarCollapsed && (
+                    <TooltipContent side="right" className="font-sans flex items-center gap-1.5">
+                      <span>{item.label}</span>
+                      {item.count !== undefined && item.count > 0 && (
+                        <span className="text-[10px] font-mono text-fg-3">({item.count})</span>
+                      )}
+                      {item.hasDot ? (
+                        <span className="text-[10px] text-warn-solid font-medium">({item.dotCount} expiring)</span>
+                      ) : ''}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
+          </div>
+        ))}
 
         {/* Divider before Settings */}
-        <div className="pt-2 pb-1">
-          <hr className="border-t border-line" />
+        <div className="pt-1 pb-1">
+          <hr className="border-t border-line/70" />
         </div>
 
         {/* Settings Nav Item */}
@@ -247,26 +300,29 @@ export function Sidebar() {
               onFocus={() => prefetchRoute('settings')}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center h-10 rounded-[8px] text-sm font-medium transition-colors',
+                  'group relative flex items-center h-10 rounded-[10px] text-sm font-medium transition-all duration-150',
                   sidebarCollapsed ? 'justify-center px-0 w-full' : 'gap-3 px-3 w-full',
-                  isActive ? 'text-accent font-semibold' : 'text-fg-2 hover:text-fg hover:bg-hover'
+                  isActive ? 'text-accent font-semibold' : 'text-fg-2 hover:text-fg hover:bg-hover/80'
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <m.span
-                      layoutId="nav-active"
-                      className="absolute inset-0 rounded-[8px] bg-selected border border-accent/30 shadow-xs"
-                      transition={spring.snappy}
-                    />
+                    <>
+                      <m.span
+                        layoutId="nav-active"
+                        className="absolute inset-0 rounded-[10px] bg-selected border border-accent/25 shadow-xs"
+                        transition={spring.snappy}
+                      />
+                      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-accent shadow-[0_0_8px_var(--color-accent)]" />
+                    </>
                   )}
                   <div className="relative flex items-center justify-center shrink-0 w-5 h-5">
                     <Settings
                       className={cn(
-                        'w-[18px] h-[18px] shrink-0 transition-colors',
-                        isActive ? 'text-accent stroke-[2.25]' : 'text-fg-3 group-hover:text-fg'
+                        'w-[18px] h-[18px] shrink-0 transition-all duration-150',
+                        isActive ? 'text-accent stroke-[2.35] scale-105' : 'text-fg-3 group-hover:text-fg group-hover:scale-105'
                       )}
                     />
                   </div>
@@ -299,22 +355,57 @@ export function Sidebar() {
         })()}
       </nav>
 
+      {/* Vault Status Widget (when expanded) */}
+      <AnimatePresence initial={false}>
+        {!sidebarCollapsed && (
+          <m.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mx-3 mb-2 p-2.5 rounded-xl bg-subtle/80 border border-line/80 shadow-2xs overflow-hidden"
+          >
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="font-semibold text-fg flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-accent" />
+                Vault Status
+              </span>
+              <span className="text-[10px] font-mono text-good-fg font-semibold bg-good-tint/60 px-1.5 py-0.5 rounded border border-good-line/40">
+                Active
+              </span>
+            </div>
+            <div className="w-full bg-line/80 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-accent h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(20, receiptsCount * 2.5))}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-1.5 text-[10px] text-fg-3">
+              <span>{receiptsCount} receipts indexed</span>
+              <span className="font-medium text-accent">Auto-sync</span>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+
       {/* 10.2 Bottom User Row with Dropdown Menu */}
-      <div className="p-2 border-t border-line shrink-0">
+      <div className="p-2.5 border-t border-line shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
               className={cn(
-                'flex items-center w-full rounded-[8px] text-left hover:bg-hover transition-colors outline-none cursor-pointer',
+                'group flex items-center w-full rounded-xl text-left border border-transparent hover:border-line/80 hover:bg-hover/80 transition-all outline-none cursor-pointer',
                 sidebarCollapsed
                   ? 'justify-center p-2'
                   : 'gap-2.5 p-2'
               )}
               aria-label="User account menu"
             >
-              <div className="w-7 h-7 rounded-full bg-accent text-on-accent text-xs font-semibold flex items-center justify-center shrink-0">
-                {userInitial}
+              <div className="relative shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-accent to-accent-hover text-white text-xs font-bold flex items-center justify-center shadow-xs ring-2 ring-accent/20">
+                  {userInitial}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
               </div>
               <AnimatePresence initial={false}>
                 {!sidebarCollapsed && (
@@ -326,14 +417,19 @@ export function Sidebar() {
                     transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-fg truncate leading-tight">
-                        {userName}
-                      </p>
-                      <p className="text-[11px] text-fg-3 truncate leading-tight">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-semibold text-fg truncate leading-tight">
+                          {userName}
+                        </p>
+                        <span className="text-[9px] font-mono font-semibold px-1 py-0.2 rounded bg-accent/10 text-accent border border-accent/20 leading-none">
+                          PRO
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-fg-3 truncate leading-tight mt-0.5">
                         {userEmail}
                       </p>
                     </div>
-                    <ChevronsUpDown className="w-3.5 h-3.5 text-fg-3 shrink-0 ml-1" />
+                    <ChevronsUpDown className="w-3.5 h-3.5 text-fg-3 group-hover:text-fg shrink-0 ml-1 transition-colors" />
                   </m.div>
                 )}
               </AnimatePresence>
