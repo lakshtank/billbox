@@ -92,8 +92,10 @@ const uploadSingle = async (req, res) => {
 
     const { extracted, handwritingDetected } = await extractFields(rawText, wordData, userCategories, {
       forceOffline: isClientForceOffline,
-      skipLlm: isClientForceOffline || cloudAiFailed,
+      skipLlm: Boolean(isClientForceOffline),
     });
+
+    const usedEngine = isClientForceOffline ? 'local-offline' : (directResult ? 'cloud-ai' : 'cloud-ai-text');
 
     return sendSuccess(res, 200, isClientForceOffline ? 'Processed via Instant Offline Local Engine' : 'File uploaded and processed', {
       fileUrl,
@@ -103,7 +105,7 @@ const uploadSingle = async (req, res) => {
       extracted,
       ocrRaw: rawText,
       handwritingDetected: handwritingDetected || false,
-      engine: 'local-offline',
+      engine: usedEngine,
     });
   } catch (error) {
     console.error('Upload single error:', error);

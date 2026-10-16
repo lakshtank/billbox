@@ -225,7 +225,7 @@ export function ReceiptUploader({ onSuccess, onHandwritingDetected }) {
       {/* 2. Upload / Processing Area */}
       {uploadMutation.isPending ? (
         /* Full Original Receipt Scanning Layout (Left: Real Document Scan with Laser Beam, Right: Extraction Stages & Telemetry) */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[480px] items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[580px] lg:min-h-[740px] items-stretch">
           {/* LEFT PANE: Full Original Document with Scanning Laser Animation */}
           <div className="lg:col-span-7 flex flex-col rounded-[14px] border border-line bg-surface p-4 shadow-xs relative overflow-hidden">
             <div className="flex items-center justify-between pb-3 mb-2 border-b border-line-subtle shrink-0">
@@ -238,10 +238,10 @@ export function ReceiptUploader({ onSuccess, onHandwritingDetected }) {
               </span>
             </div>
 
-            {/* Document display area with layoutId="doc-thumb", luminous laser line and viewfinder corners */}
+            {/* Document display area with layoutId="doc-thumb", luminous laser line and viewfinder corners - full document shown with zero scrollbar */}
             <m.div
               layoutId="doc-thumb"
-              className="scan relative flex-1 min-h-[380px] sm:min-h-[460px] max-h-[580px] rounded-[10px] bg-subtle/50 border border-line-subtle flex items-center justify-center overflow-hidden"
+              className="scan relative flex-1 min-h-[500px] sm:min-h-[620px] lg:min-h-[700px] rounded-[10px] bg-subtle/50 border border-line-subtle flex items-center justify-center overflow-hidden"
             >
               {/* Luminous laser beam sweeping across the document */}
               <div className="laser-line" />
@@ -257,15 +257,16 @@ export function ReceiptUploader({ onSuccess, onHandwritingDetected }) {
 
               {isPdf && previewUrl ? (
                 <iframe
-                  src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                  src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
                   title="PDF Document"
-                  className="w-full h-full min-h-[460px] max-h-[560px] rounded-[8px] border-0 relative z-5 pointer-events-none bg-surface"
+                  scrolling="no"
+                  className="w-full h-full min-h-[500px] sm:min-h-[620px] lg:min-h-[700px] rounded-[8px] border-0 relative z-5 pointer-events-none bg-white overflow-hidden shadow-2xs"
                 />
               ) : previewUrl ? (
                 <img
                   src={previewUrl}
                   alt="Original Receipt Document"
-                  className="w-full h-full object-contain max-h-[560px] select-none p-2 relative z-5 filter drop-shadow-sm"
+                  className="w-full h-full object-contain max-h-[720px] select-none p-2 relative z-5 filter drop-shadow-sm"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center p-8 text-center relative z-5">

@@ -290,6 +290,22 @@ export function AddReceipt() {
               />
             </m.div>
           )}
+
+          {mode === 'review' && !ocrData && (
+            <m.div
+              key="review-empty"
+              className="w-full py-16 flex flex-col items-center justify-center text-center gap-3"
+            >
+              <p className="text-sm font-medium text-fg">No receipt details found.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleModeSwitch('scan')}
+              >
+                Scan receipt again
+              </Button>
+            </m.div>
+          )}
         </AnimatePresence>
       </div>
     </div>

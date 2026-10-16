@@ -157,6 +157,39 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
 
   const [items, setItems] = useState(initialItems);
 
+  // Synchronize state when ocrData arrives or changes
+  React.useEffect(() => {
+    if (ocrData?.extracted) {
+      const ext = ocrData.extracted;
+      if (ext.storeName?.value) setStoreName(ext.storeName.value);
+      if (ext.invoiceNumber?.value) setInvoiceNumber(ext.invoiceNumber.value);
+      if (ext.purchaseDate?.value) setPurchaseDate(formatDateForInput(ext.purchaseDate.value));
+      if (ext.currency?.value) setCurrency(ext.currency.value);
+      if (ext.subtotal?.value != null) setSubtotal(String(ext.subtotal.value));
+      if (ext.shippingAmount?.value != null) setShippingAmount(String(ext.shippingAmount.value));
+      if (ext.taxAmount?.value != null) setTaxAmount(String(ext.taxAmount.value));
+      if (ext.discountAmount?.value != null) setDiscountAmount(String(ext.discountAmount.value));
+      const grand = ext.grandTotal?.value != null ? ext.grandTotal.value : ext.totalAmount?.value;
+      if (grand != null) setGrandTotal(String(grand));
+      if (Array.isArray(ext.items) && ext.items.length > 0) {
+        setItems(
+          ext.items.map((item, idx) => ({
+            id: item.id || `item-${idx + 1}-${Date.now()}`,
+            productName: item.productName || '',
+            brand: item.brand || '',
+            category: item.category || 'General',
+            quantity: item.quantity || 1,
+            unitPrice: item.unitPrice != null ? String(item.unitPrice) : '',
+            lineTotal: item.lineTotal != null ? String(item.lineTotal) : '',
+            warrantyPeriodValue: item.warrantyPeriodValue != null ? String(item.warrantyPeriodValue) : '',
+            warrantyPeriodUnit: item.warrantyPeriodUnit || 'months',
+            confidence: item.confidence ?? 85,
+          }))
+        );
+      }
+    }
+  }, [ocrData]);
+
   // Auto-recalculate line total and update subtotal & grand total
   const handleItemChange = (id, field, value) => {
     setItems((prev) => {
@@ -474,11 +507,14 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
           </div>
 
           <m.div layoutId="doc-thumb" className="flex-1 min-h-0 rounded-[12px] overflow-hidden">
-            {documentSrc ? (
+            {documentSrc || fileUrl || fileData ? (
               <DocumentViewer
                 url={documentSrc}
-                filename={`${storeName || 'Receipt'} Document`}
+                fileUrl={fileUrl}
+                fileData={fileData}
+                mimeType={mimeType}
                 type={fileType}
+                filename={`${storeName || 'Receipt'} Document`}
                 className="h-full w-full shadow-xs"
               />
             ) : (

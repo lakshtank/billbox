@@ -117,16 +117,17 @@ const generateGeminiContentWithFallback = async (ai, contentPayload, config, ope
   const isServerless = Boolean(
     process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION
   );
-  const timeoutMs = 25000;
+  // Allow enough time (35s) for multimodal vision and high-token document extractions
+  const timeoutMs = 35000;
 
   const customModel = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : [];
   const models = Array.from(
     new Set([
       ...customModel,
-      'gemini-flash-latest',
+      'gemini-3.6-flash',
       'gemini-3.5-flash-lite',
-      'gemini-3.8-flash',
       'gemini-3.5-flash',
+      'gemini-flash-lite-latest',
     ])
   );
 
