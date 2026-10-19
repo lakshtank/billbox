@@ -115,6 +115,8 @@ const uploadSingle = async (req, res) => {
       `Processing error: ${error.message || 'Failed to process receipt'}`
     );
   }
+};
+
 // POST /api/upload/demo-scan
 // Public endpoint for unauthenticated visitors on the landing page to test OCR extraction
 const uploadDemoScan = async (req, res) => {

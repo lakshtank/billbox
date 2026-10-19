@@ -34,7 +34,7 @@ if (typeof global.DOMMatrix === 'undefined') {
 }
 
 process.on('uncaughtException', (err) => {
-  console.error('[Process] Uncaught Exception:', err?.message || err);
+  console.error('[Process] Uncaught Exception:', err?.stack || err);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
