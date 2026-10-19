@@ -208,12 +208,9 @@ export function BottomTabBar() {
           {/* 5. More */}
           <button
             type="button"
-            onClick={() => setSheetOpen(true)}
-            className={cn(
-              'relative flex flex-col items-center justify-center gap-1 h-full py-1 text-[10px] font-medium transition-colors cursor-pointer',
-              sheetOpen ? 'text-accent' : 'text-fg-2 hover:text-fg'
-            )}
-            aria-label="Open more menu"
+            onClick={() => window.dispatchEvent(new CustomEvent('billbox:open-sidebar'))}
+            className="relative flex flex-col items-center justify-center gap-1 h-full py-1 text-[10px] font-medium transition-colors cursor-pointer text-fg-2 hover:text-fg"
+            aria-label="Open navigation menu"
           >
             <m.div whileTap={{ scale: 0.92 }} className="relative z-10 flex items-center justify-center">
               <Menu className="w-5 h-5 shrink-0" />

@@ -59,44 +59,44 @@ body,
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===== Sleek Modern Scrollbars for inner containers ===== */
+/* ===== Sleek Modern Scrollbars for all containers ===== */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
 }
 
-#main {
-  scrollbar-gutter: stable;
-}
-
-.overflow-y-auto::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar,
-main::-webkit-scrollbar,
-nav::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track,
-.overflow-x-auto::-webkit-scrollbar-track,
-main::-webkit-scrollbar-track,
-nav::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb,
-.overflow-x-auto::-webkit-scrollbar-thumb,
-main::-webkit-scrollbar-thumb,
-nav::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--line-strong);
   border-radius: 9999px;
 }
 
-.overflow-y-auto::-webkit-scrollbar-thumb:hover,
-.overflow-x-auto::-webkit-scrollbar-thumb:hover,
-main::-webkit-scrollbar-thumb:hover,
-nav::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: var(--fg-secondary);
+}
+
+/* Touch and mobile screens (<1024px): Native mobile app experience with zero bulky scrollbars */
+@media (max-width: 1024px) {
+  #main {
+    scrollbar-gutter: auto !important;
+  }
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
 }
 
 /* Utility to hide scrollbars while allowing scroll (tabs, filmstrips, chips, tables) */

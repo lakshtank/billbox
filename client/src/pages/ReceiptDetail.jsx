@@ -18,6 +18,10 @@ import {
   Check,
   Loader2,
   Plus,
+  Eye,
+  FileText,
+  X,
+  Upload,
 } from 'lucide-react';
 import toast from '@/lib/toast';
 import { useReceiptQuery } from '../queries/useReceiptsQuery';
@@ -80,6 +84,7 @@ export function ReceiptDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFullFormModal, setShowFullFormModal] = useState(false);
   const [copiedInvoice, setCopiedInvoice] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
 
   // Step 16.3: Mobile review tabs: Document | Details (< lg)
   const [mobileReviewTab, setMobileReviewTab] = useState('details');
@@ -753,6 +758,45 @@ export function ReceiptDetail() {
       {/* 2. Main Workspace: Two-pane on desktop when document exists, otherwise full width */}
       {hasDocument ? (
         <div className="space-y-4">
+          {/* Mobile Document Quick Banner (Ensures document is immediately visible & accessible on mobile) */}
+          <div className="lg:hidden p-3.5 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="size-9 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center text-accent shrink-0">
+                <FileText className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-fg truncate">
+                  Original Receipt Document
+                </div>
+                <div className="text-[11px] text-fg-3">
+                  {isPdf ? 'PDF Invoice' : 'Receipt Image'} · Attached
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDocModal(true)}
+                className="h-8 text-xs gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer"
+              >
+                <Eye className="size-3.5" />
+                <span>View Pop-up</span>
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={handleDownload}
+                className="h-8 size-8 p-0 text-fg-3 hover:text-fg cursor-pointer"
+                title="Download document"
+              >
+                <Download className="size-3.5" />
+              </Button>
+            </div>
+          </div>
+
           {/* Step 16.3: Mobile review tabs: Document | Details (< lg) */}
           <div className="lg:hidden flex items-center p-1 bg-subtle border border-line rounded-[8px] select-none">
             <button
@@ -1886,6 +1930,40 @@ export function ReceiptDetail() {
               isSubmitting={updateMutation.isPending}
               onCancel={() => setShowFullFormModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up Document Viewer Modal (Zero Scroll, Pop-Up Type) */}
+      {showDocModal && hasDocument && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none font-sans">
+          <div className="relative w-full max-w-4xl h-[90vh] bg-surface rounded-2xl border border-line shadow-2xl overflow-hidden flex flex-col">
+            <div className="h-12 px-4 border-b border-line flex items-center justify-between bg-surface/90 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="size-4 text-accent shrink-0" />
+                <span className="text-xs font-semibold text-fg truncate">
+                  {vendorName} Document Preview
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDocModal(false)}
+                className="size-8 rounded-full bg-hover flex items-center justify-center text-fg-3 hover:text-fg transition-colors cursor-pointer shrink-0"
+                aria-label="Close document pop-up"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 relative">
+              <DocumentViewer
+                url={documentUrl}
+                fileUrl={documentUrl}
+                fileData={receipt.fileData}
+                mimeType={receipt.mimeType}
+                fileName={`${vendorName} Receipt`}
+                fileType={receipt.fileType}
+              />
+            </div>
           </div>
         </div>
       )}

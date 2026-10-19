@@ -500,47 +500,102 @@ export function DocumentViewer({
               </div>
             ) : isPdf ? (
               <div
-                className="relative w-full h-full overflow-auto flex items-center justify-center p-1 sm:p-2 no-scrollbar"
+                className="relative w-full h-full overflow-auto flex items-center justify-center p-2 sm:p-4 no-scrollbar"
                 style={{ cursor: currentScale > 1 ? 'grab' : 'default' }}
               >
-                <div
-                  style={{
-                    transform: `scale(${currentScale}) rotate(${rotation}deg)`,
-                    transformOrigin: 'top center',
-                    transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                    width: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
-                    height: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
-                    minHeight: isFullscreen ? 'calc(100vh - 70px)' : '440px',
-                  }}
-                  className="w-full h-full flex items-center justify-center origin-top transition-transform"
-                >
-                  <object
-                    data={pdfViewUrl}
-                    type="application/pdf"
-                    className="w-full h-full min-h-[440px] rounded-[8px] border-0 bg-surface shadow-2xs"
-                    onLoad={() => setIsLoaded(true)}
-                    onError={handleMediaError}
+                {isMobile ? (
+                  /* Mobile-Optimized PDF Experience: Direct full-screen view & download card */
+                  <div className="w-full max-w-sm p-6 rounded-2xl bg-surface border border-line shadow-lg text-center flex flex-col items-center justify-center space-y-4 my-auto select-none">
+                    <div className="size-16 rounded-2xl bg-accent-tint border border-accent/30 flex items-center justify-center text-accent shadow-xs">
+                      <FileText className="size-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent/15 text-accent text-[11px] font-semibold uppercase tracking-wider">
+                        PDF Invoice Attached
+                      </div>
+                      <h4 className="text-sm font-semibold text-fg line-clamp-2 px-2">
+                        {resolvedFilename}
+                      </h4>
+                      <p className="text-xs text-fg-3">
+                        View document in full resolution with browser-native PDF controls.
+                      </p>
+                    </div>
+
+                    <div className="w-full flex flex-col gap-2 pt-2">
+                      <a
+                        href={tabNavigationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-accent text-on-accent text-xs font-semibold hover:bg-accent-hover transition-colors shadow-xs"
+                      >
+                        <ExternalLink className="size-4" />
+                        <span>Open Fullscreen PDF</span>
+                      </a>
+                      <a
+                        href={tabNavigationUrl}
+                        download={resolvedFilename}
+                        className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-line bg-surface hover:bg-hover text-fg text-xs font-semibold transition-colors"
+                      >
+                        <Download className="size-4 text-fg-3" />
+                        <span>Download PDF</span>
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      transform: `scale(${currentScale}) rotate(${rotation}deg)`,
+                      transformOrigin: 'top center',
+                      transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      width: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
+                      height: currentScale > 1 ? `${Math.round(currentScale * 100)}%` : '100%',
+                      minHeight: isFullscreen ? 'calc(100vh - 70px)' : '440px',
+                    }}
+                    className="w-full h-full flex items-center justify-center origin-top transition-transform"
                   >
-                    <iframe
-                      src={pdfViewUrl}
-                      title={resolvedFilename}
+                    <object
+                      data={pdfViewUrl}
+                      type="application/pdf"
                       className="w-full h-full min-h-[440px] rounded-[8px] border-0 bg-surface shadow-2xs"
                       onLoad={() => setIsLoaded(true)}
                       onError={handleMediaError}
                     >
-                      <p className="p-4 text-xs text-fg-3">
-                        Your browser does not support inline PDFs.{' '}
-                        <a
-                          href={tabNavigationUrl}
-                          download={resolvedFilename}
-                          className="text-accent underline font-medium"
-                        >
-                          Download PDF
-                        </a>
-                      </p>
-                    </iframe>
-                  </object>
-                </div>
+                      <iframe
+                        src={pdfViewUrl}
+                        title={resolvedFilename}
+                        className="w-full h-full min-h-[440px] rounded-[8px] border-0 bg-surface shadow-2xs"
+                        onLoad={() => setIsLoaded(true)}
+                        onError={handleMediaError}
+                      >
+                        <div className="w-full h-full min-h-[360px] p-6 flex flex-col items-center justify-center text-center space-y-3">
+                          <FileText className="size-10 text-accent/60" />
+                          <div className="text-xs text-fg-3">
+                            Inline PDF preview is not supported by your browser.
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={tabNavigationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-on-accent text-xs font-medium"
+                            >
+                              <ExternalLink className="size-3.5" />
+                              <span>Open PDF</span>
+                            </a>
+                            <a
+                              href={tabNavigationUrl}
+                              download={resolvedFilename}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-surface text-fg text-xs font-medium hover:bg-hover"
+                            >
+                              <Download className="size-3.5" />
+                              <span>Download</span>
+                            </a>
+                          </div>
+                        </div>
+                      </iframe>
+                    </object>
+                  </div>
+                )}
               </div>
             ) : (
               <m.div

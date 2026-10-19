@@ -34,6 +34,10 @@ export function Navbar() {
     window.dispatchEvent(new CustomEvent('billbox:open-more-sheet'));
   };
 
+  const handleOpenSidebar = () => {
+    window.dispatchEvent(new CustomEvent('billbox:open-sidebar'));
+  };
+
   // For auth pages or public pages, render minimal branded topbar
   if (isAuthPage) {
     return (
@@ -57,7 +61,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
-              onClick={handleOpenMoreSheet}
+              onClick={handleOpenSidebar}
               className="p-1.5 rounded-[6px] text-fg-2 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
               aria-label="Open menu"
             >

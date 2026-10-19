@@ -10,7 +10,13 @@ import {
   ArrowLeft,
   Tag,
   ReceiptText,
+  FileText,
+  Eye,
+  X,
+  Download,
 } from 'lucide-react';
+import { DocumentViewer } from '@/components/data/DocumentViewer';
+import { getAuthenticatedFileUrl } from '@/utils/fileUrl';
 import { useProductQuery } from '../queries/useProductsQuery';
 import { useUpdateProduct, useDeleteProduct } from '../queries/useProductMutations';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -232,6 +238,7 @@ export function ProductDetail() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [reminderChecked, setReminderChecked] = useState(false);
   const [reminderShaking, setReminderShaking] = useState(false);
 
@@ -435,6 +442,28 @@ export function ProductDetail() {
     };
   }, [product]);
 
+  const receipt = product?.receiptId;
+  const storeName = receipt?.storeName || 'Merchant';
+  const statusKey = timelineMetrics?.statusKey || 'none';
+  const hasDocument = Boolean(receipt?.fileUrl || receipt?.fileData);
+  const isPdf = receipt?.fileType === 'pdf' || receipt?.fileUrl?.toLowerCase().endsWith('.pdf');
+
+  const documentUrl = useMemo(() => {
+    if (!receipt) return null;
+    if (receipt.publicToken) {
+      return `/api/public/receipts/${receipt.publicToken}/file`;
+    }
+    if (receipt.fileData) {
+      return receipt.fileData.startsWith('data:')
+        ? receipt.fileData
+        : `data:${receipt.mimeType || (isPdf ? 'application/pdf' : 'image/jpeg')};base64,${receipt.fileData}`;
+    }
+    if (receipt.fileUrl) {
+      return getAuthenticatedFileUrl(receipt.fileUrl);
+    }
+    return null;
+  }, [receipt, isPdf]);
+
   if (isLoading) {
     return (
       <div className="space-y-6 font-sans select-none" aria-busy="true">
@@ -486,10 +515,6 @@ export function ProductDetail() {
       </div>
     );
   }
-
-  const receipt = product.receiptId;
-  const storeName = receipt?.storeName || 'Merchant';
-  const statusKey = timelineMetrics?.statusKey || 'none';
 
   return (
     <div className="space-y-5 w-full font-sans">
@@ -557,6 +582,35 @@ export function ProductDetail() {
         />
       )}
 
+      {/* Mobile Document Quick Banner: Direct access to source bill document on mobile */}
+      {hasDocument && (
+        <div className="lg:hidden p-3.5 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="size-9 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center text-accent shrink-0">
+              <FileText className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-fg truncate">
+                Source Receipt Document
+              </div>
+              <div className="text-[11px] text-fg-3">
+                {isPdf ? 'PDF Invoice' : 'Receipt Image'} · {storeName}
+              </div>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowDocModal(true)}
+            className="h-8 text-xs gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer shrink-0"
+          >
+            <Eye className="size-3.5" />
+            <span>View Pop-up</span>
+          </Button>
+        </div>
+      )}
+
       {/* 3. Detail Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
         {/* Card 1: Purchase & Cost Information */}
@@ -610,7 +664,17 @@ export function ProductDetail() {
           </div>
 
           {receipt?._id && (
-            <div className="pt-3 border-t border-line-subtle mt-auto">
+            <div className="pt-3 border-t border-line-subtle mt-auto space-y-2">
+              {hasDocument && (
+                <button
+                  type="button"
+                  onClick={() => setShowDocModal(true)}
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 rounded-[8px] border border-accent/30 bg-accent/10 hover:bg-accent/15 text-accent text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <Eye className="size-3.5" />
+                  <span>View bill document</span>
+                </button>
+              )}
               <Link
                 to={`/receipts/${receipt._id}`}
                 className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 rounded-[8px] border border-line bg-subtle hover:bg-subtle/80 text-fg text-xs font-medium transition-colors no-underline cursor-pointer"
@@ -852,6 +916,40 @@ export function ProductDetail() {
         onConfirm={handleConfirmDelete}
         onClose={() => setShowDeleteModal(false)}
       />
+
+      {/* Pop-up Document Viewer Modal (Zero Scroll, Pop-up Type) */}
+      {showDocModal && hasDocument && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none font-sans">
+          <div className="relative w-full max-w-4xl h-[90vh] bg-surface rounded-2xl border border-line shadow-2xl overflow-hidden flex flex-col">
+            <div className="h-12 px-4 border-b border-line flex items-center justify-between bg-surface/90 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="size-4 text-accent shrink-0" />
+                <span className="text-xs font-semibold text-fg truncate">
+                  {storeName} Document Preview
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDocModal(false)}
+                className="size-8 rounded-full bg-hover flex items-center justify-center text-fg-3 hover:text-fg transition-colors cursor-pointer shrink-0"
+                aria-label="Close document pop-up"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 relative">
+              <DocumentViewer
+                url={documentUrl}
+                fileUrl={documentUrl}
+                fileData={receipt.fileData}
+                mimeType={receipt.mimeType}
+                fileName={`${storeName} Receipt`}
+                fileType={receipt.fileType}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
