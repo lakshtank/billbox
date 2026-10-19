@@ -43,7 +43,8 @@ export function GoogleLoginButton({
             if (onSuccess) {
               onSuccess(data);
             } else {
-              navigate('/');
+              const hasPending = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('billbox_pending_receipt'));
+              navigate(hasPending ? '/receipts/new' : '/receipts');
             }
           },
           onError: (err) => {

@@ -73,8 +73,8 @@ function MobileSidebarPopup({ open, onClose }) {
   };
 
   const navLinks = [
-    { to: '/', label: 'Overview', icon: LayoutDashboard },
     { to: '/receipts', label: 'Receipts', icon: ReceiptText, count: receiptsCount },
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { to: '/products', label: 'Products', icon: Package },
     { to: '/warranties', label: 'Warranties', icon: ShieldCheck, hasDot: expiringCount > 0, dotCount: expiringCount },
     { to: '/stores', label: 'Merchants', icon: Store },
@@ -125,7 +125,7 @@ function MobileSidebarPopup({ open, onClose }) {
             {/* Header: Brand Logo + Close Button */}
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2">
-                <Logo size="md" showWordmark={true} />
+                <Logo size="md" showWordmark={true} to="/receipts" />
               </div>
               <button
                 type="button"
@@ -286,8 +286,8 @@ function SidebarContent({
   const receiptsCount = receiptsData?.total ?? 0;
 
   const navItems = [
-    { to: '/', label: 'Overview', icon: LayoutDashboard, routeKey: 'dashboard' },
     { to: '/receipts', label: 'Receipts', icon: ReceiptText, routeKey: 'receipts', count: receiptsCount },
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, routeKey: 'dashboard' },
     { to: '/products', label: 'Products', icon: Package, routeKey: 'products' },
     {
       to: '/warranties',
@@ -356,7 +356,7 @@ function SidebarContent({
           </Tooltip>
         ) : (
           <div className="flex items-center justify-between w-full min-w-0">
-            <Logo size="md" showWordmark={true} />
+            <Logo size="md" showWordmark={true} to="/receipts" />
             {!isMobile && (
               <Tooltip>
                 <TooltipTrigger asChild>

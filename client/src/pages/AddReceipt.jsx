@@ -73,6 +73,24 @@ export function AddReceipt() {
   const [ocrData, setOcrData] = useState(null);
   const [handwritingNote, setHandwritingNote] = useState(false);
 
+  // Read and load pending receipt saved from landing page demo scan if present
+  useEffect(() => {
+    const pendingRaw = sessionStorage.getItem('billbox_pending_receipt');
+    if (pendingRaw) {
+      try {
+        const pending = JSON.parse(pendingRaw);
+        sessionStorage.removeItem('billbox_pending_receipt');
+        if (pending && (pending.extracted || pending.storeName)) {
+          setOcrData(pending);
+          setMode('review');
+          toast.success('Your scanned receipt was restored and is ready to save!');
+        }
+      } catch (err) {
+        console.error('Failed to parse pending receipt:', err);
+      }
+    }
+  }, []);
+
   // Sync mode if query params change externally (browser back/forward, command palette, etc.)
   useEffect(() => {
     const targetMode = getInitialMode();

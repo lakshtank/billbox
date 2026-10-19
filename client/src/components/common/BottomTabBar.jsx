@@ -94,37 +94,7 @@ export function BottomTabBar() {
         className="tabbar md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface border-t border-line pb-[env(safe-area-inset-bottom)] select-none font-sans"
       >
         <div className="grid grid-cols-5 h-14 items-center px-1">
-          {/* 1. Overview */}
-          <NavLink
-            to="/"
-            end
-            onMouseEnter={() => prefetchRoute('dashboard')}
-            onTouchStart={() => prefetchRoute('dashboard')}
-            className={({ isActive }) =>
-              cn(
-                'relative flex flex-col items-center justify-center gap-1 h-full py-1 text-[10px] font-medium transition-colors',
-                isActive ? 'text-accent' : 'text-fg-2 hover:text-fg'
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                {isActive && (
-                  <m.span
-                    layoutId="tab-active"
-                    className="absolute inset-x-1 inset-y-1.5 rounded-lg bg-selected border border-accent/20"
-                    transition={spring.snappy}
-                  />
-                )}
-                <m.div whileTap={{ scale: 0.92 }} className="relative z-10 flex items-center justify-center">
-                  <LayoutDashboard className="w-5 h-5 shrink-0" />
-                </m.div>
-                <span className="relative z-10">Overview</span>
-              </>
-            )}
-          </NavLink>
-
-          {/* 2. Receipts */}
+          {/* 1. Receipts (Main Page) */}
           <NavLink
             to="/receipts"
             onMouseEnter={() => prefetchRoute('receipts')}
@@ -149,6 +119,35 @@ export function BottomTabBar() {
                   <ReceiptText className="w-5 h-5 shrink-0" />
                 </m.div>
                 <span className="relative z-10">Receipts</span>
+              </>
+            )}
+          </NavLink>
+
+          {/* 2. Overview */}
+          <NavLink
+            to="/dashboard"
+            onMouseEnter={() => prefetchRoute('dashboard')}
+            onTouchStart={() => prefetchRoute('dashboard')}
+            className={({ isActive }) =>
+              cn(
+                'relative flex flex-col items-center justify-center gap-1 h-full py-1 text-[10px] font-medium transition-colors',
+                isActive ? 'text-accent' : 'text-fg-2 hover:text-fg'
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <m.span
+                    layoutId="tab-active"
+                    className="absolute inset-x-1 inset-y-1.5 rounded-lg bg-selected border border-accent/20"
+                    transition={spring.snappy}
+                  />
+                )}
+                <m.div whileTap={{ scale: 0.92 }} className="relative z-10 flex items-center justify-center">
+                  <LayoutDashboard className="w-5 h-5 shrink-0" />
+                </m.div>
+                <span className="relative z-10">Overview</span>
               </>
             )}
           </NavLink>

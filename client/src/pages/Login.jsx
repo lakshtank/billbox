@@ -56,7 +56,8 @@ export function Login() {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    const hasPending = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('billbox_pending_receipt'));
+    return <Navigate to={hasPending ? "/receipts/new" : "/receipts"} replace />;
   }
 
   const onSubmit = (values) => {
@@ -67,7 +68,8 @@ export function Login() {
         toast.success('Signed in');
         setIsSuccess(true);
         setTimeout(() => {
-          navigate('/');
+          const hasPending = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('billbox_pending_receipt'));
+          navigate(hasPending ? '/receipts/new' : '/receipts');
         }, 120);
       },
       onError: (err) => {

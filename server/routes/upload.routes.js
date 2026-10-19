@@ -6,9 +6,13 @@ const {
   uploadBatch,
   getBatchStatus,
   saveBatchFile,
+  uploadDemoScan,
 } = require('../controllers/upload.controller');
 
 const router = express.Router();
+
+// Public route for unauthenticated landing page live test scanner
+router.post('/demo-scan', uploadSingleFile, uploadDemoScan);
 
 // Protected routes — single & batch uploads
 router.post('/single', auth, uploadSingleFile, uploadSingle);

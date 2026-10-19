@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { Toaster as SonnerToaster } from './components/ui/sonner';
 import CommandPalette from './components/common/CommandPalette';
@@ -38,6 +38,7 @@ const BatchReview = lazy(() => import('./pages/BatchReview'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const PublicReceipt = lazy(() => import('./pages/PublicReceipt'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 import RouteSkeleton from './components/common/RouteSkeleton';
 
@@ -98,8 +99,19 @@ const AppLayout = () => {
     location.pathname === '/register' ||
     location.pathname === '/forgot-password' ||
     location.pathname.startsWith('/reset-password');
+  const isLandingPage = location.pathname === '/' && !isAuthenticated;
   const isPublicPage = location.pathname.startsWith('/public/');
-  const showSidebar = isAuthenticated && !isAuthPage && !isPublicPage;
+  const showSidebar = isAuthenticated && !isAuthPage && !isPublicPage && !isLandingPage;
+
+  if (isLandingPage) {
+    return (
+      <div className="app-root min-h-screen w-full bg-bg-app">
+        <Suspense fallback={<PageLoader />}>
+          <LandingPage />
+        </Suspense>
+      </div>
+    );
+  }
 
   if (isPublicPage) {
     return (
@@ -168,7 +180,7 @@ const AppLayout = () => {
                     path="/"
                     element={
                       <ProtectedRoute>
-                        <Dashboard />
+                        <Navigate to="/receipts" replace />
                       </ProtectedRoute>
                     }
                   />

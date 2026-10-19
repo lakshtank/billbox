@@ -19,6 +19,7 @@ export const routeLoaders = {
   warranties: () => import('../pages/WarrantyTracker'),
   addReceipt: () => import('../pages/AddReceipt'),
   batchReview: () => import('../pages/BatchReview'),
+  landing: () => import('../pages/LandingPage'),
   profile: () => import('../pages/Profile'),
   settings: () => import('../pages/Settings'),
 };

@@ -67,7 +67,7 @@ export function Navbar() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <Logo size="sm" showWordmark={true} />
+            <Logo size="sm" showWordmark={true} to={user ? "/receipts" : "/"} />
           </div>
 
           <div className="hidden md:block min-w-0">

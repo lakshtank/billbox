@@ -115,6 +115,72 @@ const uploadSingle = async (req, res) => {
       `Processing error: ${error.message || 'Failed to process receipt'}`
     );
   }
+// POST /api/upload/demo-scan
+// Public endpoint for unauthenticated visitors on the landing page to test OCR extraction
+const uploadDemoScan = async (req, res) => {
+  try {
+    if (!req.file) {
+      return sendError(res, 400, 'No receipt file attached.');
+    }
+
+    const filePath = req.file.path;
+    const mimeType = req.file.mimetype;
+    const isPdf = mimeType === 'application/pdf';
+    const fileType = isPdf ? 'pdf' : 'image';
+
+    let fileBuffer = null;
+    let fileData = null;
+    if (fs.existsSync(filePath)) {
+      fileBuffer = fs.readFileSync(filePath);
+      fileData = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+    }
+
+    const defaultCategories = ['Electronics', 'Appliances', 'Groceries', 'Furniture', 'Clothing & Apparel', 'Dining', 'Others'];
+    let directResult = null;
+
+    if (fileBuffer && process.env.GEMINI_API_KEY) {
+      try {
+        directResult = await extractFieldsDirectFromDocument(fileBuffer, mimeType, defaultCategories, { forceOffline: false });
+      } catch (err) {
+        console.warn('Demo scan direct Gemini extraction error:', err.message);
+      }
+    }
+
+    let extracted = directResult?.extracted;
+    let rawText = directResult?.rawText || '';
+
+    if (!extracted) {
+      const ocrRes = await runOCR(filePath, mimeType);
+      rawText = ocrRes.rawText || '';
+      const wordData = ocrRes.wordData || [];
+      const resData = await extractFields(rawText, wordData, defaultCategories, {
+        forceOffline: false,
+        skipLlm: !process.env.GEMINI_API_KEY,
+      });
+      extracted = resData.extracted;
+    }
+
+    // Clean up temporary uploaded file from disk if present
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (cleanupErr) {
+      // ignore
+    }
+
+    return sendSuccess(res, 200, 'Demo receipt processed successfully', {
+      fileData,
+      mimeType,
+      fileType,
+      extracted,
+      ocrRaw: rawText,
+      isDemo: true,
+    });
+  } catch (error) {
+    console.error('uploadDemoScan error:', error);
+    return sendError(res, 500, `Demo scanning error: ${error.message || 'Failed to scan receipt'}`);
+  }
 };
 
 // Concurrent background processing function for batch upload (Processes up to 3 files in parallel for 3x speedup)
@@ -532,4 +598,5 @@ module.exports = {
   uploadBatch,
   getBatchStatus,
   saveBatchFile,
+  uploadDemoScan,
 };
