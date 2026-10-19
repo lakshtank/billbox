@@ -147,7 +147,7 @@ export default function Stores() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search merchants..."
-            className="w-full text-sm pl-9 pr-8 py-1.5 rounded-lg border border-line bg-surface text-fg placeholder:text-fg-3 focus:outline-none focus:ring-1 focus:ring-accent transition-colors"
+            className="w-full text-sm pl-9 pr-8 py-1.5 rounded-lg border border-line bg-surface text-fg placeholder:text-fg-3 focus:outline-none focus:border-line-focus transition-colors"
           />
           {searchTerm && (
             <button

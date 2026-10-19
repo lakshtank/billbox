@@ -81,11 +81,11 @@ const CurrencyInput = React.forwardRef(
           placeholder={placeholder}
           data-error={error}
           className={cn(
-            "h-10 w-full rounded-[8px] border border-line bg-surface pl-12 pr-3 py-2 text-right text-sm text-fg shadow-2xs transition-colors duration-fast outline-none tnum font-tabular",
+            "h-10 w-full rounded-[8px] border border-line bg-surface pl-12 pr-3 py-2 text-right text-sm text-fg shadow-2xs transition-colors duration-fast outline-none focus:outline-none focus-visible:outline-none tnum font-tabular",
             "placeholder:text-fg-3 hover:border-line-strong",
-            "focus-visible:border-line-focus focus-visible:ring-2 focus-visible:ring-accent/20",
+            "focus:border-line-focus focus-visible:border-line-focus focus:ring-0 focus-visible:ring-0",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            error && "border-bad-solid focus-visible:border-bad-solid focus-visible:ring-bad-solid/20"
+            error && "border-bad-solid focus:border-bad-solid focus-visible:border-bad-solid focus:ring-0 focus-visible:ring-0"
           )}
           {...props}
         />

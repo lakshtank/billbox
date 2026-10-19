@@ -51,9 +51,9 @@ const SearchInput = React.forwardRef(
           placeholder={placeholder}
           className={cn(
             size === "sm" ? "h-9 text-xs" : "h-10 text-sm",
-            "w-full rounded-[8px] border border-line bg-surface pl-9 pr-14 text-fg shadow-2xs transition-colors duration-fast outline-none",
+            "w-full rounded-[8px] border border-line bg-surface pl-9 pr-14 text-fg shadow-2xs transition-colors duration-fast outline-none focus:outline-none focus-visible:outline-none",
             "placeholder:text-fg-3 hover:border-line-strong",
-            "focus-visible:border-line-focus focus-visible:ring-2 focus-visible:ring-accent/20",
+            "focus:border-line-focus focus-visible:border-line-focus focus:ring-0 focus-visible:ring-0",
             "disabled:cursor-not-allowed disabled:opacity-50",
             inputClassName
           )}

@@ -28,13 +28,13 @@ function SelectTrigger({
       data-size={size}
       data-error={error}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-[8px] border border-line bg-surface px-3 py-2 text-sm text-fg shadow-2xs transition-colors duration-fast outline-none cursor-pointer",
+        "flex w-full items-center justify-between gap-2 rounded-[8px] border border-line bg-surface px-3 py-2 text-sm text-fg shadow-2xs transition-colors duration-fast outline-none focus:outline-none focus-visible:outline-none cursor-pointer",
         "placeholder:text-fg-3 hover:border-line-strong",
-        "focus-visible:border-line-focus focus-visible:ring-2 focus-visible:ring-accent/20",
+        "focus:border-line-focus focus-visible:border-line-focus focus:ring-0 focus-visible:ring-0",
         "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-subtle/40",
         size === "sm" ? "h-8 px-2.5 text-xs" : "h-10 px-3 py-2 text-sm",
         (error || props["aria-invalid"] === true || props["aria-invalid"] === "true") &&
-          "border-bad-solid hover:border-bad-solid focus-visible:border-bad-solid focus-visible:ring-bad-solid/20",
+          "border-bad-solid hover:border-bad-solid focus:border-bad-solid focus-visible:border-bad-solid focus:ring-0 focus-visible:ring-0",
         className
       )}
       {...props}

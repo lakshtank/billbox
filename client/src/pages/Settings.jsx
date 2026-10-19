@@ -474,7 +474,7 @@ export default function Settings() {
                         setProfileForm({ ...profileForm, name: e.target.value })
                       }
                       placeholder="Your full name"
-                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
                     />
                   </div>
 
@@ -537,7 +537,7 @@ export default function Settings() {
                           currentPassword: e.target.value,
                         })
                       }
-                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
                     />
                   </div>
 
@@ -555,7 +555,7 @@ export default function Settings() {
                           newPassword: e.target.value,
                         })
                       }
-                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
                     />
                     {/* Password Strength Indicator */}
                     {passwordForm.newPassword && (
@@ -600,7 +600,7 @@ export default function Settings() {
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent"
+                      className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
                     />
                   </div>
 
@@ -643,7 +643,7 @@ export default function Settings() {
                         defaultCurrency: e.target.value,
                       })
                     }
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus cursor-pointer"
                   >
                     {CURRENCIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -669,7 +669,7 @@ export default function Settings() {
                         dateFormat: e.target.value,
                       })
                     }
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus cursor-pointer"
                   >
                     {DATE_FORMATS.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -692,7 +692,7 @@ export default function Settings() {
                         timezone: e.target.value,
                       })
                     }
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-accent cursor-pointer"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus cursor-pointer"
                   >
                     {TIMEZONES.map((tz) => (
                       <option key={tz} value={tz}>
@@ -1034,7 +1034,7 @@ export default function Settings() {
                     value={clearDataInput}
                     onChange={(e) => setClearDataInput(e.target.value)}
                     placeholder="Type DELETE to confirm"
-                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-bad"
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-bad-solid"
                   />
                   <Button
                     type="button"
@@ -1063,7 +1063,7 @@ export default function Settings() {
                     value={deleteAccountInput}
                     onChange={(e) => setDeleteAccountInput(e.target.value)}
                     placeholder={`Type ${user?.email || 'your email'} to confirm`}
-                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-1 focus:ring-bad"
+                    className="flex-1 text-xs px-3 py-1.5 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-bad-solid"
                   />
                   <Button
                     type="button"

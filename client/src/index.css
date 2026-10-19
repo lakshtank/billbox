@@ -537,3 +537,51 @@ select.appearance-none {
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* ==========================================================================
+   Universal Focus / Active Outline & Ring Removal for all Form Inputs
+   ========================================================================== */
+input,
+textarea,
+select,
+[contenteditable="true"],
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="select-trigger"] {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+input:focus,
+input:focus-visible,
+input:active,
+textarea:focus,
+textarea:focus-visible,
+textarea:active,
+select:focus,
+select:focus-visible,
+select:active,
+[contenteditable="true"]:focus,
+[contenteditable="true"]:focus-visible,
+[contenteditable="true"]:active,
+[data-slot="input"]:focus,
+[data-slot="input"]:focus-visible,
+[data-slot="input"]:active,
+[data-slot="textarea"]:focus,
+[data-slot="textarea"]:focus-visible,
+[data-slot="textarea"]:active,
+[data-slot="select-trigger"]:focus,
+[data-slot="select-trigger"]:focus-visible,
+[data-slot="select-trigger"]:active {
+  outline: none !important;
+  outline-style: none !important;
+  outline-width: 0 !important;
+  outline-color: transparent !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-width: 0px !important;
+}
+

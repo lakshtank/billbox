@@ -307,7 +307,7 @@ export default function Profile() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors"
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:outline-none transition-colors"
                     placeholder="Your full name"
                     required
                   />
@@ -343,7 +343,7 @@ export default function Profile() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors"
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg placeholder:text-fg-muted focus:border-accent focus:outline-none transition-colors"
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
@@ -360,7 +360,7 @@ export default function Profile() {
                     id="profileCurrencySelect"
                     value={formData.defaultCurrency}
                     onChange={(e) => setFormData({ ...formData, defaultCurrency: e.target.value })}
-                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors cursor-pointer"
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:outline-none transition-colors cursor-pointer"
                   >
                     {CURRENCIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -382,7 +382,7 @@ export default function Profile() {
                     id="profileTimezoneSelect"
                     value={formData.timezone}
                     onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none transition-colors cursor-pointer"
+                    className="w-full text-xs h-9 pl-9 pr-3 bg-surface border border-line rounded-[8px] text-fg focus:border-accent focus:outline-none transition-colors cursor-pointer"
                   >
                     {TIMEZONES.map((tz) => (
                       <option key={tz} value={tz}>

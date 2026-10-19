@@ -78,7 +78,7 @@ export function ProductListForm({
                       value={item.productName || ''}
                       onChange={(e) => onItemChange(item.id, 'productName', e.target.value)}
                       placeholder="Item name / title *"
-                      className={`h-8 text-xs bg-surface ${itemError ? 'border-bad-line focus:ring-bad' : ''}`}
+                      className={`h-8 text-xs bg-surface ${itemError ? 'border-bad-line' : ''}`}
                       required
                     />
                     <Input

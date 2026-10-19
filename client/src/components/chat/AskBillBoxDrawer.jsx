@@ -721,7 +721,7 @@ export function AskBillBoxDrawer() {
             {/* Top Hairline Accent */}
             <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-line/80 to-transparent pointer-events-none" />
 
-            <div className="relative flex items-end gap-2 bg-subtle/50 dark:bg-subtle/30 border border-line/80 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15 rounded-2xl p-2.5 transition-all shadow-inner">
+            <div className="relative flex items-end gap-2 bg-subtle/50 dark:bg-subtle/30 border border-line/80 focus-within:border-accent rounded-2xl p-2.5 transition-all shadow-inner">
               <textarea
                 ref={textareaRef}
                 value={inputMessage}

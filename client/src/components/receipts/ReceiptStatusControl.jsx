@@ -150,7 +150,7 @@ const ReceiptStatusControl = ({ receipt }) => {
                     if (noteError) setNoteError('');
                   }}
                   placeholder="e.g. Warranty claim approved, replacement unit received."
-                  className="w-full text-xs p-2.5 rounded-[8px] bg-surface border border-line text-fg placeholder:text-fg-muted focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+                  className="w-full text-xs p-2.5 rounded-[8px] bg-surface border border-line text-fg placeholder:text-fg-muted focus:border-accent focus:outline-none"
                 />
                 {noteError && <p className="text-xs text-bad-text font-medium mt-1">{noteError}</p>}
               </div>
