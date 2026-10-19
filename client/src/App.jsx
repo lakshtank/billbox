@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Toaster as SonnerToaster } from './components/ui/sonner';
 import CommandPalette from './components/common/CommandPalette';
 import ShortcutModal from './components/common/ShortcutModal';
+import AskBillBoxDrawer from './components/chat/AskBillBoxDrawer';
 import { AuthProvider } from './context/AuthContext';
 import { ScrollContainerContext } from './context/ScrollContainerContext';
 import Navbar from './components/common/Navbar';
@@ -331,6 +332,7 @@ const App = () => {
           <SonnerToaster position="bottom-right" />
           <CommandPalette />
           <ShortcutModal />
+          <AskBillBoxDrawer />
           <ErrorBoundary>
             <SmoothScroll>
               <AppLayout />

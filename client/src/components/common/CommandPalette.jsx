@@ -15,7 +15,9 @@ import {
   Moon,
   ArrowRight,
   Loader2,
+  Sparkles,
 } from "lucide-react";
+import useUiStore from "../../store/uiStore";
 import {
   CommandDialog,
   CommandInput,
@@ -194,6 +196,13 @@ export function CommandPalette() {
 
         {/* Actions Group */}
         <CommandGroup heading="Actions">
+          <CommandItem onSelect={() => runCommand(() => useUiStore.getState().openAskBillBox())}>
+            <Sparkles className="size-4 text-accent" />
+            <span>Ask BillBox AI</span>
+            <kbd className="ml-auto text-[10px] font-mono bg-subtle px-1.5 py-0.5 rounded border border-line text-fg-3">
+              ⌘J
+            </kbd>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate("/receipts/new"))}>
             <Plus className="size-4 text-accent" />
             <span>New Receipt</span>

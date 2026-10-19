@@ -120,6 +120,7 @@ const publicReceiptRoutes = require('./routes/publicReceipt.routes');
 const productRoutes = require('./routes/product.routes');
 const storeRoutes = require('./routes/store.routes');
 const reminderRoutes = require('./routes/reminder.routes');
+const chatRoutes = require('./routes/chat.routes');
 
 const fs = require('fs');
 
@@ -271,6 +272,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/public/receipts', publicReceiptRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Client runtime error logger
 app.post('/api/client-error', express.json(), (req, res) => {

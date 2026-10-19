@@ -17,7 +17,9 @@ import {
   Sun,
   Moon,
   Command,
+  Sparkles,
 } from 'lucide-react';
+import useUiStore from '../../store/uiStore';
 import { useRemindersQuery } from '../../queries/useRemindersQuery';
 import { usePreferences } from '../../context/PreferencesContext';
 import useAuth from '../../hooks/useAuth';
@@ -232,6 +234,23 @@ export function BottomTabBar() {
           <div className="space-y-4 pt-2">
             {/* Nav Links */}
             <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSheetOpen(false);
+                  useUiStore.getState().openAskBillBox();
+                }}
+                className="col-span-2 flex items-center justify-between p-3 rounded-[8px] border border-accent/25 bg-accent/[0.08] hover:bg-accent/[0.16] text-accent text-sm font-semibold transition-colors text-left cursor-pointer shadow-2xs"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-accent shrink-0" />
+                  <span>Ask BillBox AI</span>
+                </div>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/20">
+                  Gemini 3.8
+                </span>
+              </button>
+
               <button
                 type="button"
                 onMouseEnter={() => prefetchRoute('products')}

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import * as m from 'motion/react-m';
-import { Search, Plus, Menu } from 'lucide-react';
+import { Search, Plus, Menu, Sparkles } from 'lucide-react';
 import { AppBreadcrumbs } from './AppBreadcrumbs';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Logo } from '../brand/Logo';
 import { useIsFetching } from '@tanstack/react-query';
 import useAuth from '../../hooks/useAuth';
+import useUiStore from '../../store/uiStore';
 import { prefetchRoute } from '../../lib/routePreloader';
 import { useAppScroll } from '../../hooks/useAppScroll';
 
@@ -123,6 +124,23 @@ export function Navbar() {
                 </Button>
               </div>
             </>
+          )}
+
+          {/* Ask BillBox AI Trigger */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => useUiStore.getState().openAskBillBox()}
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-[8px] border border-accent/25 bg-accent/[0.08] hover:bg-accent/[0.16] hover:border-accent/40 text-accent font-medium text-xs transition-all shadow-2xs hover:shadow-xs cursor-pointer group shrink-0"
+              title="Ask BillBox AI (Cmd+J / Ctrl+J)"
+              aria-label="Ask BillBox AI"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-accent group-hover:scale-110 transition-transform" />
+              <span className="font-semibold">Ask AI</span>
+              <kbd className="hidden md:inline-flex items-center px-1 py-0.2 text-[9px] font-mono font-medium text-accent/80 bg-accent/10 border border-accent/20 rounded">
+                ⌘J
+              </kbd>
+            </button>
           )}
 
           {/* Real Notification Bell */}

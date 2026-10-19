@@ -20,10 +20,12 @@ import {
   PanelLeftOpen,
   Check,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { Logo } from '../brand/Logo';
 import { usePreferences } from '../../context/PreferencesContext';
 import useAuth from '../../hooks/useAuth';
+import useUiStore from '../../store/uiStore';
 import { useRemindersQuery } from '../../queries/useRemindersQuery';
 import { useReceiptsQuery } from '../../queries/useReceiptsQuery';
 import {
@@ -384,6 +386,53 @@ function SidebarContent({
 
       {/* ── Navigation (Linear without grouping, clean, minimal, premium) ────── */}
       <nav aria-label="Primary" className="relative flex-1 overflow-y-auto no-scrollbar px-2.5 py-3 space-y-1">
+        {/* Ask BillBox AI Trigger */}
+        <div className="mb-2 pb-2 border-b border-line/50">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isMobile && onMobileClose) onMobileClose();
+                  useUiStore.getState().openAskBillBox();
+                }}
+                className={cn(
+                  'group relative flex items-center h-10 w-full rounded-lg text-sm font-medium transition-all duration-150 border border-accent/25 bg-accent/[0.08] hover:bg-accent/[0.16] hover:border-accent/40 text-accent cursor-pointer shadow-2xs',
+                  collapsed && !isMobile ? 'justify-center px-0' : 'gap-3 px-3'
+                )}
+                aria-label="Ask BillBox AI"
+              >
+                <div className="relative flex items-center justify-center shrink-0 w-5 h-5 text-accent">
+                  <Sparkles className="w-[18px] h-[18px] shrink-0 group-hover:scale-110 transition-transform" />
+                </div>
+                <AnimatePresence initial={false}>
+                  {showLabels && (
+                    <m.div
+                      className="relative flex-1 flex items-center justify-between min-w-0 overflow-hidden"
+                      initial={{ opacity: 0, width: 0, x: -6 }}
+                      animate={{ opacity: 1, width: 'auto', x: 0 }}
+                      exit={{ opacity: 0, width: 0, x: -6, transition: { duration: 0.12 } }}
+                      transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                    >
+                      <span className="truncate text-sm font-semibold">
+                        Ask BillBox
+                      </span>
+                      <kbd className="ml-auto text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-accent/15 text-accent border border-accent/20">
+                        ⌘J
+                      </kbd>
+                    </m.div>
+                  )}
+                </AnimatePresence>
+              </button>
+            </TooltipTrigger>
+            {collapsed && !isMobile && (
+              <TooltipContent side="right">
+                Ask BillBox AI <kbd className="ml-1 text-[10px] font-mono opacity-70">⌘J</kbd>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+
         {navItems.map((item) => {
           const Icon = item.icon;
           const link = (

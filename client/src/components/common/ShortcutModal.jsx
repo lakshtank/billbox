@@ -21,6 +21,7 @@ const SHORTCUT_GROUPS = [
   {
     title: 'Actions & Tools',
     items: [
+      { keys: ['⌘J', '/', 'Ctrl+J'], label: 'Ask BillBox AI' },
       { keys: ['⌘K', '/', 'Ctrl+K'], label: 'Open command palette' },
       { keys: ['/'], label: 'Search receipts & products' },
       { keys: ['N'], label: 'Create new receipt' },

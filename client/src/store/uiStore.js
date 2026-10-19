@@ -9,6 +9,11 @@ const useUiStore = create((set) => ({
   activeBatchId: null,
   setActiveBatchId: (batchId) => set({ activeBatchId: batchId }),
   clearActiveBatch: () => set({ activeBatchId: null }),
+
+  isAskBillBoxOpen: false,
+  openAskBillBox: () => set({ isAskBillBoxOpen: true }),
+  closeAskBillBox: () => set({ isAskBillBoxOpen: false }),
+  toggleAskBillBox: () => set((state) => ({ isAskBillBoxOpen: !state.isAskBillBoxOpen })),
 }));
 
 export default useUiStore;
