@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Mail,
   Send,
@@ -20,8 +20,17 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import toast from '@/lib/toast';
 
-export function EmailPreviewModal({ open, onClose, product = null, user = null, onSendTest = null }) {
+export function EmailPreviewModal({
+  open,
+  onClose,
+  product = null,
+  user = null,
+  isEmailConfigured = false,
+  onSendTest = null,
+  onOpenSmtpConfig = null,
+}) {
   const [isSending, setIsSending] = useState(false);
+  const [lastPreviewUrl, setLastPreviewUrl] = useState(null);
 
   if (!open || !product) return null;
 
@@ -43,10 +52,23 @@ export function EmailPreviewModal({ open, onClose, product = null, user = null, 
     if (!onSendTest) return;
     setIsSending(true);
     try {
-      await onSendTest(product);
-      toast.success(`Test email dispatched to ${recipientEmail}!`);
+      const res = await onSendTest(product);
+      if (res?.previewUrl) {
+        setLastPreviewUrl(res.previewUrl);
+        toast.success('Test email dispatched via Ethereal Sandbox!', {
+          action: {
+            label: 'View Email',
+            onClick: () => window.open(res.previewUrl, '_blank'),
+          },
+        });
+      } else if (res?.isLive) {
+        toast.success(`Live warranty email delivered to ${recipientEmail}! Check your inbox and spam folder.`);
+      } else {
+        toast.success('Test email dispatched successfully!');
+      }
     } catch (err) {
-      toast.error('Could not dispatch test email.');
+      const msg = err.response?.data?.message || 'Could not dispatch test email.';
+      toast.error(msg);
     } finally {
       setIsSending(false);
     }
@@ -56,19 +78,79 @@ export function EmailPreviewModal({ open, onClose, product = null, user = null, 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl bg-surface text-fg border border-line shadow-2xl p-6 rounded-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-1 pb-3 border-b border-line">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
-              <Mail className="size-4" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="size-8 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                <Mail className="size-4" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-fg">Warranty Alert Email Preview</DialogTitle>
             </div>
-            <DialogTitle className="text-lg font-bold text-fg">Warranty Alert Email Preview</DialogTitle>
+            {isEmailConfigured ? (
+              <Badge variant="ok" className="text-[10px] gap-1 py-0.5">
+                <CheckCircle2 className="size-3" />
+                <span>Live Delivery</span>
+              </Badge>
+            ) : (
+              <Badge variant="warn" className="text-[10px] gap-1 py-0.5">
+                <AlertTriangle className="size-3" />
+                <span>Sandbox Mode</span>
+              </Badge>
+            )}
           </div>
           <DialogDescription className="text-xs text-fg-3">
             This exact high-fidelity template is dispatched automatically at 30d, 15d, and 7d milestones.
           </DialogDescription>
         </DialogHeader>
 
+        {/* Live Delivery vs Sandbox Notice */}
+        {!isEmailConfigured && (
+          <div className="my-2.5 p-3 rounded-xl bg-warn-tint/60 border border-warn/30 text-warn-fg text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                Real emails to your inbox require SMTP
+              </span>
+              {onOpenSmtpConfig && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenSmtpConfig();
+                  }}
+                  className="font-bold underline text-warn-fg hover:opacity-80 text-[11px] cursor-pointer"
+                >
+                  Connect Gmail →
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-fg-2 leading-relaxed">
+              No mail server is configured in <code className="font-mono bg-subtle px-1 py-0.2 rounded">server/.env</code>. Test emails will open in an active Ethereal web mailbox for verification.
+            </p>
+          </div>
+        )}
+
+        {/* Ethereal Delivered Banner (When test email was sent) */}
+        {lastPreviewUrl && (
+          <div className="my-2 p-3 rounded-xl bg-ok-tint border border-ok-line text-ok-fg text-xs flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-ok shrink-0" />
+              <span className="font-medium">Test message successfully delivered to Ethereal mailbox!</span>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(lastPreviewUrl, '_blank')}
+              className="h-7 text-xs gap-1 font-semibold border-ok-line text-ok-fg hover:bg-ok-bg"
+            >
+              <span>Open in Web Mailbox</span>
+              <ExternalLink className="size-3" />
+            </Button>
+          </div>
+        )}
+
         {/* Email Header Metadata Box */}
-        <div className="my-3 p-3 rounded-2xl bg-subtle/50 border border-line-subtle space-y-1.5 text-xs">
+        <div className="my-2 p-3 rounded-2xl bg-subtle/50 border border-line-subtle space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
             <span className="text-fg-3">Recipient:</span>
             <span className="font-semibold text-fg font-mono">{recipientEmail}</span>
@@ -101,22 +183,26 @@ export function EmailPreviewModal({ open, onClose, product = null, user = null, 
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-slate-500 font-medium">Product Name:</span>
-              <span className="text-slate-900 font-semibold">{productName}</span>
+              <span className="text-slate-500">Covered Item:</span>
+              <span className="font-bold text-slate-800">{productName}</span>
             </div>
+            {storeName && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Vendor / Merchant:</span>
+                <span className="font-medium text-slate-700">{storeName}</span>
+              </div>
+            )}
             <div className="flex justify-between">
-              <span className="text-slate-500 font-medium">Store / Merchant:</span>
-              <span className="text-slate-900 font-semibold">{storeName}</span>
+              <span className="text-slate-500">Official Expiry:</span>
+              <span className="font-medium text-slate-700">{formattedExpiry}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 font-medium">Warranty Expiry:</span>
-              <span className="text-slate-900 font-semibold">{formattedExpiry}</span>
-            </div>
-            <div className="flex justify-between border-t border-slate-200/60 pt-2 font-bold">
-              <span className="text-amber-700">Days Remaining:</span>
-              <span className="text-amber-700 font-mono">{daysRemaining} Days</span>
+            <div className="flex justify-between items-center pt-1 border-t border-slate-200">
+              <span className="text-slate-500">Deadline Countdown:</span>
+              <span className={`font-bold ${daysRemaining <= 7 ? 'text-red-600' : daysRemaining <= 30 ? 'text-amber-600' : 'text-blue-600'}`}>
+                {daysRemaining} days remaining
+              </span>
             </div>
           </div>
 
@@ -144,7 +230,7 @@ export function EmailPreviewModal({ open, onClose, product = null, user = null, 
             className="h-9 px-4 text-xs font-semibold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20 cursor-pointer flex items-center gap-1.5"
           >
             <Send className="size-3.5" />
-            <span>{isSending ? 'Sending...' : 'Send Live Test Email'}</span>
+            <span>{isSending ? 'Sending...' : isEmailConfigured ? 'Send Live Email to Inbox' : 'Send Test via Sandbox'}</span>
           </Button>
         </div>
       </DialogContent>

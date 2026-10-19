@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+const nodemailer = require('nodemailer');
 const Product = require('../models/Product.model');
 const Receipt = require('../models/Receipt.model');
 const User = require('../models/User.model');
@@ -224,7 +227,17 @@ const testSendReminder = async (req, res) => {
       );
     }
 
-    return sendSuccess(res, 200, `Test reminder sent to ${user.email}`, { log });
+    const message = delivery.isLive
+      ? `Live warranty reminder sent to ${user.email}!`
+      : `Test email dispatched via Ethereal Mailer (SMTP unconfigured in server/.env). View email preview URL included.`;
+
+    return sendSuccess(res, 200, message, {
+      log,
+      isLive: delivery.isLive,
+      isSimulated: delivery.isSimulated,
+      previewUrl: delivery.previewUrl,
+      recipientEmail: user.email,
+    });
   } catch (error) {
     console.error('testSendReminder error:', error);
     return sendError(res, 500, 'Failed to send test reminder');
@@ -289,7 +302,17 @@ const sendTestAlert = async (req, res) => {
       );
     }
 
-    return sendSuccess(res, 200, `Test alert sent to ${user.email}`, { log });
+    const message = delivery.isLive
+      ? `Live test alert dispatched to ${user.email}!`
+      : `Test alert dispatched via Ethereal Mailer (SMTP unconfigured in server/.env). View email preview URL included.`;
+
+    return sendSuccess(res, 200, message, {
+      log,
+      isLive: delivery.isLive,
+      isSimulated: delivery.isSimulated,
+      previewUrl: delivery.previewUrl,
+      recipientEmail: user.email,
+    });
   } catch (error) {
     console.error('sendTestAlert error:', error);
     return sendError(res, 500, 'Failed to send test alert');
@@ -394,6 +417,64 @@ const scanWarrantyNow = async (req, res) => {
   }
 };
 
+// POST /api/reminders/configure-smtp
+// Verifies and updates SMTP credentials in server environment
+const configureSmtp = async (req, res) => {
+  try {
+    const { host, port = 465, user, pass, from } = req.body;
+    if (!host || !user || !pass) {
+      return sendError(res, 400, 'SMTP host, user email, and password are required.');
+    }
+
+    // Verify SMTP connection
+    const testTransporter = nodemailer.createTransport({
+      host,
+      port: Number(port) || 465,
+      secure: Number(port) === 465,
+      auth: { user, pass },
+    });
+
+    await testTransporter.verify();
+
+    // Update active process.env
+    process.env.SMTP_HOST = host;
+    process.env.SMTP_PORT = String(port);
+    process.env.SMTP_USER = user;
+    process.env.SMTP_PASS = pass;
+    if (from) process.env.EMAIL_FROM = from;
+
+    const envPath = path.join(__dirname, '../.env');
+    let envContent = '';
+    if (fs.existsSync(envPath)) {
+      envContent = fs.readFileSync(envPath, 'utf8');
+    }
+
+    const updates = {
+      SMTP_HOST: host,
+      SMTP_PORT: String(port),
+      SMTP_USER: user,
+      SMTP_PASS: pass,
+      EMAIL_FROM: from || user,
+    };
+
+    Object.entries(updates).forEach(([key, val]) => {
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (regex.test(envContent)) {
+        envContent = envContent.replace(regex, `${key}=${val}`);
+      } else {
+        envContent += `\n${key}=${val}`;
+      }
+    });
+
+    fs.writeFileSync(envPath, envContent.trim() + '\n', 'utf8');
+
+    return sendSuccess(res, 200, `SMTP connection verified successfully! Live emails will now be delivered via ${host}.`);
+  } catch (error) {
+    console.error('configureSmtp error:', error.message);
+    return sendError(res, 400, `SMTP Verification failed: ${error.message}`);
+  }
+};
+
 module.exports = {
   getReminders,
   updateReminderSettings,
@@ -402,4 +483,5 @@ module.exports = {
   triggerCronReminderCheck,
   previewWarrantyEmail,
   scanWarrantyNow,
+  configureSmtp,
 };

@@ -11,6 +11,7 @@ import {
   Eye,
   RefreshCw,
   Sparkles,
+  Send,
 } from 'lucide-react';
 import {
   useRemindersQuery,
@@ -20,6 +21,7 @@ import {
 } from '../queries/useRemindersQuery';
 import useAuth from '@/hooks/useAuth';
 import { EmailPreviewModal } from '../components/reminders/EmailPreviewModal';
+import { SmtpConfigModal } from '../components/reminders/SmtpConfigModal';
 import { PageHeader } from '../components/common/PageHeader';
 import { EmptyState } from '../components/common/EmptyState';
 import { DateCell } from '../components/data/DateCell';
@@ -38,12 +40,13 @@ export default function ReminderCenter() {
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'history'
   const [searchTerm, setSearchTerm] = useState('');
   const [previewProduct, setPreviewProduct] = useState(null);
+  const [showSmtpModal, setShowSmtpModal] = useState(false);
 
   const filters = {
     search: searchTerm.trim(),
   };
 
-  const { data, isLoading, isError } = useRemindersQuery(filters);
+  const { data, isLoading, isError, refetch } = useRemindersQuery(filters);
   const updateMutation = useUpdateReminderMutation();
   const testMutation = useTestReminderMutation();
   const scanMutation = useScanRemindersMutation();
@@ -75,8 +78,19 @@ export default function ReminderCenter() {
 
   const handleSendTestEmail = (product) => {
     testMutation.mutate(product._id, {
-      onSuccess: () => {
-        toast.success(`Test reminder sent for ${product.productName}!`);
+      onSuccess: (res) => {
+        if (res?.previewUrl) {
+          toast.success(`Test email dispatched via Ethereal!`, {
+            action: {
+              label: 'View Email',
+              onClick: () => window.open(res.previewUrl, '_blank'),
+            },
+          });
+        } else if (res?.isLive) {
+          toast.success(`Live reminder sent to ${user?.email || 'your email'}!`);
+        } else {
+          toast.success(`Test reminder evaluated for ${product.productName}!`);
+        }
       },
       onError: (err) => {
         const msg = err.response?.data?.message || 'Failed to send test reminder';
@@ -125,20 +139,31 @@ export default function ReminderCenter() {
       {!isLoading && stats.isEmailConfigured === false && (
         <div
           role="alert"
-          className="flex items-center justify-between gap-3 p-3.5 rounded-[10px] border border-warn/30 bg-warn-tint text-warn-fg text-sm font-medium shadow-2xs"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-[12px] border border-warn/30 bg-warn-tint text-warn-fg text-xs font-medium shadow-xs"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <AlertTriangle className="size-4 shrink-0 text-warn-fg" />
-            <span className="truncate">
-              Email delivery isn't configured. Reminders won't be sent.
-            </span>
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+            <AlertTriangle className="size-4 shrink-0 text-warn-fg mt-0.5 sm:mt-0" />
+            <div>
+              <span className="font-semibold text-fg block sm:inline mr-2">Email delivery is currently unconfigured.</span>
+              <span className="text-fg-2">Test alerts are sent to Ethereal sandbox. Connect your Gmail to receive live alerts in your personal inbox.</span>
+            </div>
           </div>
-          <Link
-            to="/settings"
-            className="shrink-0 text-xs font-semibold underline hover:no-underline text-warn-fg"
-          >
-            Settings →
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setShowSmtpModal(true)}
+              className="h-7 px-3 text-xs font-semibold bg-accent hover:bg-accent/90 text-white cursor-pointer shadow-2xs"
+            >
+              Connect Gmail SMTP
+            </Button>
+            <Link
+              to="/settings"
+              className="text-xs font-semibold text-fg-3 hover:text-fg underline"
+            >
+              Settings
+            </Link>
+          </div>
         </div>
       )}
 
@@ -146,8 +171,17 @@ export default function ReminderCenter() {
       <PageHeader
         title="Reminders"
         description="Automated warranty expiration alerts and notification history."
-        action={
-          <div className="flex items-center gap-2">
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSmtpModal(true)}
+              className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <Mail className="size-3.5 text-accent" />
+              <span>{stats.isEmailConfigured ? 'Email Configured' : 'Connect Email'}</span>
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -268,23 +302,24 @@ export default function ReminderCenter() {
           ) : (
             <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
               <LayoutGroup id="billbox-reminders-rows">
-                <table className="w-full text-left border-collapse table-fixed text-sm">
-                  <colgroup>
-                    <col className="w-[35%] min-w-[200px]" />
-                    <col className="w-[20%] min-w-[130px]" />
-                    <col className="w-[20%] min-w-[130px]" />
-                    <col className="w-[15%] min-w-[100px]" />
-                    <col className="w-[10%] min-w-[80px]" />
-                  </colgroup>
-                  <thead>
-                    <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
-                      <th className="py-2.5 px-4 font-semibold">Product</th>
-                      <th className="py-2.5 px-4 font-semibold">Expiry</th>
-                      <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
-                      <th className="py-2.5 px-4 font-semibold">Channel</th>
-                      <th className="py-2.5 px-4 font-semibold text-center">Alert</th>
-                    </tr>
-                  </thead>
+                <div className="overflow-x-auto min-w-full">
+                  <table className="w-full text-left border-collapse table-fixed text-sm min-w-[780px]">
+                    <colgroup>
+                      <col className="w-[30%] min-w-[190px]" />
+                      <col className="w-[18%] min-w-[110px]" />
+                      <col className="w-[18%] min-w-[120px]" />
+                      <col className="w-[12%] min-w-[90px]" />
+                      <col className="w-[22%] min-w-[210px]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                        <th className="py-2.5 px-4 font-semibold">Product</th>
+                        <th className="py-2.5 px-4 font-semibold">Expiry</th>
+                        <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
+                        <th className="py-2.5 px-4 font-semibold">Channel</th>
+                        <th className="py-2.5 px-4 font-semibold text-right">Alert & Actions</th>
+                      </tr>
+                    </thead>
                   <m.tbody
                     variants={variants.stagger(0.015)}
                     initial={shouldStagger ? 'hidden' : false}
@@ -347,8 +382,8 @@ export default function ReminderCenter() {
                             </td>
 
                             {/* Switch & Test Trigger */}
-                            <td className="py-3 px-4 text-center">
-                              <div className="inline-flex items-center justify-center gap-2">
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center justify-end gap-2 shrink-0">
                                 <Switch
                                   checked={Boolean(prod.reminderEnabled)}
                                   onCheckedChange={(checked) =>
@@ -358,13 +393,13 @@ export default function ReminderCenter() {
                                 />
                                 <Button
                                   type="button"
-                                  variant="ghost"
+                                  variant="outline"
                                   size="sm"
                                   onClick={() => setPreviewProduct(prod)}
-                                  className="h-6 px-1.5 text-[11px] text-fg-3 hover:text-accent font-normal flex items-center gap-1 cursor-pointer"
+                                  className="h-7 px-2.5 text-xs text-fg-2 hover:text-accent border-line hover:border-accent font-medium flex items-center gap-1.5 cursor-pointer"
                                   title="Preview formatted email template"
                                 >
-                                  <Eye className="size-3" />
+                                  <Eye className="size-3 text-accent" />
                                   <span>Preview</span>
                                 </Button>
                                 <Button
@@ -373,10 +408,10 @@ export default function ReminderCenter() {
                                   size="sm"
                                   onClick={() => handleSendTestEmail(prod)}
                                   disabled={testMutation.isPending || !prod.reminderEnabled}
-                                  className="h-6 px-1.5 text-[11px] text-fg-3 hover:text-accent font-normal"
+                                  className="h-7 px-2 text-xs text-fg-3 hover:text-accent font-medium cursor-pointer"
                                   title="Send a test reminder email"
                                 >
-                                  Test
+                                  <span>Test</span>
                                 </Button>
                               </div>
                             </td>
@@ -385,9 +420,10 @@ export default function ReminderCenter() {
                       })}
                   </m.tbody>
                 </table>
-              </LayoutGroup>
-            </div>
-          )}
+              </div>
+            </LayoutGroup>
+          </div>
+        )}
         </div>
       )}
 
@@ -490,7 +526,17 @@ export default function ReminderCenter() {
         onClose={() => setPreviewProduct(null)}
         product={previewProduct}
         user={user}
+        isEmailConfigured={stats.isEmailConfigured}
         onSendTest={(p) => testMutation.mutateAsync(p._id)}
+        onOpenSmtpConfig={() => setShowSmtpModal(true)}
+      />
+
+      {/* SMTP Connection & Live Delivery Modal */}
+      <SmtpConfigModal
+        open={showSmtpModal}
+        onClose={() => setShowSmtpModal(false)}
+        userEmail={user?.email}
+        onConfigured={() => refetch()}
       />
     </PageContentTransition>
   );

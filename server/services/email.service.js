@@ -1,30 +1,61 @@
 const nodemailer = require('nodemailer');
 
-const createTransporter = () => {
+let cachedEthereal = null;
+
+const createTransporter = async () => {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT, 10) || 587;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (
-    !host ||
-    !user ||
-    !pass ||
-    user.includes('your_smtp_user') ||
-    pass.includes('your_smtp_password')
+    host &&
+    user &&
+    pass &&
+    !user.includes('your_smtp_user') &&
+    !pass.includes('your_smtp_password')
   ) {
-    return null;
+    return {
+      transporter: nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: {
+          user,
+          pass,
+        },
+      }),
+      isLive: true,
+      from: process.env.EMAIL_FROM || user,
+    };
   }
 
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
-  });
+  // Active Ethereal test account for verifiable test dispatch when SMTP is not configured
+  if (!cachedEthereal) {
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      cachedEthereal = {
+        transporter: nodemailer.createTransport({
+          host: 'smtp.ethereal.email',
+          port: 587,
+          secure: false,
+          auth: {
+            user: testAccount.user,
+            pass: testAccount.pass,
+          },
+        }),
+        isLive: false,
+        isEthereal: true,
+        from: `"BillBox Vault" <${testAccount.user}>`,
+      };
+      console.log(`[EmailService] Initialized Ethereal test mailer: ${testAccount.user}`);
+    } catch (err) {
+      console.warn('[EmailService] Could not create Ethereal test account:', err.message);
+      return null;
+    }
+  }
+
+  return cachedEthereal;
 };
 
 const renderWarrantyEmailHtml = ({
@@ -112,22 +143,26 @@ const sendWarrantyReminderEmail = async ({
       daysRemaining,
     });
 
-    const transporter = createTransporter();
+    const transportInfo = await createTransporter();
 
-    if (!transporter) {
+    if (!transportInfo) {
       console.log(
         `[EmailService] Simulation Mode (SMTP unconfigured): Warranty reminder email generated for ${to} | Subject: "${subject}"`
       );
       return {
         delivered: true,
         reason: 'simulated',
+        isLive: false,
+        isSimulated: true,
         messageId: `sim-${Date.now()}`,
         html: htmlContent,
       };
     }
 
+    const { transporter, isLive, isEthereal, from } = transportInfo;
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM || 'noreply@billbox.com',
+      from,
       to,
       subject,
       text: textContent,
@@ -135,8 +170,23 @@ const sendWarrantyReminderEmail = async ({
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[EmailService] Email delivered to ${to} (MessageID: ${info.messageId})`);
-    return { delivered: true, reason: 'sent', messageId: info.messageId, html: htmlContent };
+    const previewUrl = isEthereal ? nodemailer.getTestMessageUrl(info) : null;
+
+    if (previewUrl) {
+      console.log(`[EmailService] Ethereal delivery url: ${previewUrl}`);
+    } else {
+      console.log(`[EmailService] Live email dispatched to ${to} (MessageID: ${info.messageId})`);
+    }
+
+    return {
+      delivered: true,
+      reason: isLive ? 'sent' : 'ethereal',
+      isLive: Boolean(isLive),
+      isSimulated: !isLive,
+      previewUrl,
+      messageId: info.messageId,
+      html: htmlContent,
+    };
   } catch (error) {
     console.error(`[EmailService] Failed to send email to ${to}:`, error.message);
     return { delivered: false, reason: 'failed', error: error.message };
