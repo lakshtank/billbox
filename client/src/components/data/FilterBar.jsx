@@ -355,7 +355,6 @@ export function FilterBar({
         onOpenChange={setMobileFilterOpen}
         title="Filter & Refine"
         description="Filter by category, warranty status, or view mode"
-        snapPoints={[0.5, 1]}
       >
         <div className="flex flex-col gap-4 py-2 font-sans text-left">
           {/* Categories */}
@@ -446,7 +445,7 @@ export function FilterBar({
           )}
 
           {/* Sticky Apply & Reset Actions at bottom */}
-          <div className="sticky bottom-0 bg-surface pt-3 border-t border-line-subtle flex items-center justify-between gap-3 mt-4">
+          <div className="sticky bottom-0 bg-surface pt-3 pb-2 border-t border-line-subtle flex items-center justify-between gap-3 mt-4">
             <Button
               type="button"
               variant="ghost"
