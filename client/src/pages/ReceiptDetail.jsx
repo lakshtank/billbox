@@ -18,10 +18,7 @@ import {
   Check,
   Loader2,
   Plus,
-  Eye,
-  FileText,
   X,
-  Upload,
 } from 'lucide-react';
 import toast from '@/lib/toast';
 import { useReceiptQuery } from '../queries/useReceiptsQuery';
@@ -83,8 +80,7 @@ export function ReceiptDetail() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFullFormModal, setShowFullFormModal] = useState(false);
-
-
+  const [copiedInvoice, setCopiedInvoice] = useState(false);
   // Step 16.3: Mobile review tabs: Document | Details (< lg)
   const [mobileReviewTab, setMobileReviewTab] = useState('details');
   const [tabDirection, setTabDirection] = useState(1);

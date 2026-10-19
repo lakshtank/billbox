@@ -172,15 +172,15 @@ export default function ReminderCenter() {
         title="Reminders"
         description="Automated warranty expiration alerts and notification history."
         actions={
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowSmtpModal(true)}
-              className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="h-8 px-2.5 sm:px-3 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Mail className="size-3.5 text-accent" />
-              <span>{stats.isEmailConfigured ? 'Email Configured' : 'Connect Email'}</span>
+              <span className="truncate">{stats.isEmailConfigured ? 'Email Configured' : 'Connect Email'}</span>
             </Button>
             <Button
               variant="outline"
@@ -196,7 +196,7 @@ export default function ReminderCenter() {
                     }
                 )
               }
-              className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 cursor-pointer"
+              className="h-8 px-2.5 sm:px-3 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Eye className="size-3.5 text-accent" />
               <span>Preview Email</span>
@@ -205,7 +205,7 @@ export default function ReminderCenter() {
               size="sm"
               onClick={handleScanNow}
               disabled={scanMutation.isPending}
-              className="h-8 px-2.5 sm:px-3 text-xs bg-accent hover:bg-accent/90 text-white shadow-xs flex items-center gap-1.5 cursor-pointer"
+              className="col-span-2 sm:col-span-1 h-8 px-2.5 sm:px-3 text-xs bg-accent hover:bg-accent/90 text-white shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <RefreshCw
                 className={`size-3.5 ${scanMutation.isPending ? 'animate-spin' : ''}`}
@@ -300,130 +300,215 @@ export default function ReminderCenter() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
-              <LayoutGroup id="billbox-reminders-rows">
-                <div className="overflow-x-auto min-w-full">
-                  <table className="w-full text-left border-collapse table-fixed text-sm min-w-[780px]">
-                    <colgroup>
-                      <col className="w-[30%] min-w-[190px]" />
-                      <col className="w-[18%] min-w-[110px]" />
-                      <col className="w-[18%] min-w-[120px]" />
-                      <col className="w-[12%] min-w-[90px]" />
-                      <col className="w-[22%] min-w-[210px]" />
-                    </colgroup>
-                    <thead>
-                      <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
-                        <th className="py-2.5 px-4 font-semibold">Product</th>
-                        <th className="py-2.5 px-4 font-semibold">Expiry</th>
-                        <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
-                        <th className="py-2.5 px-4 font-semibold">Channel</th>
-                        <th className="py-2.5 px-4 font-semibold text-right">Alert & Actions</th>
-                      </tr>
-                    </thead>
-                  <m.tbody
-                    variants={variants.stagger(0.015)}
-                    initial={shouldStagger ? 'hidden' : false}
-                    animate="show"
-                    className="divide-y divide-line-subtle"
-                  >
-                    {filteredItems.map((prod, index) => {
-                        const isStaggered = index < 12;
-                        const enableLayout = filteredItems.length <= 50;
+            <div>
+              {/* Mobile Native App Cards View (<md) */}
+              <div className="md:hidden divide-y divide-line-subtle">
+                {filteredItems.map((prod) => (
+                  <div key={`mobile-reminder-${prod._id}`} className="p-4 space-y-3">
+                    {/* Top row: Product Name + Toggle Switch */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          to={`/products/${prod._id}`}
+                          className="font-semibold text-sm text-fg hover:text-accent transition-colors block truncate"
+                        >
+                          {prod.productName}
+                        </Link>
+                        <div className="flex items-center gap-1.5 text-xs text-fg-3 flex-wrap mt-0.5">
+                          {prod.brand && <span>{prod.brand}</span>}
+                          {prod.brand && prod.receipt?.storeName && <span>•</span>}
+                          {prod.receipt?.storeName && <span>{prod.receipt.storeName}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                        <span className="text-[11px] font-medium text-fg-3">
+                          {prod.reminderEnabled ? 'Active' : 'Muted'}
+                        </span>
+                        <Switch
+                          checked={Boolean(prod.reminderEnabled)}
+                          onCheckedChange={(checked) =>
+                            handleToggleReminder(prod, checked)
+                          }
+                          aria-label={`Toggle reminder for ${prod.productName}`}
+                        />
+                      </div>
+                    </div>
 
-                        return (
-                          <m.tr
-                            key={prod._id}
-                            layout={enableLayout ? 'position' : false}
-                            transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-                            variants={variants.fade}
-                            initial={shouldStagger && isStaggered ? 'hidden' : false}
-                            animate="show"
-                            className="group hover:bg-hover/60 transition-colors"
-                          >
-                            {/* Product Name, Brand & Merchant */}
-                            <td className="py-3 px-4">
-                              <div className="min-w-0">
-                                <Link
-                                  to={`/products/${prod._id}`}
-                                  className="font-medium text-fg hover:text-accent transition-colors truncate block"
-                                >
-                                  {prod.productName}
-                                </Link>
-                                <div className="flex items-center gap-1.5 text-xs text-fg-3 flex-wrap mt-0.5">
-                                  {prod.brand && <span>{prod.brand}</span>}
-                                  {prod.brand && prod.receipt?.storeName && <span>•</span>}
-                                  {prod.receipt?.storeName && (
-                                    <span>{prod.receipt.storeName}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
+                    {/* Middle row: Expiry countdown + Next reminder date */}
+                    <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-subtle/60 border border-line-subtle text-xs">
+                      <div>
+                        <span className="text-[11px] text-fg-3 block mb-0.5">Expiry</span>
+                        <DateCell
+                          value={prod.warrantyExpiryDate}
+                          relative
+                          daysRemaining={prod.daysRemaining}
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-fg-3 block mb-0.5">Next Reminder</span>
+                        <DateCell value={prod.nextReminderDate} />
+                      </div>
+                    </div>
 
-                            {/* Expiry Date */}
-                            <td className="py-3 px-4">
-                              <DateCell
-                                value={prod.warrantyExpiryDate}
-                                relative
-                                daysRemaining={prod.daysRemaining}
-                              />
-                            </td>
-
-                            {/* Next Reminder Date */}
-                            <td className="py-3 px-4">
-                              <DateCell value={prod.nextReminderDate} />
-                            </td>
-
-                            {/* Channel */}
-                            <td className="py-3 px-4">
-                              <span className="inline-flex items-center gap-1.5 text-xs text-fg-2 bg-subtle px-2 py-0.5 rounded border border-line">
-                                <Mail className="size-3 text-fg-3" />
-                                <span>Email</span>
-                              </span>
-                            </td>
-
-                            {/* Switch & Test Trigger */}
-                            <td className="py-3 px-4 text-right whitespace-nowrap">
-                              <div className="inline-flex items-center justify-end gap-2 shrink-0">
-                                <Switch
-                                  checked={Boolean(prod.reminderEnabled)}
-                                  onCheckedChange={(checked) =>
-                                    handleToggleReminder(prod, checked)
-                                  }
-                                  aria-label={`Toggle reminder for ${prod.productName}`}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setPreviewProduct(prod)}
-                                  className="h-7 px-2.5 text-xs text-fg-2 hover:text-accent border-line hover:border-accent font-medium flex items-center gap-1.5 cursor-pointer"
-                                  title="Preview formatted email template"
-                                >
-                                  <Eye className="size-3 text-accent" />
-                                  <span>Preview</span>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleSendTestEmail(prod)}
-                                  disabled={testMutation.isPending || !prod.reminderEnabled}
-                                  className="h-7 px-2 text-xs text-fg-3 hover:text-accent font-medium cursor-pointer"
-                                  title="Send a test reminder email"
-                                >
-                                  <span>Test</span>
-                                </Button>
-                              </div>
-                            </td>
-                          </m.tr>
-                        );
-                      })}
-                  </m.tbody>
-                </table>
+                    {/* Bottom row: Channel badge + Action buttons (Preview & Test) */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] text-fg-2 bg-subtle px-2 py-0.5 rounded border border-line">
+                        <Mail className="size-3 text-fg-3" />
+                        <span>Email</span>
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPreviewProduct(prod)}
+                          className="h-7 px-2.5 text-xs text-fg-2 hover:text-accent border-line hover:border-accent font-medium flex items-center gap-1 cursor-pointer"
+                        >
+                          <Eye className="size-3 text-accent" />
+                          <span>Preview</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSendTestEmail(prod)}
+                          disabled={testMutation.isPending || !prod.reminderEnabled}
+                          className="h-7 px-2 text-xs text-fg-3 hover:text-accent font-medium cursor-pointer"
+                        >
+                          <span>Test</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </LayoutGroup>
-          </div>
-        )}
+
+              {/* Desktop Table View (>=md) */}
+              <div className="hidden md:block overflow-x-auto overflow-y-hidden no-scrollbar">
+                <LayoutGroup id="billbox-reminders-rows">
+                  <div className="overflow-x-auto min-w-full">
+                    <table className="w-full text-left border-collapse table-fixed text-sm min-w-[780px]">
+                      <colgroup>
+                        <col className="w-[30%] min-w-[190px]" />
+                        <col className="w-[18%] min-w-[110px]" />
+                        <col className="w-[18%] min-w-[120px]" />
+                        <col className="w-[12%] min-w-[90px]" />
+                        <col className="w-[22%] min-w-[210px]" />
+                      </colgroup>
+                      <thead>
+                        <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                          <th className="py-2.5 px-4 font-semibold">Product</th>
+                          <th className="py-2.5 px-4 font-semibold">Expiry</th>
+                          <th className="py-2.5 px-4 font-semibold">Next reminder date</th>
+                          <th className="py-2.5 px-4 font-semibold">Channel</th>
+                          <th className="py-2.5 px-4 font-semibold text-right">Alert & Actions</th>
+                        </tr>
+                      </thead>
+                      <m.tbody
+                        variants={variants.stagger(0.015)}
+                        initial={shouldStagger ? 'hidden' : false}
+                        animate="show"
+                        className="divide-y divide-line-subtle"
+                      >
+                        {filteredItems.map((prod, index) => {
+                          const isStaggered = index < 12;
+                          const enableLayout = filteredItems.length <= 50;
+
+                          return (
+                            <m.tr
+                              key={prod._id}
+                              layout={enableLayout ? 'position' : false}
+                              transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+                              variants={variants.fade}
+                              initial={shouldStagger && isStaggered ? 'hidden' : false}
+                              animate="show"
+                              className="group hover:bg-hover/60 transition-colors"
+                            >
+                              {/* Product Name, Brand & Merchant */}
+                              <td className="py-3 px-4">
+                                <div className="min-w-0">
+                                  <Link
+                                    to={`/products/${prod._id}`}
+                                    className="font-medium text-fg hover:text-accent transition-colors truncate block"
+                                  >
+                                    {prod.productName}
+                                  </Link>
+                                  <div className="flex items-center gap-1.5 text-xs text-fg-3 flex-wrap mt-0.5">
+                                    {prod.brand && <span>{prod.brand}</span>}
+                                    {prod.brand && prod.receipt?.storeName && <span>•</span>}
+                                    {prod.receipt?.storeName && (
+                                      <span>{prod.receipt.storeName}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Expiry Date */}
+                              <td className="py-3 px-4">
+                                <DateCell
+                                  value={prod.warrantyExpiryDate}
+                                  relative
+                                  daysRemaining={prod.daysRemaining}
+                                />
+                              </td>
+
+                              {/* Next Reminder Date */}
+                              <td className="py-3 px-4">
+                                <DateCell value={prod.nextReminderDate} />
+                              </td>
+
+                              {/* Channel */}
+                              <td className="py-3 px-4">
+                                <span className="inline-flex items-center gap-1.5 text-xs text-fg-2 bg-subtle px-2 py-0.5 rounded border border-line">
+                                  <Mail className="size-3 text-fg-3" />
+                                  <span>Email</span>
+                                </span>
+                              </td>
+
+                              {/* Switch & Test Trigger */}
+                              <td className="py-3 px-4 text-right whitespace-nowrap">
+                                <div className="inline-flex items-center justify-end gap-2 shrink-0">
+                                  <Switch
+                                    checked={Boolean(prod.reminderEnabled)}
+                                    onCheckedChange={(checked) =>
+                                      handleToggleReminder(prod, checked)
+                                    }
+                                    aria-label={`Toggle reminder for ${prod.productName}`}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setPreviewProduct(prod)}
+                                    className="h-7 px-2.5 text-xs text-fg-2 hover:text-accent border-line hover:border-accent font-medium flex items-center gap-1.5 cursor-pointer"
+                                    title="Preview formatted email template"
+                                  >
+                                    <Eye className="size-3 text-accent" />
+                                    <span>Preview</span>
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleSendTestEmail(prod)}
+                                    disabled={testMutation.isPending || !prod.reminderEnabled}
+                                    className="h-7 px-2 text-xs text-fg-3 hover:text-accent font-medium cursor-pointer"
+                                    title="Send a test reminder email"
+                                  >
+                                    <span>Test</span>
+                                  </Button>
+                                </div>
+                              </td>
+                            </m.tr>
+                          );
+                        })}
+                      </m.tbody>
+                    </table>
+                  </div>
+                </LayoutGroup>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -450,71 +535,114 @@ export default function ReminderCenter() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto overflow-y-hidden no-scrollbar">
-              <table className="w-full text-left border-collapse table-fixed text-sm">
-                <colgroup>
-                  <col className="w-[20%] min-w-[130px]" />
-                  <col className="w-[30%] min-w-[180px]" />
-                  <col className="w-[30%] min-w-[180px]" />
-                  <col className="w-[20%] min-w-[120px]" />
-                </colgroup>
-                <thead>
-                  <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
-                    <th className="py-2.5 px-4 font-semibold">Sent at</th>
-                    <th className="py-2.5 px-4 font-semibold">Product</th>
-                    <th className="py-2.5 px-4 font-semibold">Recipient</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Delivery status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line-subtle">
-                  {logs.map((log) => {
-                    let statusProp = 'reconciled';
-                    let statusLabel = 'Sent';
+            <div>
+              {/* Mobile Native App Cards View (<md) */}
+              <div className="md:hidden divide-y divide-line-subtle">
+                {logs.map((log) => {
+                  let statusProp = 'reconciled';
+                  let statusLabel = 'Sent';
 
-                    if (log.status === 'failed') {
-                      statusProp = 'failed';
-                      statusLabel = 'Failed';
-                    } else if (log.status === 'skipped' || log.status === 'not_configured') {
-                      statusProp = 'not_configured';
-                      statusLabel = 'Not configured';
-                    }
+                  if (log.status === 'failed') {
+                    statusProp = 'failed';
+                    statusLabel = 'Failed';
+                  } else if (log.status === 'skipped' || log.status === 'not_configured') {
+                    statusProp = 'not_configured';
+                    statusLabel = 'Not configured';
+                  }
 
-                    return (
-                      <tr
-                        key={log._id}
-                        className="group hover:bg-hover/60 transition-colors"
-                      >
-                        {/* Sent At */}
-                        <td className="py-3 px-4 font-medium text-fg">
-                          <DateCell value={log.sentAt} />
-                        </td>
-
-                        {/* Product */}
-                        <td className="py-3 px-4">
-                          <div className="font-medium text-fg truncate">
+                  return (
+                    <div key={`mobile-log-${log._id}`} className="p-4 space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-sm text-fg truncate">
                             {log.productName}
-                          </div>
+                          </h4>
                           {log.storeName && (
-                            <div className="text-xs text-fg-3 truncate">
-                              {log.storeName}
-                            </div>
+                            <p className="text-xs text-fg-3 truncate">{log.storeName}</p>
                           )}
-                        </td>
+                        </div>
+                        <StatusBadge status={statusProp} label={statusLabel} />
+                      </div>
 
-                        {/* Recipient */}
-                        <td className="py-3 px-4 text-xs font-mono text-fg-2 truncate">
-                          {log.recipientEmail}
-                        </td>
+                      <div className="flex items-center justify-between text-xs text-fg-3 pt-1 border-t border-line-subtle">
+                        <div className="flex items-center gap-1.5 truncate max-w-[65%]">
+                          <Mail className="size-3 shrink-0 text-fg-3" />
+                          <span className="font-mono text-fg-2 truncate">{log.recipientEmail}</span>
+                        </div>
+                        <DateCell value={log.sentAt} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                        {/* Delivery Status */}
-                        <td className="py-3 px-4 text-right">
-                          <StatusBadge status={statusProp} label={statusLabel} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Desktop Table View (>=md) */}
+              <div className="hidden md:block overflow-x-auto overflow-y-hidden no-scrollbar">
+                <table className="w-full text-left border-collapse table-fixed text-sm">
+                  <colgroup>
+                    <col className="w-[20%] min-w-[130px]" />
+                    <col className="w-[30%] min-w-[180px]" />
+                    <col className="w-[30%] min-w-[180px]" />
+                    <col className="w-[20%] min-w-[120px]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-line bg-subtle text-xs font-medium text-fg-3 uppercase tracking-wider">
+                      <th className="py-2.5 px-4 font-semibold">Sent at</th>
+                      <th className="py-2.5 px-4 font-semibold">Product</th>
+                      <th className="py-2.5 px-4 font-semibold">Recipient</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Delivery status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line-subtle">
+                    {logs.map((log) => {
+                      let statusProp = 'reconciled';
+                      let statusLabel = 'Sent';
+
+                      if (log.status === 'failed') {
+                        statusProp = 'failed';
+                        statusLabel = 'Failed';
+                      } else if (log.status === 'skipped' || log.status === 'not_configured') {
+                        statusProp = 'not_configured';
+                        statusLabel = 'Not configured';
+                      }
+
+                      return (
+                        <tr
+                          key={log._id}
+                          className="group hover:bg-hover/60 transition-colors"
+                        >
+                          {/* Sent At */}
+                          <td className="py-3 px-4 font-medium text-fg">
+                            <DateCell value={log.sentAt} />
+                          </td>
+
+                          {/* Product */}
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-fg truncate">
+                              {log.productName}
+                            </div>
+                            {log.storeName && (
+                              <div className="text-xs text-fg-3 truncate">
+                                {log.storeName}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Recipient */}
+                          <td className="py-3 px-4 text-xs font-mono text-fg-2 truncate">
+                            {log.recipientEmail}
+                          </td>
+
+                          {/* Delivery Status */}
+                          <td className="py-3 px-4 text-right">
+                            <StatusBadge status={statusProp} label={statusLabel} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
