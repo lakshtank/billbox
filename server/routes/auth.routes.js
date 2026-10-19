@@ -4,6 +4,8 @@ const {
   register,
   login,
   googleLogin,
+  connectGoogle,
+  disconnectGoogle,
   getMe,
   updateProfile,
   changePassword,
@@ -49,6 +51,18 @@ router.post(
   validate,
   googleLogin
 );
+
+// POST /api/auth/connect-google (Authenticated)
+router.post(
+  '/connect-google',
+  auth,
+  [body('credential').notEmpty().withMessage('Google credential is required.')],
+  validate,
+  connectGoogle
+);
+
+// POST /api/auth/disconnect-google (Authenticated)
+router.post('/disconnect-google', auth, disconnectGoogle);
 
 // POST /api/auth/forgot-password
 router.post(

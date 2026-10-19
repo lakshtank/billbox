@@ -29,6 +29,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import * as m from 'motion/react-m';
 import { useScroll, useSpring } from 'motion/react';
 import { variants } from '@/lib/motion';
+import GoogleAccountCard from '../components/settings/GoogleAccountCard';
 
 const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
@@ -507,7 +508,10 @@ export default function Settings() {
                 </form>
               </div>
 
-              {/* Card 2: Change Password (Step 14.4 Reveal on scroll) */}
+              {/* Card 2: Connected Google Account */}
+              <GoogleAccountCard user={user} />
+
+              {/* Card 3: Change Password (Step 14.4 Reveal on scroll) */}
               <m.div
                 variants={variants.fadeUp}
                 initial="hidden"

@@ -44,3 +44,42 @@ export const useChangePasswordMutation = () => {
     },
   });
 };
+
+// Connect Google account
+export const useConnectGoogleMutation = () => {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ credential }) => {
+      const { data } = await api.post('/auth/connect-google', { credential });
+      return data.data;
+    },
+    onSuccess: (data) => {
+      if (data?.user) {
+        updateUser(data.user);
+      }
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+};
+
+// Disconnect Google account
+export const useDisconnectGoogleMutation = () => {
+  const queryClient = useQueryClient();
+  const { updateUser } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/auth/disconnect-google');
+      return data.data;
+    },
+    onSuccess: (data) => {
+      if (data?.user) {
+        updateUser(data.user);
+      }
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+};
+

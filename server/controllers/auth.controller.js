@@ -75,6 +75,9 @@ const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar || '',
+        googleConnected: Boolean(user.googleId),
+        hasPassword: Boolean(user.password),
         timezone: user.timezone,
         uiPreferences: user.uiPreferences || {
           theme: 'light',
@@ -92,7 +95,7 @@ const login = async (req, res) => {
 // GET /api/auth/me (or /api/auth/profile)
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = await User.findById(req.userId);
     if (!user) {
       return sendError(res, 404, 'User not found.');
     }
@@ -118,6 +121,9 @@ const getMe = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone || '',
+        avatar: user.avatar || '',
+        googleConnected: Boolean(user.googleId),
+        hasPassword: Boolean(user.password),
         timezone: user.timezone || 'UTC',
         defaultCurrency: user.defaultCurrency || 'INR',
         dateFormat: user.dateFormat || 'DD MMM YYYY',
@@ -210,11 +216,7 @@ const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return sendError(res, 400, 'Please provide both current and new passwords.');
-    }
-
-    if (newPassword.length < 6) {
+    if (!newPassword || newPassword.length < 6) {
       return sendError(res, 400, 'New password must be at least 6 characters long.');
     }
 
@@ -223,9 +225,15 @@ const changePassword = async (req, res) => {
       return sendError(res, 404, 'User not found.');
     }
 
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return sendError(res, 400, 'Current password is incorrect.');
+    // If user already has a password, verify their current password
+    if (user.password) {
+      if (!currentPassword) {
+        return sendError(res, 400, 'Please provide your current password.');
+      }
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return sendError(res, 400, 'Current password is incorrect.');
+      }
     }
 
     user.password = newPassword;
@@ -434,6 +442,8 @@ const googleLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        googleConnected: true,
+        hasPassword: Boolean(user.password),
         timezone: user.timezone,
         uiPreferences: user.uiPreferences || {
           theme: 'light',
@@ -449,10 +459,124 @@ const googleLogin = async (req, res) => {
   }
 };
 
+// POST /api/auth/connect-google
+const connectGoogle = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return sendError(res, 400, 'Google credential is required.');
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return sendError(res, 500, 'Google OAuth is not configured on the server.');
+    }
+
+    // Verify Google ID token
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyError) {
+      console.error('Google token verification failed:', verifyError.message);
+      return sendError(res, 401, 'Google verification failed or expired. Please try again.');
+    }
+
+    const { sub: googleId, picture } = payload;
+
+    // Check if this googleId is already linked to ANOTHER user
+    const existingWithGoogle = await User.findOne({
+      googleId,
+      _id: { $ne: req.userId },
+    });
+    if (existingWithGoogle) {
+      return sendError(
+        res,
+        400,
+        'This Google account is already linked to another BillBox account.'
+      );
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return sendError(res, 404, 'User not found.');
+    }
+
+    user.googleId = googleId;
+    if (!user.avatar && picture) {
+      user.avatar = picture;
+    }
+    await user.save();
+
+    return sendSuccess(res, 200, 'Google account connected successfully.', {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        googleConnected: true,
+        hasPassword: Boolean(user.password),
+        timezone: user.timezone,
+        uiPreferences: user.uiPreferences,
+      },
+    });
+  } catch (error) {
+    console.error('connectGoogle error:', error);
+    return sendError(res, 500, 'Failed to connect Google account.');
+  }
+};
+
+// POST /api/auth/disconnect-google
+const disconnectGoogle = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return sendError(res, 404, 'User not found.');
+    }
+
+    if (!user.googleId) {
+      return sendError(res, 400, 'No Google account is currently connected.');
+    }
+
+    if (!user.password) {
+      return sendError(
+        res,
+        400,
+        'You must set a password before disconnecting your Google account.'
+      );
+    }
+
+    // Remove googleId using $unset for clean sparse unique index
+    await User.updateOne({ _id: user._id }, { $unset: { googleId: 1 } });
+    const updatedUser = await User.findById(req.userId);
+
+    return sendSuccess(res, 200, 'Google account disconnected successfully.', {
+      user: {
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        avatar: updatedUser.avatar,
+        googleConnected: false,
+        hasPassword: true,
+        timezone: updatedUser.timezone,
+        uiPreferences: updatedUser.uiPreferences,
+      },
+    });
+  } catch (error) {
+    console.error('disconnectGoogle error:', error);
+    return sendError(res, 500, 'Failed to disconnect Google account.');
+  }
+};
+
 module.exports = {
   register,
   login,
   googleLogin,
+  connectGoogle,
+  disconnectGoogle,
   getMe,
   updateProfile,
   changePassword,
@@ -461,4 +585,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
 };
+
 
