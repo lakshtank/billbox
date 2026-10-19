@@ -20,7 +20,6 @@ import {
   PanelLeftOpen,
   Check,
   X,
-  Sparkles,
 } from 'lucide-react';
 import { Logo } from '../brand/Logo';
 import { usePreferences } from '../../context/PreferencesContext';
@@ -173,17 +172,6 @@ function MobileSidebarPopup({ open, onClose }) {
                   </button>
                 );
               })}
-            </div>
-
-            {/* Mini Vault Status Bar */}
-            <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-fg flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-accent" />
-                Vault Active
-              </span>
-              <span className="text-[10px] font-mono text-fg-3">
-                {receiptsCount} indexed · Auto-sync
-              </span>
             </div>
 
             {/* Appearance switcher row */}
@@ -491,43 +479,6 @@ function SidebarContent({
           );
         })}
       </nav>
-
-      {/* ── Vault Status Widget (expanded only) ──────── */}
-      <AnimatePresence initial={false}>
-        {showLabels && (
-          <m.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mx-3 mb-2 overflow-hidden"
-          >
-            <div className="p-3 rounded-xl bg-surface border border-line/60 shadow-2xs">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="font-semibold text-fg flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-accent" />
-                  Vault Status
-                </span>
-                <span className="text-[10px] font-mono text-good-fg font-semibold bg-good-tint/60 px-1.5 py-0.5 rounded-md border border-good-line/40">
-                  Active
-                </span>
-              </div>
-              <div className="w-full bg-line/50 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-accent h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, Math.max(20, receiptsCount * 2.5))}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center mt-2 text-[10px] text-fg-3">
-                <span>{receiptsCount} receipts indexed</span>
-                <span className="font-medium text-accent flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                  Auto-sync
-                </span>
-              </div>
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
 
       {/* ── User Row with Dropdown ────────────────────── */}
       <div className="relative p-2.5 border-t border-line/60 shrink-0">
