@@ -511,26 +511,8 @@ export default function Settings() {
               {/* Card 2: Connected Google Account */}
               <GoogleAccountCard user={user} />
 
-              {/* Card 3: Password Authentication Status */}
-              {user?.googleConnected || user?.googleId ? (
-                <m.div
-                  variants={variants.fadeUp}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: '-10% 0px' }}
-                  className="rounded-[12px] border border-line bg-surface p-6 shadow-2xs space-y-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold text-fg">Password Login</h2>
-                    <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-subtle text-fg-3 border border-line">
-                      Deactivated
-                    </span>
-                  </div>
-                  <p className="text-xs text-fg-3 leading-relaxed">
-                    Password login is deactivated because your account is connected to Google Single Sign-On. You sign in exclusively using Google. To switch back to email & password, use the "Switch to Password Login" button in the Google Account card above.
-                  </p>
-                </m.div>
-              ) : (
+              {/* Card 3: Change Password (Only available for email & password accounts) */}
+              {!user?.googleConnected && !user?.googleId && (
                 <m.div
                   variants={variants.fadeUp}
                   initial="hidden"

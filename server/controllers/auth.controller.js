@@ -224,26 +224,33 @@ const updateProfile = async (req, res) => {
 // PUT /api/auth/change-password
 const changePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!newPassword || newPassword.length < 6) {
-      return sendError(res, 400, 'New password must be at least 6 characters long.');
-    }
-
     const user = await User.findById(req.userId);
     if (!user) {
       return sendError(res, 404, 'User not found.');
     }
 
-    // If user already has a password, verify their current password
-    if (user.password) {
-      if (!currentPassword) {
-        return sendError(res, 400, 'Please provide your current password.');
-      }
-      const isMatch = await user.comparePassword(currentPassword);
-      if (!isMatch) {
-        return sendError(res, 400, 'Current password is incorrect.');
-      }
+    // Accounts authenticated via Google do not have password management
+    if (user.googleId || !user.password) {
+      return sendError(
+        res,
+        400,
+        'Password management is not available for accounts authenticated with Google.'
+      );
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return sendError(res, 400, 'Please provide both current and new passwords.');
+    }
+
+    if (newPassword.length < 6) {
+      return sendError(res, 400, 'New password must be at least 6 characters long.');
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return sendError(res, 400, 'Current password is incorrect.');
     }
 
     user.password = newPassword;
