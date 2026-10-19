@@ -792,7 +792,7 @@ export function Receipts() {
     <PageContentTransition
       isLoading={isLoading && !data}
       skeleton={<RouteSkeleton section="receipts" />}
-      className="space-y-6 font-sans"
+      className="space-y-3 sm:space-y-6 font-sans"
     >
       {/* 1. Page Header with Count & Actions */}
       <PageHeader
@@ -822,41 +822,45 @@ export function Receipts() {
         selectedCount={selectedCount}
       />
 
-      {/* 2.5 Smart Tag Filter Chips Ribbon (Mobile Responsive & High Contrast) */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 select-none py-1">
-        <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1.5">
-          <Tag className="size-3.5 text-accent" />
-          Tags:
-        </span>
-        <button
-          type="button"
-          onClick={() => updateParams({ tag: undefined, page: 1 })}
-          className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center justify-center font-medium ${
-            !tagParam
-              ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
-              : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
-          }`}
-        >
-          All
-        </button>
-        {allAvailableTags.map((tag) => {
-          const isActive = tagParam === tag;
-          return (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => handleTagToggle(tag)}
-              className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center gap-1.5 shrink-0 font-medium ${
-                isActive
-                  ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
-                  : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
-              }`}
-            >
-              <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
-              {isActive && <X className="size-3 shrink-0 opacity-80 hover:opacity-100" />}
-            </button>
-          );
-        })}
+      {/* 2.5 Smart Tag Filter Chips Ribbon (Single-row horizontal swipe carousel on mobile) */}
+      <div className="relative w-full py-0.5 select-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto flex-nowrap no-scrollbar scroll-smooth touch-pan-x pr-8">
+          <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1.5">
+            <Tag className="size-3.5 text-accent" />
+            Tags:
+          </span>
+          <button
+            type="button"
+            onClick={() => updateParams({ tag: undefined, page: 1 })}
+            className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center justify-center font-medium shrink-0 ${
+              !tagParam
+                ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
+                : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
+            }`}
+          >
+            All
+          </button>
+          {allAvailableTags.map((tag) => {
+            const isActive = tagParam === tag;
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => handleTagToggle(tag)}
+                className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center gap-1.5 shrink-0 whitespace-nowrap font-medium ${
+                  isActive
+                    ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
+                    : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
+                }`}
+              >
+                <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
+                {isActive && <X className="size-3 shrink-0 opacity-80 hover:opacity-100" />}
+              </button>
+            );
+          })}
+        </div>
+        {/* Soft edge fade indicating horizontal scrollability on mobile */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-bg-app to-transparent sm:hidden" />
       </div>
 
       {/* 3. Receipts View: Empty State / Table View / Grid View */}
