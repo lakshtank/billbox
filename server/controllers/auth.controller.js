@@ -1,6 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User.model');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // POST /api/auth/register
 const register = async (req, res) => {
@@ -354,9 +357,102 @@ const deleteAccount = async (req, res) => {
   }
 };
 
+// POST /api/auth/google
+const googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return sendError(res, 400, 'Google credential is required.');
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return sendError(res, 500, 'Google OAuth is not configured on the server.');
+    }
+
+    // Verify Google ID token
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch (verifyError) {
+      console.error('Google token verification failed:', verifyError.message);
+      return sendError(res, 401, 'Google authentication failed or expired. Please try again.');
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+    if (!email) {
+      return sendError(res, 400, 'Google account does not provide an email address.');
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user exists by googleId or email
+    let user = await User.findOne({
+      $or: [{ googleId }, { email: normalizedEmail }],
+    });
+
+    if (user) {
+      let isUpdated = false;
+      // Link googleId if user registered with email previously
+      if (!user.googleId) {
+        user.googleId = googleId;
+        isUpdated = true;
+      }
+      if (!user.avatar && picture) {
+        user.avatar = picture;
+        isUpdated = true;
+      }
+      if (isUpdated) {
+        await user.save();
+      }
+    } else {
+      // Create new user via Google
+      user = await User.create({
+        name: name || 'Google User',
+        email: normalizedEmail,
+        googleId,
+        avatar: picture || '',
+        timezone: 'UTC',
+      });
+    }
+
+    // Sign JWT
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    return sendSuccess(res, 200, 'Google sign-in successful', {
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        timezone: user.timezone,
+        uiPreferences: user.uiPreferences || {
+          theme: 'light',
+          density: 'comfortable',
+          viewMode: 'table',
+          sidebarCollapsed: false,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('googleLogin error:', error);
+    return sendError(res, 500, 'Server error during Google authentication.');
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleLogin,
   getMe,
   updateProfile,
   changePassword,

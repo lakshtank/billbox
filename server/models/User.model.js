@@ -16,7 +16,18 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function () {
+      return !this.googleId;
+    },
+  },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true,
+  },
+  avatar: {
+    type: String,
+    default: '',
   },
   timezone: {
     type: String,
@@ -62,13 +73,14 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving — never in the controller
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.password || !this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
 // Instance method for password comparison
 userSchema.methods.comparePassword = async function (candidatePassword) {
+  if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 

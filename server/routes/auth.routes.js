@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const {
   register,
   login,
+  googleLogin,
   getMe,
   updateProfile,
   changePassword,
@@ -39,6 +40,14 @@ router.post(
   ],
   validate,
   login
+);
+
+// POST /api/auth/google
+router.post(
+  '/google',
+  [body('credential').notEmpty().withMessage('Google credential is required.')],
+  validate,
+  googleLogin
 );
 
 // POST /api/auth/forgot-password

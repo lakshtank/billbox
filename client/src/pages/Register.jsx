@@ -11,6 +11,7 @@ import { PasswordStrengthMeter } from '../components/auth/PasswordStrengthMeter'
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
+import GoogleLoginButton from '../components/auth/GoogleLoginButton';
 import { toast } from 'sonner';
 import * as m from 'motion/react-m';
 import { ease } from '@/lib/motion';
@@ -315,8 +316,25 @@ export function Register() {
           </m.div>
         </form>
 
+        {/* Divider */}
+        <m.div variants={fieldVariants} className="relative my-3 sm:my-4 text-center">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-line" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase tracking-wider">
+            <span className="bg-app px-3 text-fg-3 font-medium">
+              Or continue with
+            </span>
+          </div>
+        </m.div>
+
+        {/* Google Sign In */}
+        <m.div variants={fieldVariants} className="flex justify-center w-full">
+          <GoogleLoginButton text="signup_with" />
+        </m.div>
+
         {/* Secondary link */}
-        <m.p variants={fieldVariants} className="text-center text-sm text-fg-2">
+        <m.p variants={fieldVariants} className="text-center text-sm text-fg-2 pt-1">
           Already have an account?{' '}
           <Link
             to="/login"

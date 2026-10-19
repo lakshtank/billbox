@@ -172,10 +172,18 @@ export default function Profile() {
       <div className="bg-surface border border-line rounded-[12px] p-5 sm:p-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            {/* Avatar Initials */}
-            <div className="size-16 rounded-[12px] bg-accent text-accent-fg flex items-center justify-center font-medium text-xl shrink-0">
-              {initials}
-            </div>
+            {/* Avatar Image or Initials */}
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user?.name || 'User'}
+                className="size-16 rounded-[12px] object-cover shrink-0 border border-line"
+              />
+            ) : (
+              <div className="size-16 rounded-[12px] bg-accent text-accent-fg flex items-center justify-center font-medium text-xl shrink-0">
+                {initials}
+              </div>
+            )}
 
             <div className="space-y-1">
               <div className="flex items-center gap-2.5 flex-wrap">

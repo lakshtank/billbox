@@ -10,6 +10,15 @@ export const useLogin = () => {
   });
 };
 
+export const useGoogleAuth = () => {
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { data } = await api.post('/auth/google', payload);
+      return data.data;
+    },
+  });
+};
+
 export const useRegister = () => {
   return useMutation({
     mutationFn: async (userData) => {

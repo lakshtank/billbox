@@ -233,9 +233,13 @@ function MobileSidebarPopup({ open, onClose }) {
                 onClick={() => handleNavigate('/profile')}
                 className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition-opacity cursor-pointer"
               >
-                <div className="size-8 rounded-full bg-gradient-to-tr from-accent to-accent-hover text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">
-                  {userInitial}
-                </div>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={userName} className="size-8 rounded-full object-cover shrink-0 shadow-xs ring-1 ring-line" />
+                ) : (
+                  <div className="size-8 rounded-full bg-gradient-to-tr from-accent to-accent-hover text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">
+                    {userInitial}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-fg truncate">{userName}</div>
                   <div className="text-[10px] text-fg-3 truncate">{userEmail}</div>
@@ -540,9 +544,13 @@ function SidebarContent({
               aria-label="User account menu"
             >
               <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-full bg-accent text-white text-xs font-semibold flex items-center justify-center shadow-2xs ring-1 ring-line">
-                  {userInitial}
-                </div>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={userName} className="w-8 h-8 rounded-full object-cover shadow-2xs ring-1 ring-line" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-accent text-white text-xs font-semibold flex items-center justify-center shadow-2xs ring-1 ring-line">
+                    {userInitial}
+                  </div>
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
               </div>
               <AnimatePresence initial={false}>
