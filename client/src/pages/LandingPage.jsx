@@ -32,7 +32,6 @@ import useAuth from '@/hooks/useAuth';
 import Hero3DReceipt from '../components/landing/Hero3DReceipt';
 import MerchantTicker from '../components/landing/MerchantTicker';
 import WorkflowSteps from '../components/landing/WorkflowSteps';
-import LiveScannerDemo from '../components/landing/LiveScannerDemo';
 import WarrantyRadarDemo from '../components/landing/WarrantyRadarDemo';
 import AnalyticsPreviewDemo from '../components/landing/AnalyticsPreviewDemo';
 import ComparisonMatrix from '../components/landing/ComparisonMatrix';
@@ -41,7 +40,6 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const scannerRef = useRef(null);
 
   // Recalculate smooth scroll limits on mount & after elements stabilize
   useEffect(() => {
@@ -55,17 +53,10 @@ export default function LandingPage() {
     };
   }, []);
 
-  const scrollToScanner = () => {
-    setMobileMenuOpen(false);
-    if (scannerRef.current) {
-      scannerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  };
-
   const FAQS = [
     {
-      q: 'Can I really scan receipts without creating an account?',
-      a: 'Yes! Our live demo scanner lets you test real AI extraction or verified sample invoices immediately with zero registration. When you decide to permanently store it and enable automated 30d/90d warranty tracking, click "Sign up to save" and your scan transfers directly into your new vault.',
+      q: 'How does BillBox parse and extract my receipts?',
+      a: 'BillBox utilizes automated document vision OCR to instantly extract merchant names, line items, purchase dates, taxes, and manufacturer warranty durations with high accuracy. Simply upload any receipt photo or PDF, and it is instantly organized.',
     },
     {
       q: 'How does the proactive 30-day and 90-day warranty radar work?',
@@ -101,13 +92,6 @@ export default function LandingPage() {
 
           {/* Desktop Center Navigation Links */}
           <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-fg-2">
-            <button
-              type="button"
-              onClick={scrollToScanner}
-              className="hover:text-fg transition-colors cursor-pointer"
-            >
-              Live Scanner
-            </button>
             <a href="#how-it-works" className="hover:text-fg transition-colors">
               How It Works
             </a>
@@ -121,7 +105,7 @@ export default function LandingPage() {
               Comparison
             </a>
             <a href="#features" className="hover:text-fg transition-colors">
-              Features
+              Core Features
             </a>
             <a href="#faq" className="hover:text-fg transition-colors">
               FAQ
@@ -134,7 +118,7 @@ export default function LandingPage() {
               <Button
                 type="button"
                 onClick={() => navigate('/receipts')}
-                className="h-9 px-4 rounded-xl text-xs font-semibold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20 cursor-pointer flex items-center gap-1.5"
+                className="h-9 px-4 rounded-xl text-xs font-semibold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20 cursor-pointer flex items-center gap-1.5 transition-all hover:scale-105"
               >
                 <span>Go to Receipts</span>
                 <ArrowRight className="size-3.5" />
@@ -145,7 +129,7 @@ export default function LandingPage() {
                   variant="ghost"
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="hidden sm:inline-flex h-9 px-3.5 text-xs font-semibold text-fg-2 hover:text-fg cursor-pointer"
+                  className="hidden sm:inline-flex h-9 px-3.5 text-xs font-semibold text-fg-2 hover:text-fg cursor-pointer transition-colors"
                 >
                   Sign In
                 </Button>
@@ -179,54 +163,48 @@ export default function LandingPage() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="lg:hidden border-b border-line bg-surface/95 backdrop-blur-2xl overflow-hidden px-5 py-5 space-y-3 font-semibold text-sm"
             >
-              <button
-                type="button"
-                onClick={scrollToScanner}
-                className="block w-full text-left py-2 text-fg hover:text-accent transition-colors"
-              >
-                Live Scanner (No Login)
-              </button>
               <a
                 href="#how-it-works"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg hover:text-accent transition-colors"
               >
                 How It Works
               </a>
               <a
                 href="#warranty-radar"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg-2 hover:text-fg transition-colors"
               >
                 Warranty Radar
               </a>
               <a
                 href="#analytics"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg-2 hover:text-fg transition-colors"
               >
                 Spending Analytics
               </a>
               <a
                 href="#comparison"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg-2 hover:text-fg transition-colors"
               >
                 Comparison Matrix
               </a>
               <a
                 href="#features"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg-2 hover:text-fg transition-colors"
               >
                 Core Features
               </a>
               <a
                 href="#faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block py-2 text-fg-2 hover:text-fg"
+                className="block py-2 text-fg-2 hover:text-fg transition-colors"
               >
                 FAQ
               </a>
@@ -260,7 +238,7 @@ export default function LandingPage() {
       </header>
 
       {/* ── 2. Hero Section with 3D Canvas & Value Proposition ──────────── */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
+      <section className="relative pt-10 pb-16 sm:pt-20 sm:pb-28 overflow-hidden">
         {/* Subtle architectural dot grid & ambient spotlight */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.08),transparent_70%)] pointer-events-none -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.25] pointer-events-none -z-10 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_40%,#000_60%,transparent_100%)]" />
@@ -269,48 +247,75 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column: Headline & Call to Action */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/80 border border-line text-xs font-medium text-fg-2 shadow-xs backdrop-blur-md">
+              <m.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/80 border border-line text-xs font-medium text-fg-2 shadow-xs backdrop-blur-md"
+              >
                 <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                 <ShieldCheck className="size-3.5 text-accent" />
                 <span>Intelligent Receipt Archiving &amp; Warranty Tracking</span>
-              </div>
+              </m.div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-fg leading-[1.12]">
+              <m.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-fg leading-[1.12]"
+              >
                 Your Receipts Fade.{' '}
                 <span className="text-fg-2">
                   Your Warranties Expire.
                 </span>{' '}
                 BillBox Protects Both.
-              </h1>
+              </m.h1>
 
-              <p className="text-sm sm:text-base text-fg-3 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+              <m.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-sm sm:text-base text-fg-3 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+              >
                 Transform crumpled thermal receipts and digital invoices into high-fidelity encrypted assets. Automatically extract merchants, itemized products, and 30d/90d warranty deadlines with instant cloud sync.
-              </p>
+              </m.p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
-                <Button
-                  type="button"
-                  onClick={scrollToScanner}
-                  className="w-full sm:w-auto h-12 px-7 rounded-xl text-sm font-semibold bg-accent hover:bg-accent/90 text-white shadow-xl shadow-accent/25 transition-all hover:scale-[1.02] cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Zap className="size-4 fill-white" />
-                  <span>Try Live Scanner (Free)</span>
-                </Button>
+              <m.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2"
+              >
+                <m.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    onClick={() => navigate('/register')}
+                    className="w-full sm:w-auto h-12 px-7 rounded-xl text-sm font-semibold bg-accent hover:bg-accent/90 text-white shadow-xl shadow-accent/25 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Zap className="size-4 fill-white" />
+                    <span>Get Started Free</span>
+                  </Button>
+                </m.div>
 
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => navigate('/register')}
-                  className="w-full sm:w-auto h-12 px-6 rounded-xl text-sm font-medium border-line hover:bg-hover cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>Create Free Vault</span>
-                  <ArrowRight className="size-4" />
-                </Button>
-              </div>
+                <m.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+                  <a
+                    href="#how-it-works"
+                    className="w-full sm:w-auto h-12 px-6 rounded-xl text-sm font-medium border border-line bg-surface hover:bg-hover cursor-pointer flex items-center justify-center gap-2 text-fg transition-colors"
+                  >
+                    <span>Explore How It Works</span>
+                    <ArrowRight className="size-4" />
+                  </a>
+                </m.div>
+              </m.div>
 
               {/* Guarantee Microcopy */}
-              <div className="flex items-center justify-center lg:justify-start gap-4 text-[11px] text-fg-3 font-medium">
+              <m.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 text-[11px] text-fg-3 font-medium"
+              >
                 <span className="flex items-center gap-1">
                   <Check className="size-3 text-emerald-600" />
                   No credit card required
@@ -323,29 +328,39 @@ export default function LandingPage() {
                   <Check className="size-3 text-emerald-600" />
                   100% Free personal tier
                 </span>
-              </div>
+              </m.div>
 
               {/* Trust Pillars */}
-              <div className="pt-6 grid grid-cols-3 gap-3 border-t border-line/60 max-w-lg mx-auto lg:mx-0 text-left">
-                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
-                  <p className="text-lg sm:text-xl font-bold font-mono text-fg">&lt; 1.2s</p>
-                  <p className="text-[11px] text-fg-3">Scan Latency</p>
-                </div>
-                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
-                  <p className="text-lg sm:text-xl font-bold font-mono text-amber-600">30d &amp; 90d</p>
-                  <p className="text-[11px] text-fg-3">Warranty Alerts</p>
-                </div>
-                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
-                  <p className="text-lg sm:text-xl font-bold font-mono text-emerald-600">100%</p>
-                  <p className="text-[11px] text-fg-3">Cloud Synced</p>
-                </div>
-              </div>
+              <m.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="pt-6 grid grid-cols-3 gap-2 sm:gap-3 border-t border-line/60 max-w-lg mx-auto lg:mx-0 text-left"
+              >
+                <m.div whileHover={{ y: -4, scale: 1.02 }} className="p-2.5 sm:p-3 rounded-xl bg-surface/70 border border-line shadow-2xs transition-colors">
+                  <p className="text-base sm:text-xl font-bold font-mono text-fg">&lt; 1.2s</p>
+                  <p className="text-[10px] sm:text-[11px] text-fg-3">Scan Latency</p>
+                </m.div>
+                <m.div whileHover={{ y: -4, scale: 1.02 }} className="p-2.5 sm:p-3 rounded-xl bg-surface/70 border border-line shadow-2xs transition-colors">
+                  <p className="text-base sm:text-xl font-bold font-mono text-amber-600">30d &amp; 90d</p>
+                  <p className="text-[10px] sm:text-[11px] text-fg-3">Warranty Alerts</p>
+                </m.div>
+                <m.div whileHover={{ y: -4, scale: 1.02 }} className="p-2.5 sm:p-3 rounded-xl bg-surface/70 border border-line shadow-2xs transition-colors">
+                  <p className="text-base sm:text-xl font-bold font-mono text-emerald-600">100%</p>
+                  <p className="text-[10px] sm:text-[11px] text-fg-3">Cloud Synced</p>
+                </m.div>
+              </m.div>
             </div>
 
             {/* Right Column: Hero Stage for Interactive 3D Physical Receipt */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center relative min-h-[480px]">
+            <m.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="lg:col-span-5 flex flex-col items-center justify-center relative min-h-[460px] sm:min-h-[480px]"
+            >
               <Hero3DReceipt />
-            </div>
+            </m.div>
           </div>
         </div>
       </section>
@@ -358,45 +373,35 @@ export default function LandingPage() {
         <WorkflowSteps />
       </div>
 
-      {/* ── 5. Live Interactive Scanner Demo (No Auth Required) ────────── */}
-      <section ref={scannerRef} id="scanner" className="py-20 sm:py-28 bg-subtle/40 border-y border-line relative">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
-            <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
-              Live Interactive Demo
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight">
-              Test Real Document Processing Now
-            </h2>
-            <p className="text-sm text-fg-3 leading-relaxed">
-              Click any verified sample invoice or drag &amp; drop your own bill. Watch instant OCR parsing, warranty detection, and tax calculations with zero sign-in required.
-            </p>
-          </div>
-
-          <LiveScannerDemo />
-        </div>
-      </section>
-
-      {/* ── 6. Warranty Radar 30d / 90d Interactive Demo ──────────────── */}
-      <section id="warranty-radar" className="py-20 sm:py-28 relative overflow-hidden">
+      {/* ── 5. Warranty Radar 30d / 90d Interactive Demo ──────────────── */}
+      <section id="warranty-radar" className="py-16 sm:py-24 relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column (5 cols): Description & Milestones */}
-            <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
+            <m.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, amount: 0.2 }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-5 space-y-6 text-center lg:text-left"
+            >
               <div className="space-y-3">
                 <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono">
                   Proactive Protection Radar
                 </Badge>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight leading-tight">
+                <h2 className="text-2xl sm:text-4xl font-extrabold text-fg tracking-tight leading-tight">
                   Never Miss a Free Claim or Replacement
                 </h2>
-                <p className="text-sm text-fg-3 leading-relaxed">
+                <p className="text-xs sm:text-sm text-fg-3 leading-relaxed">
                   Most people forget their warranties until a week after they expire. BillBox automatically calculates expiry countdowns and triggers notifications before coverage lapses.
                 </p>
               </div>
 
               <div className="space-y-3 text-xs">
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5">
+                <m.div
+                  whileHover={{ y: -3, scale: 1.01 }}
+                  className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5 transition-colors"
+                >
                   <div className="size-8 rounded-lg bg-warn-bg text-warn-fg flex items-center justify-center font-bold text-xs shrink-0">
                     ≤30d
                   </div>
@@ -406,9 +411,12 @@ export default function LandingPage() {
                       Instant alerts to schedule free manufacturer repairs, battery replacements, or exchange claims before coverage terminates.
                     </p>
                   </div>
-                </div>
+                </m.div>
 
-                <div className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5">
+                <m.div
+                  whileHover={{ y: -3, scale: 1.01 }}
+                  className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5 transition-colors"
+                >
                   <div className="size-8 rounded-lg bg-subtle text-fg-2 flex items-center justify-center font-bold text-xs shrink-0">
                     90d
                   </div>
@@ -418,9 +426,9 @@ export default function LandingPage() {
                       Surfaces items entering their final quarter on your dashboard overview so you can plan service visits.
                     </p>
                   </div>
-                </div>
+                </m.div>
               </div>
-            </div>
+            </m.div>
 
             {/* Right Column (7 cols): Interactive Time Slider & Device Grid */}
             <div className="lg:col-span-7">
@@ -430,123 +438,141 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── 7. Spending & Warranty Intelligence Analytics Preview ──────── */}
-      <section id="analytics" className="py-20 sm:py-28 bg-subtle/30 border-y border-line relative">
+      {/* ── 6. Spending & Warranty Intelligence Analytics Preview ──────── */}
+      <section id="analytics" className="py-16 sm:py-24 bg-subtle/30 border-y border-line relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-3xl mx-auto mb-12 sm:mb-14 space-y-3"
+          >
             <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
               Dashboard Intelligence
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight text-balance">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-fg tracking-tight text-balance">
               Track Spending Trends Across 30 Days, 90 Days &amp; Years
             </h2>
-            <p className="text-sm text-fg-3 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xs sm:text-sm text-fg-3 leading-relaxed max-w-2xl mx-auto">
               Visualize hardware spending, active warranties, and quarterly budget allocations with interactive Recharts intelligence.
             </p>
-          </div>
+          </m.div>
 
           <AnalyticsPreviewDemo />
         </div>
       </section>
 
-      {/* ── 8. Comparison Matrix: Traditional vs BillBox Vault ─────────── */}
+      {/* ── 7. Comparison Matrix: Traditional vs BillBox Vault ─────────── */}
       <div id="comparison">
         <ComparisonMatrix />
       </div>
 
-      {/* ── 9. Core Capabilities Feature Bento Grid ────────────────────── */}
-      <section id="features" className="py-20 sm:py-28 bg-subtle/20 border-t border-line">
+      {/* ── 8. Core Capabilities Feature Bento Grid ────────────────────── */}
+      <section id="features" className="py-16 sm:py-24 bg-subtle/20 border-t border-line">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14 space-y-2">
+          <m.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.2 }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-2xl mx-auto mb-12 sm:mb-14 space-y-2"
+          >
             <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
               Core Capabilities
             </Badge>
-            <h2 className="text-2xl sm:text-4xl font-bold text-fg">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-fg tracking-tight">
               Engineered for Complete Peace of Mind
             </h2>
             <p className="text-xs sm:text-sm text-fg-3">
               Everything you need to eliminate receipt chaos and protect every rupee spent.
             </p>
-          </div>
+          </m.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <Receipt className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">Instant Document OCR</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Extracts itemized products, taxes, dates, and store branding in under 1.2 seconds with high precision.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <BarChart3 className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">30d &amp; 90d Trend Graphs</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Dynamic Recharts spending area charts that plot trajectories across 30 days, 90 days, 1 year, and store breakdowns.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <Clock className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">Automated Expiry Radar</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Continuous background monitoring. Receive automated warnings 30 days, 15 days, and 7 days before coverage lapses.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <Share2 className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">Public Receipt Sharing</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Generate secure, shareable public web links for any invoice. Perfect for reimbursements, split costs, or insurance claims.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <Layers className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">Batch Concurrent Processing</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Have multiple receipts from a shopping trip? Drag and drop files at once. Our concurrent queue processes them in parallel.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group">
-              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                <Lock className="size-5" />
-              </div>
-              <h3 className="text-base font-bold text-fg">Google One-Tap &amp; AES-256</h3>
-              <p className="text-xs text-fg-3 leading-relaxed">
-                Seamless Google OAuth, strict CORS authentication, secure cloud storage fallback, and zero third-party data tracking.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {[
+              {
+                icon: Receipt,
+                title: 'Instant Document OCR',
+                description: 'Extracts itemized products, taxes, dates, and store branding in under 1.2 seconds with high precision.',
+              },
+              {
+                icon: BarChart3,
+                title: '30d & 90d Trend Graphs',
+                description: 'Dynamic Recharts spending area charts that plot trajectories across 30 days, 90 days, 1 year, and store breakdowns.',
+              },
+              {
+                icon: Clock,
+                title: 'Automated Expiry Radar',
+                description: 'Continuous background monitoring. Receive automated warnings 30 days, 15 days, and 7 days before coverage lapses.',
+              },
+              {
+                icon: Share2,
+                title: 'Public Receipt Sharing',
+                description: 'Generate secure, shareable public web links for any invoice. Perfect for reimbursements, split costs, or insurance claims.',
+              },
+              {
+                icon: Layers,
+                title: 'Batch Concurrent Processing',
+                description: 'Have multiple receipts from a shopping trip? Drag and drop files at once. Our concurrent queue processes them in parallel.',
+              },
+              {
+                icon: Lock,
+                title: 'Google One-Tap & AES-256',
+                description: 'Seamless Google OAuth, strict CORS authentication, secure cloud storage fallback, and zero third-party data tracking.',
+              },
+            ].map((feat, idx) => {
+              const Icon = feat.icon;
+              return (
+                <m.div
+                  key={feat.title}
+                  initial={{ opacity: 0, y: 25 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false, amount: 0.15 }}
+                  transition={{ duration: 0.45, delay: idx * 0.08 }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  className="p-6 rounded-3xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3 group cursor-default"
+                >
+                  <div className="size-11 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    <Icon className="size-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-fg">{feat.title}</h3>
+                  <p className="text-xs text-fg-3 leading-relaxed">
+                    {feat.description}
+                  </p>
+                </m.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── 10. FAQ Accordion Section ─────────────────────────────────── */}
-      <section id="faq" className="py-20 sm:py-28 max-w-4xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12 space-y-2">
+      {/* ── 9. FAQ Accordion Section ─────────────────────────────────── */}
+      <section id="faq" className="py-16 sm:py-24 max-w-4xl mx-auto px-4 sm:px-6">
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-10 sm:mb-12 space-y-2"
+        >
           <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
             Got Questions?
           </Badge>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight">
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-fg tracking-tight">
             Frequently Asked Questions
           </h2>
-        </div>
+        </m.div>
 
-        <div className="divide-y divide-line border border-line rounded-3xl bg-surface overflow-hidden shadow-xs">
+        <m.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.5 }}
+          className="divide-y divide-line border border-line rounded-3xl bg-surface overflow-hidden shadow-xs"
+        >
           {FAQS.map((faq, i) => (
-            <details key={i} className="group p-5 sm:p-6 cursor-pointer text-left">
+            <details key={i} className="group p-5 sm:p-6 cursor-pointer text-left hover:bg-subtle/30 transition-colors">
               <summary className="flex items-center justify-between font-semibold text-sm sm:text-base text-fg list-none">
                 <span>{faq.q}</span>
                 <ChevronDown className="size-4 text-fg-3 transition-transform group-open:rotate-180 shrink-0 ml-2" />
@@ -556,47 +582,55 @@ export default function LandingPage() {
               </p>
             </details>
           ))}
-        </div>
+        </m.div>
       </section>
 
-      {/* ── 11. Bottom High-Converting Call to Action Banner ───────────── */}
-      <section className="py-20 sm:py-28 relative overflow-hidden bg-gradient-to-b from-subtle/40 via-surface to-subtle/40 border-t border-line">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6">
+      {/* ── 10. Bottom High-Converting Call to Action Banner ───────────── */}
+      <section className="py-16 sm:py-24 relative overflow-hidden bg-gradient-to-b from-subtle/40 via-surface to-subtle/40 border-t border-line">
+        <m.div
+          initial={{ opacity: 0, y: 25 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6"
+        >
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-line text-xs font-medium text-fg-2 shadow-xs">
             <ShieldCheck className="size-3.5 text-accent" />
             <span>Setup in under 10 seconds • No credit card needed</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-fg tracking-tight">
+          <h2 className="text-2xl sm:text-5xl font-extrabold text-fg tracking-tight">
             Ready to Never Lose Another Warranty?
           </h2>
-          <p className="text-sm sm:text-base text-fg-3 max-w-xl mx-auto leading-relaxed">
+          <p className="text-xs sm:text-base text-fg-3 max-w-xl mx-auto leading-relaxed">
             Join thousands of smart shoppers protecting verified purchases, tracking expiry dates, and saving thousands in replacement costs.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button
-              type="button"
-              onClick={() => navigate('/register')}
-              className="w-full sm:w-auto h-12 px-8 rounded-xl text-sm font-semibold bg-accent hover:bg-accent/90 text-white shadow-xl shadow-accent/25 transition-all hover:scale-105 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>Create Free Account</span>
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={scrollToScanner}
-              className="w-full sm:w-auto h-12 px-6 rounded-xl text-sm font-medium border-line hover:bg-hover cursor-pointer"
-            >
-              Test Live Scanner First
-            </Button>
+            <m.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="w-full sm:w-auto">
+              <Button
+                type="button"
+                onClick={() => navigate('/register')}
+                className="w-full sm:w-auto h-12 px-8 rounded-xl text-sm font-semibold bg-accent hover:bg-accent/90 text-white shadow-xl shadow-accent/25 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Create Free Vault</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </m.div>
+            <m.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+              <a
+                href="#how-it-works"
+                className="w-full sm:w-auto h-12 px-6 rounded-xl text-sm font-medium border border-line bg-surface hover:bg-hover cursor-pointer flex items-center justify-center text-fg transition-colors"
+              >
+                <span>Explore How It Works</span>
+              </a>
+            </m.div>
           </div>
-        </div>
+        </m.div>
       </section>
 
-      {/* ── 12. Enterprise Multi-Column Footer ─────────────────────────── */}
-      <footer className="border-t border-line bg-surface py-14 text-xs text-fg-3 font-sans">
+      {/* ── 11. Enterprise Multi-Column Footer ─────────────────────────── */}
+      <footer className="border-t border-line bg-surface py-12 sm:py-14 text-xs text-fg-3 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 pb-12 border-b border-line">
             {/* Col 1: Brand & Tagline */}
@@ -620,9 +654,9 @@ export default function LandingPage() {
               </p>
               <ul className="space-y-2 text-xs">
                 <li>
-                  <button type="button" onClick={scrollToScanner} className="hover:text-fg transition-colors">
-                    Live Demo Scanner
-                  </button>
+                  <a href="#how-it-works" className="hover:text-fg transition-colors">
+                    How It Works
+                  </a>
                 </li>
                 <li>
                   <a href="#warranty-radar" className="hover:text-fg transition-colors">

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
+import * as m from 'motion/react-m';
 import { ShieldCheck, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const RECEIPT_PRESETS = {
@@ -552,12 +553,12 @@ export default function Hero3DReceipt({ className = '' }) {
       ref={containerRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative w-full max-w-[480px] mx-auto flex flex-col items-center select-none ${className}`}
+      className={`relative w-full max-w-[480px] mx-auto flex flex-col items-center select-none px-2 sm:px-0 ${className}`}
     >
       {/* 3D Canvas Showcase Area */}
-      <div className="relative w-full h-[520px] sm:h-[550px] flex items-center justify-center">
+      <div className="relative w-full h-[460px] sm:h-[550px] flex items-center justify-center">
         {/* Soft Ambient Spotlight Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] bg-gradient-to-tr from-accent/12 via-sky-400/10 to-transparent rounded-full blur-[80px] pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[360px] h-[300px] sm:h-[360px] bg-gradient-to-tr from-accent/15 via-sky-400/10 to-transparent rounded-full blur-[80px] pointer-events-none -z-10" />
 
         {/* 3D WebGL Canvas */}
         <div
@@ -566,42 +567,56 @@ export default function Hero3DReceipt({ className = '' }) {
         />
 
         {/* Floating Status Pill 1: Top Right */}
-        <div className="absolute -top-3 right-0 sm:right-2 p-2.5 sm:p-3 rounded-2xl bg-surface/95 border border-line shadow-xl backdrop-blur-xl flex items-center gap-3 pointer-events-none z-20 animate-bounce-subtle transition-all">
-          <div className="size-9 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500 shrink-0">
-            <AlertTriangle className="size-4.5" />
+        <m.div
+          key={`top-${selectedPreset}`}
+          initial={{ opacity: 0, scale: 0.85, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="absolute -top-2 right-1 sm:-top-3 sm:right-2 p-2 sm:p-3 rounded-2xl bg-surface/95 border border-line shadow-xl backdrop-blur-xl flex items-center gap-2.5 sm:gap-3 pointer-events-none z-20 transition-all origin-top-right max-w-[210px] sm:max-w-xs scale-90 sm:scale-100"
+        >
+          <div className="size-8 sm:size-9 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500 shrink-0">
+            <AlertTriangle className="size-4 sm:size-4.5" />
           </div>
-          <div className="text-left text-xs">
+          <div className="text-left text-xs min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-fg">{currentPresetData.topBadge.title}</span>
-              <span className="inline-block size-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="font-bold text-fg truncate">{currentPresetData.topBadge.title}</span>
+              <span className="inline-block size-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
             </div>
-            <p className="text-[11px] text-fg-3">{currentPresetData.topBadge.sub}</p>
+            <p className="text-[10px] sm:text-[11px] text-fg-3 truncate">{currentPresetData.topBadge.sub}</p>
           </div>
-        </div>
+        </m.div>
 
         {/* Floating Status Pill 2: Bottom Left */}
-        <div className="absolute -bottom-3 left-0 sm:left-2 p-2.5 sm:p-3 rounded-2xl bg-surface/95 border border-line shadow-xl backdrop-blur-xl flex items-center gap-3 pointer-events-none z-20 transition-all">
-          <div className="size-9 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500 shrink-0">
-            <ShieldCheck className="size-4.5" />
+        <m.div
+          key={`bottom-${selectedPreset}`}
+          initial={{ opacity: 0, scale: 0.85, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="absolute -bottom-2 left-1 sm:-bottom-3 sm:left-2 p-2 sm:p-3 rounded-2xl bg-surface/95 border border-line shadow-xl backdrop-blur-xl flex items-center gap-2.5 sm:gap-3 pointer-events-none z-20 transition-all origin-bottom-left max-w-[210px] sm:max-w-xs scale-90 sm:scale-100"
+        >
+          <div className="size-8 sm:size-9 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500 shrink-0">
+            <ShieldCheck className="size-4 sm:size-4.5" />
           </div>
-          <div className="text-left text-xs">
+          <div className="text-left text-xs min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-fg">{currentPresetData.bottomBadge.title}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 font-semibold">256-BIT</span>
+              <span className="font-bold text-fg truncate">{currentPresetData.bottomBadge.title}</span>
+              <span className="text-[9px] sm:text-[10px] font-mono px-1 sm:px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 font-semibold shrink-0">256-BIT</span>
             </div>
-            <p className="text-[11px] text-fg-3">{currentPresetData.bottomBadge.sub}</p>
+            <p className="text-[10px] sm:text-[11px] text-fg-3 truncate">{currentPresetData.bottomBadge.sub}</p>
           </div>
-        </div>
+        </m.div>
       </div>
 
       {/* Interactive Store Switcher Chips */}
-      <div className="mt-3 inline-flex items-center gap-1.5 p-1 rounded-xl bg-surface/90 border border-line shadow-xs backdrop-blur-md z-30">
+      <div className="mt-3 inline-flex flex-wrap justify-center items-center gap-1.5 p-1 rounded-xl bg-surface/90 border border-line shadow-xs backdrop-blur-md z-30 max-w-full">
         {Object.values(RECEIPT_PRESETS).map((p) => (
-          <button
+          <m.button
             key={p.id}
             type="button"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => handleSelectPreset(p.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedPreset === p.id
                 ? 'bg-accent text-white shadow-xs'
                 : 'text-fg-2 hover:text-fg hover:bg-hover'
@@ -609,7 +624,7 @@ export default function Hero3DReceipt({ className = '' }) {
           >
             <span>{p.icon}</span>
             <span>{p.name}</span>
-          </button>
+          </m.button>
         ))}
       </div>
     </div>

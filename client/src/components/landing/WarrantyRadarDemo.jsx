@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import * as m from 'motion/react-m';
-import { ShieldCheck, Clock, AlertTriangle, Bell, CheckCircle } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
+import { ShieldCheck, Clock, AlertTriangle, Bell, CheckCircle, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 const DEMO_DEVICES = [
@@ -11,11 +12,12 @@ const DEMO_DEVICES = [
 ];
 
 export default function WarrantyRadarDemo({ className = '' }) {
-  // Simulated day offset from purchase (0 to 395 days)
+  // Simulated day offset from purchase (0 to 380 days)
   const [daysElapsed, setDaysElapsed] = useState(340);
 
   const totalPeriodDays = 365;
   const daysRemaining = Math.max(0, totalPeriodDays - daysElapsed);
+  const percentElapsed = Math.min(100, Math.round((daysElapsed / totalPeriodDays) * 100));
 
   let bucket = 'active';
   let badgeColor = 'ok';
@@ -31,7 +33,7 @@ export default function WarrantyRadarDemo({ className = '' }) {
     bucket = 'due_soon';
     badgeColor = 'warn';
     statusText = `Due Soon: Only ${daysRemaining} Days Left!`;
-    alertMessage = 'Automated BillBox alert dispatched! Claim repairs or free battery swap before expiry.';
+    alertMessage = 'Automated BillBox alert dispatched! Claim free manufacturer repairs or battery swap.';
   } else if (daysRemaining <= 90) {
     bucket = 'next_90';
     badgeColor = 'neutral';
@@ -40,13 +42,19 @@ export default function WarrantyRadarDemo({ className = '' }) {
   }
 
   return (
-    <div className={`rounded-2xl bg-surface/90 border border-line shadow-xl p-5 sm:p-7 backdrop-blur-xl ${className}`}>
+    <m.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.15 }}
+      transition={{ duration: 0.6 }}
+      className={`rounded-3xl bg-surface/90 border border-line shadow-xl p-5 sm:p-7 backdrop-blur-xl ${className}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-line">
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-accent" />
             <h3 className="text-base sm:text-lg font-bold text-fg">
-              Interactive 30d & 90d Warranty Radar
+              Interactive 30d &amp; 90d Warranty Radar
             </h3>
           </div>
           <p className="text-xs text-fg-3 mt-1">
@@ -54,19 +62,47 @@ export default function WarrantyRadarDemo({ className = '' }) {
           </p>
         </div>
 
-        <Badge variant={badgeColor} className="text-xs font-mono shrink-0 py-1 px-3">
-          {statusText}
-        </Badge>
+        <m.div
+          key={bucket}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Badge variant={badgeColor} className="text-xs font-mono shrink-0 py-1 px-3">
+            {statusText}
+          </Badge>
+        </m.div>
       </div>
 
-      {/* Interactive Slider */}
+      {/* Interactive Slider & Animated Track */}
       <div className="py-6 space-y-3">
         <div className="flex items-center justify-between text-xs font-semibold text-fg">
           <span>Day 0 (Purchased)</span>
-          <span className="font-mono text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/20">
-            Day {daysElapsed} / 365
-          </span>
+          <m.span
+            key={daysElapsed}
+            initial={{ scale: 1.15 }}
+            animate={{ scale: 1 }}
+            className="font-mono text-accent bg-accent/10 px-2.5 py-0.5 rounded-full border border-accent/20"
+          >
+            Day {daysElapsed} / 365 ({percentElapsed}%)
+          </m.span>
           <span>Day 365 (End)</span>
+        </div>
+
+        {/* Custom Progress Track Overlay */}
+        <div className="relative w-full h-3 bg-subtle rounded-full overflow-hidden">
+          <m.div
+            className={`h-full transition-colors ${
+              bucket === 'expired'
+                ? 'bg-rose-500'
+                : bucket === 'due_soon'
+                ? 'bg-amber-500'
+                : bucket === 'next_90'
+                ? 'bg-indigo-500'
+                : 'bg-accent'
+            }`}
+            style={{ width: `${percentElapsed}%` }}
+          />
         </div>
 
         <input
@@ -75,7 +111,7 @@ export default function WarrantyRadarDemo({ className = '' }) {
           max="380"
           value={daysElapsed}
           onChange={(e) => setDaysElapsed(Number(e.target.value))}
-          className="w-full h-2.5 bg-subtle rounded-lg appearance-none cursor-pointer accent-accent"
+          className="w-full h-2 bg-transparent appearance-none cursor-pointer accent-accent -mt-5 relative z-10"
           aria-label="Warranty timeline simulator slider"
         />
 
@@ -90,39 +126,48 @@ export default function WarrantyRadarDemo({ className = '' }) {
             <span>Day 276–335</span>
           </div>
           <div>
-            <span className="block font-semibold text-amber-400">≤30d Alert!</span>
+            <span className="block font-semibold text-amber-500">≤30d Alert!</span>
             <span>Day 336–364</span>
           </div>
           <div className="text-right">
-            <span className="block font-semibold text-rose-400">Expired</span>
+            <span className="block font-semibold text-rose-500">Expired</span>
             <span>Day 365+</span>
           </div>
         </div>
       </div>
 
-      {/* Live Alert Notification Banner Preview */}
-      <div className={`p-4 rounded-xl border transition-all ${
-        bucket === 'due_soon'
-          ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
-          : bucket === 'next_90'
-          ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
-          : bucket === 'expired'
-          ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-          : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-      }`}>
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-surface/80 border border-line shrink-0 text-fg">
-            <Bell className="size-4 text-accent" />
+      {/* Live Alert Notification Banner with Flip Animation */}
+      <AnimatePresence mode="wait">
+        <m.div
+          key={bucket}
+          initial={{ opacity: 0, y: -6, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 6, scale: 0.98 }}
+          transition={{ duration: 0.25 }}
+          className={`p-4 rounded-2xl border transition-all ${
+            bucket === 'due_soon'
+              ? 'bg-amber-500/10 border-amber-500/30'
+              : bucket === 'next_90'
+              ? 'bg-indigo-500/10 border-indigo-500/30'
+              : bucket === 'expired'
+              ? 'bg-rose-500/10 border-rose-500/30'
+              : 'bg-emerald-500/10 border-emerald-500/30'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-surface/80 border border-line shrink-0 text-fg shadow-xs">
+              <Bell className="size-4 text-accent" />
+            </div>
+            <div className="text-xs">
+              <p className="font-semibold text-fg flex items-center gap-1.5">
+                <span>BillBox Smart Notification Engine</span>
+                <span className="text-[10px] font-mono text-fg-3">• Real-Time</span>
+              </p>
+              <p className="text-fg-2 mt-0.5 leading-relaxed">{alertMessage}</p>
+            </div>
           </div>
-          <div className="text-xs">
-            <p className="font-semibold text-fg flex items-center gap-1.5">
-              <span>BillBox Smart Notification Engine</span>
-              <span className="text-[10px] font-mono text-fg-3">• Real-Time</span>
-            </p>
-            <p className="text-fg-2 mt-0.5 leading-relaxed">{alertMessage}</p>
-          </div>
-        </div>
-      </div>
+        </m.div>
+      </AnimatePresence>
 
       {/* Simulated Device Cards Grid */}
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -130,9 +175,11 @@ export default function WarrantyRadarDemo({ className = '' }) {
           const devDaysRemaining = idx === 2 ? Math.min(20, daysRemaining) : daysRemaining;
           const isUrgent = devDaysRemaining > 0 && devDaysRemaining <= 30;
           return (
-            <div
+            <m.div
               key={dev.name}
-              className="p-3.5 rounded-xl bg-subtle/50 border border-line-subtle flex items-center justify-between gap-3 text-xs"
+              whileHover={{ scale: 1.02, y: -2 }}
+              transition={{ duration: 0.2 }}
+              className="p-3.5 rounded-2xl bg-subtle/50 border border-line-subtle flex items-center justify-between gap-3 text-xs shadow-2xs hover:border-accent/40 transition-colors"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-fg truncate">{dev.name}</p>
@@ -147,10 +194,10 @@ export default function WarrantyRadarDemo({ className = '' }) {
                   {devDaysRemaining === 0 ? 'Expired' : `${devDaysRemaining}d left`}
                 </Badge>
               </div>
-            </div>
+            </m.div>
           );
         })}
       </div>
-    </div>
+    </m.div>
   );
 }
