@@ -8,12 +8,18 @@ import {
   Mail,
   Search,
   X,
+  Eye,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import {
   useRemindersQuery,
   useUpdateReminderMutation,
   useTestReminderMutation,
+  useScanRemindersMutation,
 } from '../queries/useRemindersQuery';
+import useAuth from '@/hooks/useAuth';
+import { EmailPreviewModal } from '../components/reminders/EmailPreviewModal';
 import { PageHeader } from '../components/common/PageHeader';
 import { EmptyState } from '../components/common/EmptyState';
 import { DateCell } from '../components/data/DateCell';
@@ -28,8 +34,10 @@ import { LayoutGroup } from 'motion/react';
 import { variants } from '@/lib/motion';
 
 export default function ReminderCenter() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'history'
   const [searchTerm, setSearchTerm] = useState('');
+  const [previewProduct, setPreviewProduct] = useState(null);
 
   const filters = {
     search: searchTerm.trim(),
@@ -38,6 +46,7 @@ export default function ReminderCenter() {
   const { data, isLoading, isError } = useRemindersQuery(filters);
   const updateMutation = useUpdateReminderMutation();
   const testMutation = useTestReminderMutation();
+  const scanMutation = useScanRemindersMutation();
 
   const stats = data?.stats || {};
   const items = Array.isArray(data?.items) ? data.items : [];
@@ -74,6 +83,17 @@ export default function ReminderCenter() {
         toast.error(msg);
       },
     });
+  };
+
+  const handleScanNow = async () => {
+    try {
+      const res = await scanMutation.mutateAsync();
+      toast.success(
+        `Scanned ${res.checked || 0} items. ${res.remindersSentCount || 0} alerts evaluated!`
+      );
+    } catch (err) {
+      toast.error('Could not complete automated scan.');
+    }
   };
 
   // Filter items locally if search is active
@@ -126,6 +146,40 @@ export default function ReminderCenter() {
       <PageHeader
         title="Reminders"
         description="Automated warranty expiration alerts and notification history."
+        action={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setPreviewProduct(
+                  filteredItems[0] ||
+                    items[0] || {
+                      productName: 'Sample Product',
+                      warrantyExpiryDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
+                      daysRemaining: 28,
+                      receipt: { storeName: 'Official Store' },
+                    }
+                )
+              }
+              className="h-8 px-2.5 sm:px-3 text-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <Eye className="size-3.5 text-accent" />
+              <span>Preview Email</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleScanNow}
+              disabled={scanMutation.isPending}
+              className="h-8 px-2.5 sm:px-3 text-xs bg-accent hover:bg-accent/90 text-white shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw
+                className={`size-3.5 ${scanMutation.isPending ? 'animate-spin' : ''}`}
+              />
+              <span>{scanMutation.isPending ? 'Scanning...' : 'Scan Expiries Now'}</span>
+            </Button>
+          </div>
+        }
       />
 
       {/* 3. Search & Tabs Bar */}
@@ -306,6 +360,17 @@ export default function ReminderCenter() {
                                   type="button"
                                   variant="ghost"
                                   size="sm"
+                                  onClick={() => setPreviewProduct(prod)}
+                                  className="h-6 px-1.5 text-[11px] text-fg-3 hover:text-accent font-normal flex items-center gap-1 cursor-pointer"
+                                  title="Preview formatted email template"
+                                >
+                                  <Eye className="size-3" />
+                                  <span>Preview</span>
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={() => handleSendTestEmail(prod)}
                                   disabled={testMutation.isPending || !prod.reminderEnabled}
                                   className="h-6 px-1.5 text-[11px] text-fg-3 hover:text-accent font-normal"
@@ -418,6 +483,15 @@ export default function ReminderCenter() {
           )}
         </div>
       )}
+
+      {/* Warranty Email Preview Modal */}
+      <EmailPreviewModal
+        open={Boolean(previewProduct)}
+        onClose={() => setPreviewProduct(null)}
+        product={previewProduct}
+        user={user}
+        onSendTest={(p) => testMutation.mutateAsync(p._id)}
+      />
     </PageContentTransition>
   );
 }

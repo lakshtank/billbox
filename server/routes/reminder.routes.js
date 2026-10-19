@@ -7,6 +7,8 @@ const {
   testSendReminder,
   sendTestAlert,
   triggerCronReminderCheck,
+  previewWarrantyEmail,
+  scanWarrantyNow,
 } = require('../controllers/reminder.controller');
 
 // External/Vercel Cron webhook endpoint (protected via CRON_SECRET)
@@ -19,6 +21,12 @@ router.use(auth);
 
 // GET /api/reminders
 router.get('/', getReminders);
+
+// POST /api/reminders/scan-now
+router.post('/scan-now', scanWarrantyNow);
+
+// GET /api/reminders/preview-email/:productId
+router.get('/preview-email/:productId', previewWarrantyEmail);
 
 // POST /api/reminders/test-alert
 router.post('/test-alert', sendTestAlert);

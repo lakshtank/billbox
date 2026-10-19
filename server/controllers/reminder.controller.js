@@ -2,7 +2,7 @@ const Product = require('../models/Product.model');
 const Receipt = require('../models/Receipt.model');
 const User = require('../models/User.model');
 const ReminderLog = require('../models/ReminderLog.model');
-const { sendWarrantyReminderEmail } = require('../services/email.service');
+const { sendWarrantyReminderEmail, renderWarrantyEmailHtml } = require('../services/email.service');
 const { runWarrantyReminderCheck } = require('../services/reminder.service');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -331,10 +331,75 @@ const triggerCronReminderCheck = async (req, res) => {
   }
 };
 
+// GET /api/reminders/preview-email/:productId
+// Generates live HTML email template preview for an item
+const previewWarrantyEmail = async (req, res) => {
+  try {
+    const userId = req.userId || req.user?._id;
+    const { productId } = req.params;
+
+    const user = await User.findById(userId);
+    let product = null;
+
+    if (productId && productId !== 'sample') {
+      product = await Product.findOne({ _id: productId, userId }).populate('receiptId', 'storeName');
+    }
+
+    if (!product) {
+      product = await Product.findOne({ userId, warrantyExpiryDate: { $ne: null } }).populate('receiptId', 'storeName');
+    }
+
+    const productName = product?.productName || 'Apple MacBook Pro M3 (Sample)';
+    const storeName = product?.receiptId?.storeName || 'Official Apple Store';
+    const expiryDate = product?.warrantyExpiryDate || new Date(Date.now() + 28 * 24 * 60 * 60 * 1000);
+    const daysRemaining = Math.max(1, Math.ceil((new Date(expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+
+    const html = renderWarrantyEmailHtml({
+      userName: user?.name || 'Valued User',
+      productName,
+      storeName,
+      warrantyExpiryDate: expiryDate,
+      daysRemaining,
+    });
+
+    const subject = `[BillBox] Warranty Expiry Notice: ${productName} (${daysRemaining} days remaining)`;
+
+    return sendSuccess(res, 200, 'Preview generated successfully', {
+      subject,
+      html,
+      to: user?.email || 'user@example.com',
+      productName,
+      storeName,
+      daysRemaining,
+      expiryDate,
+    });
+  } catch (error) {
+    console.error('previewWarrantyEmail error:', error);
+    return sendError(res, 500, 'Failed to generate email preview');
+  }
+};
+
+// POST /api/reminders/scan-now
+// Allows authenticated users to immediately execute a warranty milestone check
+const scanWarrantyNow = async (req, res) => {
+  try {
+    const results = await runWarrantyReminderCheck();
+    return sendSuccess(res, 200, 'Warranty scan completed successfully', {
+      timestamp: new Date().toISOString(),
+      ...results,
+    });
+  } catch (error) {
+    console.error('scanWarrantyNow error:', error);
+    return sendError(res, 500, 'Failed to complete warranty scan');
+  }
+};
+
 module.exports = {
   getReminders,
   updateReminderSettings,
   testSendReminder,
   sendTestAlert,
   triggerCronReminderCheck,
+  previewWarrantyEmail,
+  scanWarrantyNow,
 };

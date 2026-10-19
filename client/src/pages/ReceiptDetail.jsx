@@ -122,6 +122,8 @@ export function ReceiptDetail() {
   const [editDiscountAmount, setEditDiscountAmount] = useState('0');
   const [editGrandTotal, setEditGrandTotal] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [receiptTags, setReceiptTags] = useState([]);
+  const [newTagInput, setNewTagInput] = useState('');
   const [editProducts, setEditProducts] = useState([]);
 
   // Map receipt products to edit format
@@ -193,9 +195,40 @@ export function ReceiptDetail() {
           : ''
       );
       setEditNotes(receipt.notes || '');
+      setReceiptTags(Array.isArray(receipt.tags) ? receipt.tags : []);
       setEditProducts(mapProductsForEdit(receipt.products));
     }
   }, [receipt, isEditing, mapProductsForEdit]);
+
+  const handleAddTag = async (tagToAdd) => {
+    const raw = (tagToAdd || newTagInput).trim();
+    if (!raw) return;
+    const formatted = raw.startsWith('#') ? raw : `#${raw}`;
+    if (receiptTags.includes(formatted)) {
+      setNewTagInput('');
+      return;
+    }
+    const nextTags = [...receiptTags, formatted];
+    setReceiptTags(nextTags);
+    setNewTagInput('');
+    try {
+      await updateMutation.mutateAsync({ id, tags: nextTags });
+      toast.success(`Tag ${formatted} added!`);
+    } catch {
+      toast.error('Failed to update tags.');
+    }
+  };
+
+  const handleRemoveTag = async (tagToRemove) => {
+    const nextTags = receiptTags.filter((t) => t !== tagToRemove);
+    setReceiptTags(nextTags);
+    try {
+      await updateMutation.mutateAsync({ id, tags: nextTags });
+      toast.success(`Tag ${tagToRemove} removed.`);
+    } catch {
+      toast.error('Failed to update tags.');
+    }
+  };
 
   // Real-time recalculation handlers
   const handleProductChange = (id, field, value) => {
@@ -394,6 +427,7 @@ export function ReceiptDetail() {
       grandTotal: editGrandTotal !== '' ? Number(editGrandTotal) : null,
       totalAmount: editGrandTotal !== '' ? Number(editGrandTotal) : null,
       notes: editNotes.trim(),
+      tags: receiptTags,
       products: editProducts.map((p) => ({
         _id:
           p._id ||
@@ -1462,6 +1496,102 @@ export function ReceiptDetail() {
                 )}
               </div>
             </m.div>
+
+            {/* Section 5: Smart Tags & Folders */}
+            <m.div
+              custom={5}
+              initial="hidden"
+              animate="show"
+              variants={sectionVariants}
+              className="p-4 rounded-[12px] bg-surface border border-line space-y-3 shadow-2xs"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-fg-3 uppercase tracking-wider">
+                  <Hash className="size-3.5 text-accent" />
+                  <span>Smart Tags & Organization</span>
+                </div>
+                <span className="text-[11px] text-fg-3 font-mono">{receiptTags.length} active</span>
+              </div>
+
+              {/* Active Tag Chips */}
+              <div className="flex items-center gap-1.5 flex-wrap min-h-[28px]">
+                {receiptTags.length === 0 ? (
+                  <span className="text-xs text-fg-3 italic">No tags assigned. Click quick tags below or create one.</span>
+                ) : (
+                  receiptTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-accent-tint text-accent border border-accent/20"
+                    >
+                      <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="size-3.5 rounded-full hover:bg-accent/20 flex items-center justify-center text-accent/80 hover:text-accent cursor-pointer"
+                        title="Remove tag"
+                      >
+                        <X className="size-2.5" />
+                      </button>
+                    </span>
+                  ))
+                )}
+              </div>
+
+              {/* Add Tag Input & Suggestions */}
+              <div className="pt-2 border-t border-line-subtle space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-3 font-mono text-xs">#</span>
+                    <Input
+                      type="text"
+                      value={newTagInput}
+                      onChange={(e) => setNewTagInput(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      placeholder="Tag..."
+                      className="h-8 text-xs font-mono pl-6 bg-surface"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAddTag()}
+                    disabled={!newTagInput.trim()}
+                    className="h-8 text-xs font-medium cursor-pointer"
+                  >
+                    <Plus className="size-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-fg-3">Quick add:</span>
+                  {['#Business', '#Personal', '#TaxDeductible', '#Hardware', '#Office', '#Travel'].map((preset) => {
+                    const isAlreadyAdded = receiptTags.includes(preset);
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        disabled={isAlreadyAdded}
+                        onClick={() => handleAddTag(preset)}
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                          isAlreadyAdded
+                            ? 'opacity-40 bg-subtle text-fg-3 border-line cursor-not-allowed'
+                            : 'bg-subtle/50 text-fg-2 border-line hover:border-accent hover:text-accent'
+                        }`}
+                      >
+                        +{preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </m.div>
           </m.div>
         </div>
       </div>
@@ -1718,6 +1848,94 @@ export function ReceiptDetail() {
                     {receipt.notes || 'No notes recorded for this receipt.'}
                   </p>
                 )}
+              </div>
+
+              {/* Smart Tags & Folders Card */}
+              <div className="p-5 rounded-[12px] bg-surface border border-line space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-fg">
+                    <Hash className="size-3.5 text-accent" />
+                    <span>Smart Tags & Organization</span>
+                  </div>
+                  <span className="text-[11px] text-fg-3 font-mono">{receiptTags.length} active</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap min-h-[28px]">
+                  {receiptTags.length === 0 ? (
+                    <span className="text-xs text-fg-3 italic">No tags assigned.</span>
+                  ) : (
+                    receiptTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium bg-accent-tint text-accent border border-accent/20"
+                      >
+                        <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="size-3.5 rounded-full hover:bg-accent/20 flex items-center justify-center text-accent/80 hover:text-accent cursor-pointer"
+                          title="Remove tag"
+                        >
+                          <X className="size-2.5" />
+                        </button>
+                      </span>
+                    ))
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-line-subtle space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-3 font-mono text-xs">#</span>
+                      <Input
+                        type="text"
+                        value={newTagInput}
+                        onChange={(e) => setNewTagInput(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                        placeholder="Tag..."
+                        className="h-8 text-xs font-mono pl-6 bg-surface"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleAddTag()}
+                      disabled={!newTagInput.trim()}
+                      className="h-8 text-xs font-medium cursor-pointer"
+                    >
+                      <Plus className="size-3 mr-1" />
+                      Add Tag
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-fg-3">Quick add:</span>
+                    {['#Business', '#Personal', '#TaxDeductible', '#Hardware', '#Office', '#Travel'].map((preset) => {
+                      const isAlreadyAdded = receiptTags.includes(preset);
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={isAlreadyAdded}
+                          onClick={() => handleAddTag(preset)}
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                            isAlreadyAdded
+                              ? 'opacity-40 bg-subtle text-fg-3 border-line cursor-not-allowed'
+                              : 'bg-subtle/50 text-fg-2 border-line hover:border-accent hover:text-accent'
+                          }`}
+                        >
+                          +{preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Linked Products */}

@@ -33,11 +33,16 @@ const getReceipts = async (req, res) => {
       warrantyStatus,
       search,
       year,
+      tag,
       page = 1,
       limit = 10,
       sortBy = 'date-desc',
     } = req.query;
     const filter = { userId: req.userId };
+
+    if (tag && tag !== 'All') {
+      filter.tags = tag;
+    }
 
     if (status) {
       if (status === 'needs_review') {
@@ -401,6 +406,7 @@ const createReceipt = async (req, res) => {
       totalAmount,
       currency,
       notes,
+      tags,
       fileUrl,
       fileType,
       ocrRaw,
@@ -480,6 +486,7 @@ const createReceipt = async (req, res) => {
       totalAmount: finalGrandTotal,
       currency: currency || 'INR',
       notes: notes ? String(notes).trim() : '',
+      tags: Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [],
       needsReview,
       ocrRaw: ocrRaw || '',
       ocrConfidence: ocrConfidence || {},

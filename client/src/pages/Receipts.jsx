@@ -37,6 +37,8 @@ import PageContentTransition from '@/components/common/PageContentTransition';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import useAuth from '@/hooks/useAuth';
+import { ExportModal } from '@/components/receipts/ExportModal';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -161,6 +163,23 @@ function ReceiptGridCard({ receipt, onNavigate, isStaggered = false, shouldStagg
         </Badge>
       </div>
 
+      {/* 2.5 Smart Tags on Card */}
+      {Array.isArray(receipt.tags) && receipt.tags.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          {receipt.tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent-tint text-accent border border-accent/20 font-medium"
+            >
+              {tag.startsWith('#') ? tag : `#${tag}`}
+            </span>
+          ))}
+          {receipt.tags.length > 3 && (
+            <span className="text-[10px] font-mono text-fg-3">+{receipt.tags.length - 3}</span>
+          )}
+        </div>
+      )}
+
       {/* 3. Middle: Uniform Structured Products Breakdown or Record Banner */}
       {products.length > 0 ? (
         <div className="rounded-[8px] bg-subtle/40 border border-line-subtle p-3 my-3 space-y-1.5 text-xs min-h-[72px] flex flex-col justify-center">
@@ -228,15 +247,23 @@ function MerchantTableCell({ receipt }) {
         >
           {vendor}
         </p>
-        <p className="font-mono text-xs text-fg-3 truncate" title={invoice ? `#${invoice}` : undefined}>
-          {invoice ? `#${invoice}` : 'No invoice #'}
-        </p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="font-mono text-xs text-fg-3 truncate" title={invoice ? `#${invoice}` : undefined}>
+            {invoice ? `#${invoice}` : 'No invoice #'}
+          </p>
+          {Array.isArray(receipt.tags) && receipt.tags.slice(0, 2).map((t) => (
+            <span key={t} className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-accent-tint/70 text-accent border border-accent/20">
+              {t.startsWith('#') ? t : `#${t}`}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 export function Receipts() {
+  const { user } = useAuth();
   const navigate = useViewTransitionNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { viewMode } = usePreferences();
@@ -251,6 +278,7 @@ export function Receipts() {
   const searchParam = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || 'All';
   const statusParam = searchParams.get('status') || 'all';
+  const tagParam = searchParams.get('tag') || '';
   const sortByParam = searchParams.get('sortBy') || 'date-desc';
   const pageParam = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
   const limitParam = Math.max(1, parseInt(searchParams.get('limit'), 10) || 25);
@@ -261,6 +289,8 @@ export function Receipts() {
   const [deletingReceipt, setDeletingReceipt] = useState(null);
   const [bulkDeleteItems, setBulkDeleteItems] = useState(null);
   const [shareModalReceipt, setShareModalReceipt] = useState(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportSelection, setExportSelection] = useState(null);
 
   const handleToggleSelectMode = useCallback(() => {
     setIsSelectMode((prev) => {
@@ -295,11 +325,14 @@ export function Receipts() {
     if (statusParam && statusParam !== 'all') {
       filters.status = statusParam;
     }
+    if (tagParam && tagParam.trim()) {
+      filters.tag = tagParam.trim();
+    }
     if (searchParam && searchParam.trim()) {
       filters.search = searchParam.trim();
     }
     return filters;
-  }, [pageParam, limitParam, sortByParam, categoryParam, statusParam, searchParam]);
+  }, [pageParam, limitParam, sortByParam, categoryParam, statusParam, tagParam, searchParam]);
 
   const { data, isLoading, isError, refetch } = useReceiptsQuery(queryFilters);
 
@@ -325,8 +358,34 @@ export function Receipts() {
     (searchParam && searchParam.trim()) ||
     (categoryParam && categoryParam !== 'All') ||
     (statusParam && statusParam !== 'all') ||
+    Boolean(tagParam) ||
     sortByParam !== 'date-desc'
   );
+
+  // Available tags extracted dynamically with standard presets
+  const allAvailableTags = useMemo(() => {
+    const PRESET_TAGS = ['#Business', '#Personal', '#TaxDeductible', '#Hardware', '#Office', '#Travel', '#WarrantyActive'];
+    const dynamicTags = new Set(PRESET_TAGS);
+    receipts.forEach((r) => {
+      if (Array.isArray(r.tags)) {
+        r.tags.forEach((t) => {
+          if (t && typeof t === 'string') {
+            const formatted = t.startsWith('#') ? t : `#${t}`;
+            dynamicTags.add(formatted);
+          }
+        });
+      }
+    });
+    return Array.from(dynamicTags);
+  }, [receipts]);
+
+  const handleTagToggle = (tag) => {
+    if (tagParam === tag) {
+      updateParams({ tag: undefined, page: 1 });
+    } else {
+      updateParams({ tag, page: 1 });
+    }
+  };
 
   // URL Update Helpers
   const updateParams = useCallback((updates) => {
@@ -643,10 +702,13 @@ export function Receipts() {
         size="sm"
         variant="ghost"
         className="h-7 text-xs text-fg-2 hover:bg-hover gap-1"
-        onClick={() => exportReceiptsToCSV(selectedItems, `selected-receipts-${Date.now()}.csv`)}
+        onClick={() => {
+          setExportSelection(selectedItems);
+          setIsExportOpen(true);
+        }}
       >
         <Download className="size-3" />
-        <span>Export</span>
+        <span>Export ({selectedItems.length})</span>
       </Button>
 
       <DropdownMenu>
@@ -691,9 +753,12 @@ export function Receipts() {
       <Button
         variant="outline"
         size="sm"
-        onClick={() => exportReceiptsToCSV(receipts, `billbox-receipts-${new Date().toISOString().slice(0, 10)}.csv`)}
+        onClick={() => {
+          setExportSelection(null);
+          setIsExportOpen(true);
+        }}
         disabled={receipts.length === 0}
-        className="gap-1.5 text-xs font-medium"
+        className="gap-1.5 text-xs font-medium cursor-pointer"
       >
         <Download className="size-3.5" />
         <span>Export</span>
@@ -755,6 +820,42 @@ export function Receipts() {
         onToggleSelectMode={handleToggleSelectMode}
         selectedCount={selectedCount}
       />
+
+      {/* 2.5 Smart Tag Filter Chips Ribbon */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar select-none">
+        <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+          <Tag className="size-3 text-accent" />
+          Tags:
+        </span>
+        <button
+          type="button"
+          onClick={() => updateParams({ tag: undefined, page: 1 })}
+          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border ${
+            !tagParam
+              ? 'bg-accent text-accent-contrast border-accent shadow-xs'
+              : 'bg-surface text-fg-3 border-line hover:text-fg hover:border-line-strong'
+          }`}
+        >
+          All
+        </button>
+        {allAvailableTags.map((tag) => {
+          const isActive = tagParam === tag;
+          return (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => handleTagToggle(tag)}
+              className={`px-2.5 py-1 rounded-full text-xs font-mono transition-all cursor-pointer border flex items-center gap-1 shrink-0 ${
+                isActive
+                  ? 'bg-accent text-accent-contrast border-accent shadow-xs'
+                  : 'bg-surface text-fg-2 border-line hover:border-line-strong hover:text-fg'
+              }`}
+            >
+              <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* 3. Receipts View: Empty State / Table View / Grid View */}
       <PullToRefresh onRefresh={refetch}>
@@ -901,6 +1002,17 @@ export function Receipts() {
           onClose={() => setShareModalReceipt(null)}
         />
       )}
+
+      {/* 7. Advanced Export Suite Modal */}
+      <ExportModal
+        open={isExportOpen}
+        onClose={() => {
+          setIsExportOpen(false);
+          setExportSelection(null);
+        }}
+        receipts={exportSelection && exportSelection.length > 0 ? exportSelection : receipts}
+        user={user}
+      />
     </PageContentTransition>
   );
 }

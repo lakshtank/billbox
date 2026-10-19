@@ -45,6 +45,11 @@ const receiptSchema = new mongoose.Schema(
     currency: { type: String, default: 'INR' },
 
     notes: { type: String, default: '' },
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
 
     // Validation / Flagging
     needsReview: { type: Boolean, default: false },

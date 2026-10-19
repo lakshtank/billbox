@@ -41,3 +41,18 @@ export const useTestReminderMutation = () => {
     },
   });
 };
+
+export const useScanRemindersMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/reminders/scan-now');
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reminders'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['warranties'] });
+    },
+  });
+};
