@@ -1,4 +1,5 @@
-const { createWorker } = require('tesseract.js');
+// Lazy-loaded to eliminate serverless cold boot overhead
+let createWorker = null;
 const fs = require('fs');
 const path = require('path');
 let sharp;
@@ -56,7 +57,6 @@ try {
 } catch (e) {
   PDFParse = null;
 }
-const { PDFDocument, PDFName, PDFRawStream, PDFStream } = require('pdf-lib');
 
 /**
  * Preprocesses an image buffer or filepath using sharp before handing off to Tesseract.js.
@@ -137,6 +137,15 @@ const handleImageOCR = async (filePathOrBuffer) => {
     if (isServerless && !hasLocalModel) {
       console.warn('Tesseract worker skipped on serverless: local traineddata not found.');
       return { rawText: '', wordData: [], overallConfidence: 0 };
+    }
+
+    if (!createWorker) {
+      try {
+        ({ createWorker } = require('tesseract.js'));
+      } catch (e) {
+        console.warn('tesseract.js require failed:', e.message);
+        return { rawText: '', wordData: [], overallConfidence: 0 };
+      }
     }
 
     const initWorkerPromise = createWorker('eng', 1, {

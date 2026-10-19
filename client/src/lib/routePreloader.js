@@ -71,9 +71,9 @@ export const routeQueryPrefetchers = {
   },
   warranties: () => {
     queryClient.prefetchQuery({
-      queryKey: ['products', { limit: 5000 }],
+      queryKey: ['products', { limit: 100 }],
       queryFn: async () => {
-        const { data } = await api.get('/products', { params: { limit: 5000 } });
+        const { data } = await api.get('/products', { params: { limit: 100 } });
         return data.data;
       },
     });
@@ -172,7 +172,8 @@ export function preloadAllRoutes() {
     const loadNext = () => {
       if (index >= priorityRoutes.length) return;
       const routeName = priorityRoutes[index++];
-      prefetchRoute(routeName);
+      // Only preload code chunks (JS) in the background so network and serverless functions are never overwhelmed
+      preloadRoute(routeName);
       timerId = setTimeout(loadNext, 180);
     };
 

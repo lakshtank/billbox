@@ -67,7 +67,7 @@ const getProducts = async (req, res) => {
         .sort(sortOptions)
         .skip(skip)
         .limit(limitNum)
-        .populate('receiptId', 'storeName purchaseDate invoiceNumber fileUrl fileData mimeType fileType publicToken currency'),
+        .populate('receiptId', 'storeName purchaseDate invoiceNumber fileUrl mimeType fileType publicToken currency'),
       Product.countDocuments(query),
     ]);
 
@@ -93,7 +93,7 @@ const getProductById = async (req, res) => {
 
     const product = await Product.findOne({ _id: id, userId }).populate(
       'receiptId',
-      'storeName purchaseDate invoiceNumber fileUrl fileData mimeType fileType publicToken currency subtotal grandTotal'
+      'storeName purchaseDate invoiceNumber fileUrl mimeType fileType publicToken currency subtotal grandTotal'
     );
 
     if (!product) {

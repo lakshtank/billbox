@@ -18,17 +18,31 @@ const connectDB = async () => {
     throw new Error(errorMsg);
   }
 
-  if (cached.conn) {
+  // If active connection already exists and socket is alive, return immediately
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
+  // If previous connection is stale/disconnected, clear cache to force clean reconnect
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
+    cached.conn = null;
+    cached.promise = null;
+  }
+
   if (!cached.promise) {
+    const opts = {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      family: 4, // Force IPv4 to prevent cloud DNS latency delays
+    };
+
     cached.promise = mongoose
-      .connect(uri, {
-        serverSelectionTimeoutMS: 6000,
-      })
+      .connect(uri, opts)
       .then((mongooseInstance) => {
-        console.log(`MongoDB connected: ${mongooseInstance.connection.host}`);
+        console.log(`[DB Config] MongoDB connected: ${mongooseInstance.connection.host}`);
         return mongooseInstance;
       });
   }
@@ -37,6 +51,7 @@ const connectDB = async () => {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
     console.error(`MongoDB connection error: ${e.message}`);
     throw e;
   }

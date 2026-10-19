@@ -104,7 +104,20 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Ensure DB connection for all requests (serverless & standalone)
+// Health check endpoint responds instantly without waiting for database handshake
+app.get('/api/health', (req, res) => {
+  const mongoose = require('mongoose');
+  res.json({
+    success: true,
+    message: 'BillBox API is running',
+    dbStatus: mongoose.connection.readyState === 1 ? 'connected' : (mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected'),
+    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
+    geminiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0,
+    isServerless: Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION),
+  });
+});
+
+// Ensure DB connection for all data requests (serverless & standalone)
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -168,7 +181,7 @@ app.get(['/uploads/:filename', '/api/uploads/:filename'], async (req, res) => {
         { fileUrl: { $regex: safeFilename, $options: 'i' } },
         { fileUrl: `/uploads/${safeFilename}` }
       ]
-    }).populate('products');
+    }).select('+fileData').populate('products');
 
     // If an associated receipt exists, enforce ownership or public share token
     if (receipt) {
@@ -286,17 +299,6 @@ app.post('/api/client-error', express.json(), (req, res) => {
     console.error('Failed to write last-client-error.json:', e);
   }
   res.json({ ok: true });
-});
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'BillBox API is running',
-    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
-    geminiKeyLength: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.length : 0,
-    isServerless: Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NOW_REGION),
-  });
 });
 
 // 404 handler

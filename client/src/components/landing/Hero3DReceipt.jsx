@@ -532,7 +532,7 @@ export default function Hero3DReceipt({ className = '' }) {
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [drawReceipt, selectedPreset]);
+  }, [drawReceipt]);
 
   // Handle Preset Switching
   const handleSelectPreset = (key) => {

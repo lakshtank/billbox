@@ -526,7 +526,7 @@ const updateReceipt = async (req, res) => {
     const existing = await Receipt.findOne({
       _id: req.params.id,
       userId: req.userId,
-    });
+    }).select('+fileData');
 
     if (!existing) {
       return sendError(res, 404, 'Receipt not found.');

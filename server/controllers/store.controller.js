@@ -202,7 +202,7 @@ const getStoreDetail = async (req, res) => {
     const products = await Product.find({
       userId,
       receiptId: { $in: receiptIds },
-    }).populate('receiptId', 'storeName purchaseDate invoiceNumber currency fileUrl fileData mimeType fileType publicToken');
+    }).populate('receiptId', 'storeName purchaseDate invoiceNumber currency fileUrl mimeType fileType publicToken');
 
     // Aggregate statistics
     let totalSpentInINR = 0;
