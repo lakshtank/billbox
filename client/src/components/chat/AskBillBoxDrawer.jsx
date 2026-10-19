@@ -326,7 +326,7 @@ export function AskBillBoxDrawer() {
         onError: (err) => {
           const errorMsg =
             err.response?.data?.message ||
-            'Unable to generate an answer right now. Please check your network or Gemini API key.';
+            'Unable to generate an answer right now. Please check your network connection or try again later.';
           const assistantErrorMessage = {
             role: 'assistant',
             content: `⚠️ **Error:** ${errorMsg}`,
@@ -426,7 +426,7 @@ export function AskBillBoxDrawer() {
                   <h2 className="text-sm font-bold text-fg tracking-tight">Ask BillBox</h2>
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
                     <span className="size-1.5 rounded-full bg-accent animate-pulse" />
-                    Gemini 3.8 Flash
+                    Vault Assistant
                   </span>
                 </div>
                 <p className="text-[11px] text-fg-3 truncate">

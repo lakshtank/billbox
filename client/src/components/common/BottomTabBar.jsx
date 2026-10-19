@@ -241,7 +241,7 @@ export function BottomTabBar() {
                   <span>Ask BillBox AI</span>
                 </div>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/20">
-                  Gemini 3.8
+                  Assistant
                 </span>
               </button>
 

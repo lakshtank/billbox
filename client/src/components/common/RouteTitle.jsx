@@ -8,7 +8,7 @@ const BASE = 'BillBox';
  * below so a detail page still gets a meaningful title before its data loads.
  */
 const EXACT = {
-  '/': 'AI Receipt & Warranty Vault',
+  '/': 'Smart Receipt & Warranty Vault',
   '/dashboard': 'Overview',
   '/login': 'Sign in',
   '/register': 'Create account',

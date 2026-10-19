@@ -48,7 +48,7 @@ export default function LandingPage() {
     },
     {
       q: 'What formats and bill types are supported?',
-      a: 'You can upload photos from your smartphone camera, PNG/JPEG images, scanned PDFs, and e-commerce digital invoices from Amazon, Apple, Croma, IKEA, Reliance, and more. Even crumpled or faded thermal receipts are handled with high accuracy by Gemini Vision.',
+      a: 'You can upload photos from your smartphone camera, PNG/JPEG images, scanned PDFs, and e-commerce digital invoices from Amazon, Apple, Croma, IKEA, Reliance, and more. Even crumpled or faded thermal receipts are handled with high accuracy by intelligent document processing.',
     },
     {
       q: 'Is BillBox free to use?',
@@ -69,13 +69,8 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-surface/80 border-b border-line/70 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5">
-              <Logo size="md" showWordmark={true} to="/" />
-            </div>
-            <Badge variant="outline" className="hidden sm:inline-flex text-[10px] text-accent border-accent/30 font-mono">
-              v2.0 Production
-            </Badge>
+          <div className="flex items-center gap-2.5">
+            <Logo size="md" showWordmark={true} to="/" />
           </div>
 
           {/* Center Navigation Links */}
@@ -135,22 +130,21 @@ export default function LandingPage() {
 
       {/* ── 2. Hero Section with 3D Canvas & Value Proposition ──────────── */}
       <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
-        {/* Ambient background glows */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/12 rounded-full blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute top-1/3 right-10 w-[350px] h-[350px] bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none -z-10" />
+        {/* Subtle ambient lighting */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/8 rounded-full blur-[140px] pointer-events-none -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column: Headline & Call to Action */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-xs font-medium">
-                <Sparkles className="size-3.5 animate-spin-slow" />
-                <span>Next-Gen Gemini 2.5 Flash Vision OCR</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-line text-xs font-medium text-fg-2 shadow-xs">
+                <ShieldCheck className="size-3.5 text-accent" />
+                <span>Intelligent Receipt Archiving &amp; Warranty Tracking</span>
               </div>
 
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-fg leading-[1.12]">
                 Your Receipts Fade.{' '}
-                <span className="bg-gradient-to-r from-accent via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="text-fg-2">
                   Your Warranties Expire.
                 </span>{' '}
                 BillBox Protects Both.
@@ -202,9 +196,9 @@ export default function LandingPage() {
             {/* Right Column: Hero Stage for 3D Receipt */}
             <div className="lg:col-span-5 relative min-h-[360px] sm:min-h-[440px] flex flex-col items-center justify-end pb-6 pointer-events-none">
               <div className="p-3.5 rounded-2xl bg-surface/75 border border-line-subtle shadow-xl backdrop-blur-md text-xs text-center space-y-1 max-w-[280px] pointer-events-auto">
-                <div className="flex items-center justify-center gap-1.5 text-accent font-semibold text-[11px]">
-                  <Sparkles className="size-3.5 animate-spin-slow" />
-                  <span>Scroll-Driven 3D Journey</span>
+                <div className="flex items-center justify-center gap-1.5 text-fg font-semibold text-[11px]">
+                  <Receipt className="size-3.5 text-accent" />
+                  <span>Interactive 3D Walkthrough</span>
                 </div>
                 <p className="text-[11px] text-fg-3">
                   Scroll down to watch the 3D receipt glide through the live scanner &amp; warranty radar
@@ -303,14 +297,14 @@ export default function LandingPage() {
               <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <Receipt className="size-5" />
               </div>
-              <h3 className="text-base font-bold text-fg">Instant Multimodal OCR</h3>
+              <h3 className="text-base font-bold text-fg">Instant Document OCR</h3>
               <p className="text-xs text-fg-3 leading-relaxed">
-                Powered by Gemini 2.5 Flash Vision. Extracts itemized products, taxes, dates, and merchant branding in under 1.2 seconds.
+                Extracts itemized products, taxes, dates, and store branding in under 1.2 seconds with high precision.
               </p>
             </div>
 
             <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3">
-              <div className="size-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <BarChart3 className="size-5" />
               </div>
               <h3 className="text-base font-bold text-fg">30d &amp; 90d Trend Graphs</h3>
@@ -320,7 +314,7 @@ export default function LandingPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3">
-              <div className="size-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <Clock className="size-5" />
               </div>
               <h3 className="text-base font-bold text-fg">Automated Expiry Radar</h3>
@@ -330,7 +324,7 @@ export default function LandingPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3">
-              <div className="size-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <Share2 className="size-5" />
               </div>
               <h3 className="text-base font-bold text-fg">Public Receipt Sharing</h3>
@@ -340,22 +334,22 @@ export default function LandingPage() {
             </div>
 
             <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3">
-              <div className="size-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <Layers className="size-5" />
               </div>
               <h3 className="text-base font-bold text-fg">Batch Processing</h3>
               <p className="text-xs text-fg-3 leading-relaxed">
-                Have a shoebox full of bills? Drag and drop multiple files at once. Our concurrent queue processes them in parallel.
+                Have multiple receipts? Drag and drop files at once. Our concurrent queue processes them in parallel.
               </p>
             </div>
 
             <div className="p-6 rounded-2xl bg-surface border border-line hover:border-accent/40 transition-all shadow-xs space-y-3">
-              <div className="size-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <div className="size-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
                 <Lock className="size-5" />
               </div>
               <h3 className="text-base font-bold text-fg">Google One-Tap &amp; Security</h3>
               <p className="text-xs text-fg-3 leading-relaxed">
-                Seamless Google OAuth, strict CORS authentication, base64 cloud storage fallback, and zero third-party data tracking.
+                Seamless Google OAuth, strict CORS authentication, secure cloud storage fallback, and zero third-party data tracking.
               </p>
             </div>
           </div>
@@ -389,16 +383,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── 7. Bottom High-Converting Call to Action ──────────────────── */}
-      <section className="py-16 sm:py-20 relative overflow-hidden bg-gradient-to-b from-subtle to-bg-app border-t border-line">
+      <section className="py-16 sm:py-20 relative overflow-hidden bg-subtle/40 border-t border-line">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-6">
-          <Badge variant="ok" className="text-xs font-mono uppercase tracking-wider py-1 px-3">
-            Start Storing In 10 Seconds
-          </Badge>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-line text-xs font-medium text-fg-2 shadow-xs">
+            <ShieldCheck className="size-3.5 text-accent" />
+            <span>Setup in under 10 seconds</span>
+          </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold text-fg tracking-tight">
             Ready to Never Lose Another Receipt?
           </h2>
           <p className="text-sm sm:text-base text-fg-3 max-w-xl mx-auto">
-            Join thousands tracking over ₹5M+ in verified expenses and active warranty coverage.
+            Join thousands tracking verified expenses and active warranty coverage.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

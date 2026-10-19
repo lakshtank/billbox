@@ -87,7 +87,7 @@ export function ReceiptUploader({ onSuccess, onHandwritingDetected }) {
     if (nextVal) {
       toast.success('Offline OCR engine active.');
     } else {
-      toast.success('Gemini AI engine active.');
+      toast.success('Cloud engine active.');
     }
   };
 

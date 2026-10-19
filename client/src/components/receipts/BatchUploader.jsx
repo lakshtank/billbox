@@ -57,7 +57,7 @@ export function BatchUploader() {
     if (nextVal) {
       toast.success('Offline OCR engine active for batch.');
     } else {
-      toast.success('Gemini AI engine active for batch.');
+      toast.success('Cloud engine active for batch.');
     }
   };
 
@@ -166,7 +166,7 @@ export function BatchUploader() {
               </div>
               <div>
                 <div className="font-semibold text-fg flex items-center gap-2">
-                  <span>{forceOfflineMode ? 'Local Offline Batch Engine' : 'Google Gemini AI Batch Engine'}</span>
+                  <span>{forceOfflineMode ? 'Local Offline Batch Engine' : 'Cloud Processing Batch Engine'}</span>
                   <span
                     className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider ${
                       forceOfflineMode
@@ -174,7 +174,7 @@ export function BatchUploader() {
                         : 'bg-accent-tint text-accent border border-accent/20'
                     }`}
                   >
-                    {forceOfflineMode ? 'Offline' : 'Gemini AI'}
+                    {forceOfflineMode ? 'Offline' : 'Cloud Engine'}
                   </span>
                 </div>
                 <p className="text-[11px] text-fg-3">
@@ -193,7 +193,7 @@ export function BatchUploader() {
               {forceOfflineMode ? (
                 <>
                   <WifiOff className="size-3 text-fg-3" />
-                  <span>Use Cloud Gemini</span>
+                  <span>Use Cloud Engine</span>
                 </>
               ) : (
                 <>

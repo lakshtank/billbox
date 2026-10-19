@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Tag,
   Zap,
+  Receipt,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -129,10 +130,10 @@ export default function LiveScannerDemo({ className = '' }) {
   const [previewImage, setPreviewImage] = useState(null);
 
   const scanSteps = [
-    'Initializing Gemini 2.5 Flash Vision...',
+    'Scanning document structure...',
     'Detecting store merchant & invoice metadata...',
-    'Itemizing products & line total calculations...',
-    'Auto-calculating warranty periods & expiry alerts...',
+    'Itemizing line products & totals...',
+    'Calculating warranty coverage & expiry alerts...',
   ];
 
   const triggerScanAnimation = (data, customImg = null) => {
@@ -287,13 +288,15 @@ export default function LiveScannerDemo({ className = '' }) {
     }
   };
 
+  const displayData = extractedData || activePreset || SAMPLE_PRESETS[0];
+
   return (
     <div className={`w-full rounded-2xl bg-surface/90 border border-line shadow-2xl backdrop-blur-xl overflow-hidden ${className}`}>
       {/* Interactive Preset Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 px-4 sm:px-6 py-3.5 bg-subtle/80 border-b border-line text-xs font-sans">
         <div className="flex items-center gap-2 text-fg font-semibold">
-          <Sparkles className="size-4 text-accent animate-spin-slow" />
-          <span>Live Interactive OCR Demo</span>
+          <Receipt className="size-4 text-accent" />
+          <span>Interactive Document Scanner</span>
           <span className="hidden sm:inline-block text-[11px] font-normal text-fg-3">
             (No login required to test)
           </span>
@@ -384,8 +387,8 @@ export default function LiveScannerDemo({ className = '' }) {
                       Supports PNG, JPG, or PDF (up to 10MB)
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-[10px] text-accent border-accent/30 font-mono">
-                    Instant AI Multimodal OCR
+                  <Badge variant="outline" className="text-[10px] text-fg-3 border-line font-mono">
+                    Instant Document Processing
                   </Badge>
                 </div>
               )}
@@ -422,14 +425,14 @@ export default function LiveScannerDemo({ className = '' }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="text-base font-bold text-fg">
-                    {extractedData.storeName}
+                    {displayData.storeName}
                   </h4>
                   <Badge variant="ok" className="text-[10px] uppercase font-mono tracking-wider">
                     Verified Merchant
                   </Badge>
                 </div>
                 <p className="text-xs text-fg-3 font-mono mt-0.5">
-                  {extractedData.invoiceNumber} • {extractedData.purchaseDate}
+                  {displayData.invoiceNumber} • {displayData.purchaseDate}
                 </p>
               </div>
 
@@ -438,7 +441,7 @@ export default function LiveScannerDemo({ className = '' }) {
                   Grand Total
                 </span>
                 <p className="text-lg font-bold text-fg font-mono">
-                  ₹{Number(extractedData.grandTotal || 0).toLocaleString('en-IN')}
+                  ₹{Number(displayData.grandTotal || 0).toLocaleString('en-IN')}
                 </p>
               </div>
             </div>
@@ -450,7 +453,7 @@ export default function LiveScannerDemo({ className = '' }) {
               </span>
 
               <div className="divide-y divide-line-subtle border border-line-subtle rounded-xl overflow-hidden bg-subtle/40">
-                {extractedData.items.map((item, idx) => {
+                {(displayData.items || []).map((item, idx) => {
                   const isExpiringSoon = item.warrantyStatus === 'expiring_soon';
                   return (
                     <div key={idx} className="p-3 flex items-start justify-between gap-3 text-xs">
@@ -500,19 +503,19 @@ export default function LiveScannerDemo({ className = '' }) {
               <div className="p-2.5 rounded-lg bg-subtle border border-line-subtle">
                 <span className="text-[10px] text-fg-3 uppercase font-medium">Subtotal</span>
                 <p className="font-mono font-semibold text-fg mt-0.5">
-                  ₹{Number(extractedData.subtotal || 0).toLocaleString('en-IN')}
+                  ₹{Number(displayData.subtotal || 0).toLocaleString('en-IN')}
                 </p>
               </div>
               <div className="p-2.5 rounded-lg bg-subtle border border-line-subtle">
                 <span className="text-[10px] text-fg-3 uppercase font-medium">GST / Taxes</span>
                 <p className="font-mono font-semibold text-fg mt-0.5">
-                  ₹{Number(extractedData.taxAmount || 0).toLocaleString('en-IN')}
+                  ₹{Number(displayData.taxAmount || 0).toLocaleString('en-IN')}
                 </p>
               </div>
-              <div className="col-span-2 sm:col-span-1 p-2.5 rounded-lg bg-accent/10 border border-accent/20">
-                <span className="text-[10px] text-accent uppercase font-medium">AI Confidence</span>
-                <p className="font-mono font-semibold text-accent mt-0.5">
-                  99.8% Perfect
+              <div className="col-span-2 sm:col-span-1 p-2.5 rounded-lg bg-subtle border border-line-subtle">
+                <span className="text-[10px] text-fg-3 uppercase font-medium">Scan Accuracy</span>
+                <p className="font-mono font-semibold text-fg mt-0.5">
+                  High Precision
                 </p>
               </div>
             </div>

@@ -47,15 +47,15 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0x6366f1, 2.8); // Indigo
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.2); // Clean white key light
     dirLight1.position.set(5, 6, 4);
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x06b6d4, 2.2); // Cyan
+    const dirLight2 = new THREE.DirectionalLight(0x6366f1, 1.6); // Subtle accent fill
     dirLight2.position.set(-5, -4, 3);
     scene.add(dirLight2);
 
-    const pointLight = new THREE.PointLight(0x38bdf8, 2.0, 15);
+    const pointLight = new THREE.PointLight(0xffffff, 1.2, 15);
     pointLight.position.set(0, 1, 4);
     scene.add(pointLight);
 
@@ -79,7 +79,7 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
 
     ctx.fillStyle = '#94a3b8';
     ctx.font = '14px monospace';
-    ctx.fillText('AI RECEIPT & WARRANTY PROTECTION', 36, 90);
+    ctx.fillText('SMART RECEIPT & WARRANTY VAULT', 36, 90);
     ctx.fillText('-----------------------------------', 36, 114);
 
     ctx.fillStyle = '#f8fafc';
