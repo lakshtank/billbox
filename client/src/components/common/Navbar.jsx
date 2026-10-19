@@ -88,9 +88,6 @@ export function Navbar() {
               <Search className="w-3.5 h-3.5 text-fg-3" />
               <span className="text-xs text-fg-3">Search...</span>
             </span>
-            <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-fg-3 bg-subtle border border-line rounded">
-              ⌘K
-            </kbd>
           </button>
 
           {/* Mobile Search Icon Button */}

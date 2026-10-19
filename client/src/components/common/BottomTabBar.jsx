@@ -75,11 +75,6 @@ export function BottomTabBar() {
     return items.filter((i) => i.daysRemaining > 0 && i.daysRemaining <= 30).length;
   }, [remindersData]);
 
-  const handleOpenShortcuts = () => {
-    setSheetOpen(false);
-    window.dispatchEvent(new CustomEvent('billbox:open-shortcuts'));
-  };
-
   const handleNavigate = (path) => {
     setSheetOpen(false);
     navigate(path);
@@ -362,21 +357,6 @@ export function BottomTabBar() {
                   </button>
                 </div>
               </div>
-
-              {/* Shortcuts trigger */}
-              <button
-                type="button"
-                onClick={handleOpenShortcuts}
-                className="flex items-center justify-between w-full p-2.5 rounded-[8px] text-sm font-medium text-fg hover:bg-hover transition-colors text-left cursor-pointer"
-              >
-                <span className="flex items-center gap-2.5">
-                  <Command className="w-4 h-4 text-fg-3" />
-                  <span>Keyboard shortcuts</span>
-                </span>
-                <kbd className="text-[10px] font-mono bg-subtle border border-line rounded px-1.5 py-0.5 text-fg-3">
-                  ?
-                </kbd>
-              </button>
 
               {/* Sign out */}
               {user && (

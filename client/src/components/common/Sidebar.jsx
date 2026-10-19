@@ -302,9 +302,6 @@ function SidebarContent({
     { to: '/settings', label: 'Settings', icon: Settings, routeKey: 'settings' },
   ];
 
-  const handleOpenShortcuts = () => {
-    window.dispatchEvent(new CustomEvent('billbox:open-shortcuts'));
-  };
 
   const handleNavigate = (path) => {
     if (isMobile && onMobileClose) onMobileClose();
@@ -354,7 +351,7 @@ function SidebarContent({
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              Expand sidebar <kbd className="ml-1 text-[10px] font-mono opacity-70">⌘B</kbd>
+              Expand sidebar
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -374,7 +371,7 @@ function SidebarContent({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">
-                  Collapse sidebar <kbd className="ml-1 text-[10px] font-mono opacity-70">⌘B</kbd>
+                  Collapse sidebar
                 </TooltipContent>
               </Tooltip>
             )}
@@ -583,15 +580,6 @@ function SidebarContent({
               {theme === 'dark' && <Check className="w-3.5 h-3.5 ml-auto text-accent" />}
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem onClick={handleOpenShortcuts}>
-              <Command className="w-4 h-4 mr-2 text-fg-3" />
-              <span>Keyboard shortcuts</span>
-              <kbd className="ml-auto text-[10px] font-mono bg-subtle border border-line rounded px-1 text-fg-3">
-                ?
-              </kbd>
-            </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 

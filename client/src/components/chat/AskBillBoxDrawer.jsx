@@ -279,20 +279,11 @@ export function AskBillBoxDrawer() {
     }
   }, [messages, askMutation.isPending, isAskBillBoxOpen]);
 
-  // Handle keyboard shortcuts (Esc, Cmd+J)
+  // Close on Escape key when drawer is open
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isAskBillBoxOpen) {
         closeAskBillBox();
-      }
-      // Global shortcut Cmd+J or Ctrl+J
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'j' || e.key === 'J')) {
-        e.preventDefault();
-        if (isAskBillBoxOpen) {
-          closeAskBillBox();
-        } else {
-          useUiStore.getState().openAskBillBox();
-        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -749,14 +740,11 @@ export function AskBillBoxDrawer() {
               </button>
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-fg-3 px-1 pt-2">
+            <div className="flex items-center text-[10px] text-fg-3 px-1 pt-2">
               <span className="flex items-center gap-1">
                 <CornerDownLeft className="size-2.5 opacity-70" />
                 Press Enter to send · Shift+Enter for new line
               </span>
-              <kbd className="hidden sm:inline-flex items-center gap-1 font-mono text-[9px] px-1.5 py-0.5 bg-subtle border border-line/80 rounded">
-                Esc to close
-              </kbd>
             </div>
           </div>
         </m.div>

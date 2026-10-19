@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { Toaster as SonnerToaster } from './components/ui/sonner';
 import CommandPalette from './components/common/CommandPalette';
-import ShortcutModal from './components/common/ShortcutModal';
 import AskBillBoxDrawer from './components/chat/AskBillBoxDrawer';
 import AskBillBoxFloatingTrigger from './components/chat/AskBillBoxFloatingTrigger';
 import { AuthProvider } from './context/AuthContext';
@@ -18,7 +17,6 @@ import AnimatedOutlet from './components/common/AnimatedOutlet';
 import { ViewTransitionProvider } from './context/ViewTransitionContext';
 import SmoothScroll from './components/common/SmoothScroll';
 import useAuth from './hooks/useAuth';
-import useGlobalShortcuts from './hooks/useGlobalShortcuts';
 import { preloadAllRoutes } from './lib/routePreloader';
 
 // Lazy-loaded route components for performance optimization & code-splitting
@@ -94,8 +92,6 @@ const AppLayout = () => {
     };
   }, []);
 
-  // Register global keyboard navigation (g+o, g+r, n, ?, etc.)
-  useGlobalShortcuts();
 
   const isAuthPage =
     location.pathname === '/login' ||
@@ -332,7 +328,6 @@ const App = () => {
           <RouteTitle />
           <SonnerToaster position="bottom-right" />
           <CommandPalette />
-          <ShortcutModal />
           <AskBillBoxFloatingTrigger />
           <AskBillBoxDrawer />
           <ErrorBoundary>

@@ -32,11 +32,8 @@ import api from "@/api/axios";
 
 /**
  * CommandPalette component
- * Step 8.10:
- * - ⌘K / Ctrl+K and '/' focus
  * - 560px wide, radius 16, elevation 3, plain scrim
  * - Groups: Actions, Go to, Receipts (debounced server search), Products
- * - Arrow keys + Enter, Esc closes
  * - Result rows 40px with icon, label, hint
  */
 export function CommandPalette() {
@@ -49,28 +46,11 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const { theme, setTheme } = usePreferences();
 
-  // Keyboard shortcut listener: ⌘K, Ctrl+K, or '/' (when not in an input/textarea)
+  // Listen for open event triggered from search inputs or buttons
   React.useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((prev) => !prev);
-      } else if (
-        e.key === "/" &&
-        !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName) &&
-        !document.activeElement?.isContentEditable
-      ) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-
     const handleOpenEvent = () => setOpen(true);
-
-    window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("billbox:open-command-palette", handleOpenEvent);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("billbox:open-command-palette", handleOpenEvent);
     };
   }, []);
@@ -199,9 +179,6 @@ export function CommandPalette() {
           <CommandItem onSelect={() => runCommand(() => useUiStore.getState().openAskBillBox())}>
             <Sparkles className="size-4 text-accent" />
             <span>Ask BillBox AI</span>
-            <kbd className="ml-auto text-[10px] font-mono bg-subtle px-1.5 py-0.5 rounded border border-line text-fg-3">
-              ⌘J
-            </kbd>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate("/receipts/new"))}>
             <Plus className="size-4 text-accent" />

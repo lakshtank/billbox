@@ -12,8 +12,6 @@ const SearchInput = React.forwardRef(
       onChange,
       onClear,
       placeholder = "Search...",
-      showShortcut = true,
-      onShortcutClick,
       ...props
     },
     ref
@@ -60,7 +58,7 @@ const SearchInput = React.forwardRef(
           {...props}
         />
         <div className="absolute right-2.5 flex items-center gap-1">
-          {currentValue ? (
+          {currentValue && (
             <button
               type="button"
               onClick={handleClear}
@@ -69,16 +67,7 @@ const SearchInput = React.forwardRef(
             >
               <X className="size-3.5" />
             </button>
-          ) : showShortcut ? (
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={onShortcutClick}
-              className="hidden md:inline-flex items-center gap-0.5 rounded border border-line bg-subtle px-1.5 py-0.5 font-mono text-[10px] font-medium text-fg-3 select-none"
-            >
-              <span>⌘</span>K
-            </button>
-          ) : null}
+          )}
         </div>
       </div>
     );

@@ -71,9 +71,6 @@ function CommandInput({ className, ...props }) {
         )}
         {...props}
       />
-      <kbd className="hidden sm:inline-flex items-center rounded border border-line bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-fg-3 select-none">
-        ESC
-      </kbd>
     </div>
   );
 }
