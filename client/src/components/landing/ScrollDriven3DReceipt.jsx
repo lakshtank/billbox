@@ -151,88 +151,26 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
       roughness: 0.35,
       metalness: 0.12,
       side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 1.0,
     });
 
     const receiptMesh = new THREE.Mesh(receiptGeo, receiptMat);
     scene.add(receiptMesh);
 
-    // 5. Holographic Ring around Receipt
-    const ringGeo = new THREE.TorusGeometry(2.25, 0.02, 16, 90);
-    const ringMat = new THREE.MeshBasicMaterial({
+    // 5. 3D Laser Scanning Beam Mesh
+    const laserGeo = new THREE.PlaneGeometry(3.0, 0.04);
+    const laserMat = new THREE.MeshBasicMaterial({
       color: 0x6366f1,
       transparent: true,
-      opacity: 0.65,
-      wireframe: true,
-    });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    scene.add(ringMesh);
-
-    // 6. 3D Laser Scanning Beam Mesh
-    const laserGeo = new THREE.PlaneGeometry(3.0, 0.05);
-    const laserMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      transparent: true,
-      opacity: 0.9,
+      opacity: 0.0,
       side: THREE.DoubleSide,
     });
     const laserMesh = new THREE.Mesh(laserGeo, laserMat);
-    laserMesh.position.set(0, 0, 0.15);
+    laserMesh.position.set(0, 0, 0.12);
     receiptMesh.add(laserMesh);
 
-    // 7. Floating Holographic Warranty Shield Badge
-    const badgeGeo = new THREE.OctahedronGeometry(0.5, 1);
-    const badgeMat = new THREE.MeshStandardMaterial({
-      color: 0x06b6d4,
-      metalness: 0.9,
-      roughness: 0.1,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const badgeMesh = new THREE.Mesh(badgeGeo, badgeMat);
-    scene.add(badgeMesh);
-
-    const innerGeo = new THREE.SphereGeometry(0.22, 16, 16);
-    const innerMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-    const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-    badgeMesh.add(innerMesh);
-
-    // 8. Ambient Depth Particle Constellation
-    const particleCount = 200;
-    const particleGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleColors = new Float32Array(particleCount * 3);
-
-    const c1 = new THREE.Color(0x6366f1);
-    const c2 = new THREE.Color(0x38bdf8);
-    const c3 = new THREE.Color(0x10b981);
-
-    for (let i = 0; i < particleCount; i++) {
-      const idx = i * 3;
-      particlePositions[idx] = (Math.random() - 0.5) * 14;
-      particlePositions[idx + 1] = (Math.random() - 0.5) * 12;
-      particlePositions[idx + 2] = (Math.random() - 0.5) * 8;
-
-      const col = Math.random() > 0.6 ? c1 : Math.random() > 0.5 ? c2 : c3;
-      particleColors[idx] = col.r;
-      particleColors[idx + 1] = col.g;
-      particleColors[idx + 2] = col.b;
-    }
-
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.06,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.7,
-      blending: THREE.AdditiveBlending,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // 9. Scroll Tracking & Waypoint Interpolation
+    // 6. Scroll Tracking & Waypoint Interpolation
     let targetScrollRatio = 0;
     let currentScrollRatio = 0;
 
@@ -246,7 +184,7 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
     window.addEventListener('scroll', updateScrollRatio, { passive: true });
     updateScrollRatio();
 
-    // 10. Mouse Pointer Parallax
+    // 7. Mouse Pointer Parallax
     let targetMouseX = 0;
     let targetMouseY = 0;
     let currentMouseX = 0;
@@ -259,7 +197,7 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
 
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
 
-    // 11. Animation Loop
+    // 8. Animation Loop
     let animId;
     let startTime = performance.now();
 
@@ -271,91 +209,96 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
       currentScrollRatio += (targetScrollRatio - currentScrollRatio) * 0.08;
 
       // Smooth mouse lerp
-      currentMouseX += (targetMouseX * 0.35 - currentMouseX) * 0.06;
-      currentMouseY += (targetMouseY * 0.25 - currentMouseY) * 0.06;
+      currentMouseX += (targetMouseX * 0.3 - currentMouseX) * 0.06;
+      currentMouseY += (targetMouseY * 0.2 - currentMouseY) * 0.06;
 
-      // Waypoint Transitions along the Scroll Journey
-      // p: 0.0 -> Hero
-      // p: 0.3 -> Live Scanner Demo
-      // p: 0.6 -> Warranty Radar
-      // p: 0.9 -> Vault & Bottom
       const p = currentScrollRatio;
       const isMobile = window.innerWidth < 1024;
 
       // Calculate Target 3D Coordinates
-      let posX, posY, posZ, rotX, rotY, rotZ, scale;
+      let posX, posY, posZ, rotX, rotY, rotZ, scale, opacity;
 
-      if (p <= 0.25) {
-        // Stage 1: Hero
-        const t = p / 0.25;
-        posX = isMobile ? 0 : THREE.MathUtils.lerp(1.7, 0.4, t);
-        posY = THREE.MathUtils.lerp(0.2, -0.6, t);
-        posZ = THREE.MathUtils.lerp(0.5, 1.2, t);
-        rotX = THREE.MathUtils.lerp(-0.15, 0.05, t);
-        rotY = isMobile ? 0 : THREE.MathUtils.lerp(0.35, -0.05, t);
-        rotZ = THREE.MathUtils.lerp(-0.05, 0.02, t);
-        scale = isMobile ? 0.75 : THREE.MathUtils.lerp(0.95, 1.05, t);
-        laserMat.opacity = THREE.MathUtils.lerp(0, 0.8, t);
-      } else if (p <= 0.6) {
-        // Stage 2: Scanner to Warranty Radar
-        const t = (p - 0.25) / 0.35;
-        posX = isMobile ? 0 : THREE.MathUtils.lerp(0.4, 1.8, t);
-        posY = THREE.MathUtils.lerp(-0.6, -1.8, t);
-        posZ = THREE.MathUtils.lerp(1.2, 0.7, t);
-        rotX = THREE.MathUtils.lerp(0.05, -0.15, t);
-        rotY = isMobile ? 0 : THREE.MathUtils.lerp(-0.05, 0.45, t);
-        rotZ = THREE.MathUtils.lerp(0.02, -0.08, t);
-        scale = isMobile ? 0.7 : THREE.MathUtils.lerp(1.05, 0.95, t);
-        laserMat.opacity = Math.max(0, 0.8 - t * 1.5);
+      if (isMobile) {
+        // Mobile: Show only in hero stage, then gracefully fade out so mobile screen is 100% clear
+        posX = 0;
+        posY = -0.4;
+        posZ = 0.5;
+        rotX = -0.1;
+        rotY = 0;
+        rotZ = 0;
+        scale = 0.65;
+        opacity = p <= 0.12 ? Math.max(0, 1.0 - p / 0.12) : 0;
+        laserMat.opacity = 0;
+      } else if (p <= 0.20) {
+        // Stage 1: Hero (Right side space, posX ≈ 2.45)
+        const t = p / 0.20;
+        posX = THREE.MathUtils.lerp(2.5, 2.35, t);
+        posY = THREE.MathUtils.lerp(0.28, 0.12, t);
+        posZ = 0.8;
+        rotX = -0.12;
+        rotY = -0.32;
+        rotZ = 0.04;
+        scale = 0.98;
+        opacity = 1.0;
+        laserMat.opacity = 0;
+      } else if (p <= 0.52) {
+        // Stage 2: Glides smoothly into the dedicated LEFT SIDE space (posX = -2.75) beside the Live Scanner
+        const t = (p - 0.20) / 0.32;
+        posX = THREE.MathUtils.lerp(2.35, -2.75, t);
+        posY = THREE.MathUtils.lerp(0.12, -0.05, t);
+        posZ = THREE.MathUtils.lerp(0.8, 1.15, t);
+        rotX = THREE.MathUtils.lerp(-0.12, 0.06, t);
+        rotY = THREE.MathUtils.lerp(-0.32, 0.22, t);
+        rotZ = THREE.MathUtils.lerp(0.04, -0.02, t);
+        scale = THREE.MathUtils.lerp(0.98, 1.04, t);
+        opacity = 1.0;
+        laserMat.opacity = THREE.MathUtils.lerp(0, 0.85, t);
+      } else if (p <= 0.78) {
+        // Stage 3: Parks securely in the LEFT SIDE space (posX = -2.75) beside the Warranty Radar
+        const t = (p - 0.52) / 0.26;
+        posX = -2.75;
+        posY = THREE.MathUtils.lerp(-0.05, -0.22, t);
+        posZ = THREE.MathUtils.lerp(1.15, 0.95, t);
+        rotX = THREE.MathUtils.lerp(0.06, -0.08, t);
+        rotY = THREE.MathUtils.lerp(0.22, 0.30, t);
+        rotZ = THREE.MathUtils.lerp(-0.02, -0.04, t);
+        scale = 1.0;
+        opacity = 1.0;
+        laserMat.opacity = Math.max(0, 0.85 - t * 2.5);
       } else {
-        // Stage 3: Warranty Radar to Vault
-        const t = (p - 0.6) / 0.4;
-        posX = isMobile ? 0 : THREE.MathUtils.lerp(1.8, 0, t);
-        posY = THREE.MathUtils.lerp(-1.8, -3.2, t);
-        posZ = THREE.MathUtils.lerp(0.7, 0.2, t);
-        rotX = THREE.MathUtils.lerp(-0.15, 0.2, t);
-        rotY = isMobile ? 0 : THREE.MathUtils.lerp(0.45, 0, t);
-        rotZ = THREE.MathUtils.lerp(-0.08, 0, t);
-        scale = isMobile ? 0.65 : THREE.MathUtils.lerp(0.95, 0.8, t);
+        // Stage 4: Descends into the vault archive, fading out cleanly for Features & FAQ
+        const t = (p - 0.78) / 0.22;
+        posX = THREE.MathUtils.lerp(-2.75, -2.5, t);
+        posY = THREE.MathUtils.lerp(-0.22, -3.2, t);
+        posZ = THREE.MathUtils.lerp(0.95, 0.2, t);
+        rotX = THREE.MathUtils.lerp(-0.08, 0.35, t);
+        rotY = THREE.MathUtils.lerp(0.30, 0.05, t);
+        rotZ = THREE.MathUtils.lerp(-0.04, 0, t);
+        scale = THREE.MathUtils.lerp(1.0, 0.45, t);
+        opacity = Math.max(0, 1.0 - t * 1.5);
         laserMat.opacity = 0;
       }
 
-      // Sine-wave levitation offset
-      const floatY = Math.sin(elapsed * 1.6) * 0.08;
-      const floatX = Math.cos(elapsed * 1.2) * 0.04;
+      receiptMat.opacity = opacity;
+      laserMat.opacity = laserMat.opacity * opacity;
 
-      // Apply positions to receipt
+      // Subtle levitation offset
+      const floatY = Math.sin(elapsed * 1.5) * 0.05;
+      const floatX = Math.cos(elapsed * 1.2) * 0.03;
+
       receiptMesh.position.set(posX + floatX, posY + floatY, posZ);
       receiptMesh.rotation.set(rotX + currentMouseY, rotY + currentMouseX, rotZ);
       receiptMesh.scale.set(scale, scale, scale);
 
-      // Ring follows receipt
-      ringMesh.position.set(posX + floatX, posY + floatY, posZ - 0.1);
-      ringMesh.rotation.z = elapsed * 0.4;
-      ringMesh.scale.set(scale, scale, scale);
-
       // Laser sweep animation across receipt surface
-      laserMesh.position.y = Math.sin(elapsed * 3.0) * 1.6;
-
-      // Badge orbits receipt
-      badgeMesh.position.set(
-        posX + Math.cos(elapsed * 1.5) * 1.8,
-        posY + Math.sin(elapsed * 1.8) * 1.2,
-        posZ + 0.6
-      );
-      badgeMesh.rotation.x = elapsed * 1.2;
-      badgeMesh.rotation.y = elapsed * 1.4;
-
-      // Particle constellation drift
-      particles.rotation.y = elapsed * 0.025;
-      particles.rotation.x = elapsed * 0.012;
+      laserMesh.position.y = Math.sin(elapsed * 2.8) * 1.5;
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // 12. Window Resize Handler
+    // 9. Window Resize Handler
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -374,16 +317,8 @@ export default function ScrollDriven3DReceipt({ className = '' }) {
       receiptGeo.dispose();
       receiptMat.dispose();
       texture.dispose();
-      ringGeo.dispose();
-      ringMat.dispose();
       laserGeo.dispose();
       laserMat.dispose();
-      badgeGeo.dispose();
-      badgeMat.dispose();
-      innerGeo.dispose();
-      innerMat.dispose();
-      particleGeo.dispose();
-      particleMat.dispose();
       renderer.dispose();
 
       if (mount && renderer.domElement) {

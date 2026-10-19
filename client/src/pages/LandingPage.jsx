@@ -212,38 +212,97 @@ export default function LandingPage() {
       {/* ── 3. Live Interactive Scanner Demo (No Auth Required) ────────── */}
       <section ref={scannerRef} id="scanner" className="py-16 sm:py-24 bg-subtle/30 border-y border-line relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
-            <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
-              Live Product Experience
-            </Badge>
-            <h2 className="text-2xl sm:text-4xl font-bold text-fg">
-              Scan Any Receipt Right Now.
-            </h2>
-            <p className="text-xs sm:text-sm text-fg-3">
-              Click any of our verified sample bills or drag &amp; drop your own bill below. See instant OCR data extraction and warranty calculation without signing in.
-            </p>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Column (lg:col-span-4): Dedicated Space for 3D Receipt */}
+            <div className="hidden lg:flex flex-col justify-between min-h-[520px] relative pointer-events-none pr-2">
+              <div className="space-y-2">
+                <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
+                  Stage 01 • Optical Ingestion
+                </Badge>
+                <h3 className="text-xl font-bold text-fg">
+                  Instant Digitization
+                </h3>
+                <p className="text-xs text-fg-3 leading-relaxed">
+                  As receipts pass through the scan field, store names, line items, taxes, and warranty durations are extracted into high-fidelity records.
+                </p>
+              </div>
 
-          <LiveScannerDemo />
+              {/* Bottom anchor card below the 3D receipt */}
+              <div className="p-4 rounded-xl bg-surface/80 border border-line-subtle shadow-sm backdrop-blur-md space-y-1.5 pointer-events-auto">
+                <div className="flex items-center gap-2 text-xs font-semibold text-fg">
+                  <Receipt className="size-3.5 text-accent" />
+                  <span>Optical Extraction Beam</span>
+                </div>
+                <p className="text-[11px] text-fg-3">
+                  Sub-second extraction for crumpled thermal paper and digital e-invoices.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column (lg:col-span-8): Interactive Live Scanner */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="space-y-1.5 text-center lg:text-left">
+                <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono lg:hidden">
+                  Live Product Experience
+                </Badge>
+                <h2 className="text-2xl sm:text-3xl font-bold text-fg">
+                  Scan Any Receipt Right Now
+                </h2>
+                <p className="text-xs sm:text-sm text-fg-3">
+                  Click any verified sample bill or drag &amp; drop your own bill below. See instant OCR data extraction and warranty calculation without signing in.
+                </p>
+              </div>
+
+              <LiveScannerDemo />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── 4. Warranty Radar 30d / 90d Interactive Demo ──────────────── */}
       <section id="warranty-radar" className="py-16 sm:py-24 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            <div className="lg:col-span-5 space-y-4 text-center lg:text-left">
-              <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono">
-                Proactive Protection
-              </Badge>
-              <h2 className="text-2xl sm:text-4xl font-bold text-fg leading-tight">
-                Never Miss a Warranty Claim Again.
-              </h2>
-              <p className="text-xs sm:text-sm text-fg-3 leading-relaxed">
-                Most people forget about their warranties until an appliance breaks a week after expiration. BillBox keeps a living radar of every purchase:
-              </p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Column (lg:col-span-4): Dedicated Space for 3D Receipt */}
+            <div className="hidden lg:flex flex-col justify-between min-h-[500px] relative pointer-events-none pr-2">
+              <div className="space-y-2">
+                <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono">
+                  Stage 02 • Expiry Protection
+                </Badge>
+                <h3 className="text-xl font-bold text-fg">
+                  Living Warranty Radar
+                </h3>
+                <p className="text-xs text-fg-3 leading-relaxed">
+                  BillBox continuously tracks warranty durations from your receipts, grouping them into 30-day and 90-day alert horizons.
+                </p>
+              </div>
 
-              <div className="space-y-3 pt-2 text-xs">
+              <div className="p-4 rounded-xl bg-surface/80 border border-line-subtle shadow-sm backdrop-blur-md space-y-1.5 pointer-events-auto">
+                <div className="flex items-center gap-2 text-xs font-semibold text-fg">
+                  <ShieldCheck className="size-3.5 text-amber-500" />
+                  <span>Automated Claim Tracking</span>
+                </div>
+                <p className="text-[11px] text-fg-3">
+                  Real-time alerts for battery replacements, free repairs, and store claim deadlines.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column (lg:col-span-8): Warranty Radar Description & Interactive Demo */}
+            <div className="lg:col-span-8 space-y-6">
+              <div className="space-y-2 text-center lg:text-left">
+                <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono lg:hidden">
+                  Proactive Protection
+                </Badge>
+                <h2 className="text-2xl sm:text-3xl font-bold text-fg leading-tight">
+                  Never Miss a Warranty Claim Again
+                </h2>
+                <p className="text-xs sm:text-sm text-fg-3 leading-relaxed">
+                  Most people forget about their warranties until an appliance breaks a week after expiration. BillBox keeps a living radar of every purchase:
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="p-3 rounded-xl bg-surface border border-line flex items-start gap-3">
                   <div className="size-6 rounded-md bg-warn-bg text-warn-fg flex items-center justify-center font-bold text-[10px] shrink-0">
                     ≤30d
@@ -268,9 +327,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="lg:col-span-7">
               <WarrantyRadarDemo />
             </div>
           </div>
