@@ -26,10 +26,12 @@ export function ConfirmModal({
   cancelText = 'Cancel',
   isDestructive = true,
   isLoading = false,
+  icon: CustomIcon,
   onConfirm,
   onClose,
 }) {
   const isMobile = useMediaQuery('(max-width: 639px)');
+  const IconComponent = CustomIcon || (isDestructive ? Trash2 : AlertTriangle);
 
   const bodyContent = (
     <div className="flex items-start gap-3.5">
@@ -40,11 +42,7 @@ export function ConfirmModal({
             : 'bg-accent-tint border-accent-line text-accent'
         }`}
       >
-        {isDestructive ? (
-          <Trash2 className="size-5 text-bad-fg" />
-        ) : (
-          <AlertTriangle className="size-5 text-accent" />
-        )}
+        <IconComponent className={`size-5 ${isDestructive ? 'text-bad-fg' : 'text-accent'}`} />
       </div>
 
       <div className="flex-1 min-w-0 pr-2">
@@ -119,11 +117,7 @@ export function ConfirmModal({
                 : 'bg-accent-tint border-accent-line text-accent'
             }`}
           >
-            {isDestructive ? (
-              <Trash2 className="size-5 text-bad-fg" />
-            ) : (
-              <AlertTriangle className="size-5 text-accent" />
-            )}
+            <IconComponent className={`size-5 ${isDestructive ? 'text-bad-fg' : 'text-accent'}`} />
           </div>
 
           <div className="flex-1 min-w-0 pr-2">

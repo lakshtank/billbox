@@ -1,6 +1,8 @@
 import { createContext, useState, useEffect, useCallback } from 'react';
+import { LogOut } from 'lucide-react';
 import api from '../api/axios';
 import { usePreferences } from './PreferencesContext';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 export const AuthContext = createContext(null);
 
@@ -22,6 +24,8 @@ export const AuthProvider = ({ children }) => {
     // If we have cached token and user, don't block the UI while validating
     return Boolean(token && !savedUser);
   });
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const { syncFromUser } = usePreferences();
 
@@ -87,13 +91,28 @@ export const AuthProvider = ({ children }) => {
     [syncFromUser]
   );
 
-  const logoutUser = useCallback(() => {
+  // Directly clears auth credentials without asking for confirmation
+  const forceLogout = useCallback(() => {
     localStorage.removeItem('billbox_token');
     localStorage.removeItem('billbox_user');
     if (typeof document !== 'undefined') {
       document.cookie = 'billbox_token=; path=/; max-age=0; SameSite=Lax';
     }
     setUser(null);
+  }, []);
+
+  // Standard sign out trigger: always prompts confirmation modal
+  const logoutUser = useCallback(() => {
+    setShowLogoutConfirm(true);
+  }, []);
+
+  const confirmLogout = useCallback(() => {
+    setShowLogoutConfirm(false);
+    forceLogout();
+  }, [forceLogout]);
+
+  const cancelLogout = useCallback(() => {
+    setShowLogoutConfirm(false);
   }, []);
 
   const updateUser = useCallback((userData) => {
@@ -112,7 +131,25 @@ export const AuthProvider = ({ children }) => {
     loading,
     loginUser,
     logoutUser,
+    requestLogout: logoutUser,
+    forceLogout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out of your account? You will need to sign in again to access your receipts and warranties."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        isDestructive={true}
+        icon={LogOut}
+        onConfirm={confirmLogout}
+        onClose={cancelLogout}
+      />
+    </AuthContext.Provider>
+  );
 };
+
