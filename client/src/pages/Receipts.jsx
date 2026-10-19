@@ -11,6 +11,7 @@ import {
   Share2,
   FileText,
   Tag,
+  X,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -821,19 +822,19 @@ export function Receipts() {
         selectedCount={selectedCount}
       />
 
-      {/* 2.5 Smart Tag Filter Chips Ribbon */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar select-none">
-        <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-          <Tag className="size-3 text-accent" />
+      {/* 2.5 Smart Tag Filter Chips Ribbon (Mobile Responsive & High Contrast) */}
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 select-none py-1">
+        <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1.5">
+          <Tag className="size-3.5 text-accent" />
           Tags:
         </span>
         <button
           type="button"
           onClick={() => updateParams({ tag: undefined, page: 1 })}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border ${
+          className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center justify-center font-medium ${
             !tagParam
-              ? 'bg-accent text-accent-contrast border-accent shadow-xs'
-              : 'bg-surface text-fg-3 border-line hover:text-fg hover:border-line-strong'
+              ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
+              : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
           }`}
         >
           All
@@ -845,13 +846,14 @@ export function Receipts() {
               key={tag}
               type="button"
               onClick={() => handleTagToggle(tag)}
-              className={`px-2.5 py-1 rounded-full text-xs font-mono transition-all cursor-pointer border flex items-center gap-1 shrink-0 ${
+              className={`h-7 px-3 rounded-full text-xs transition-colors cursor-pointer border flex items-center gap-1.5 shrink-0 font-medium ${
                 isActive
-                  ? 'bg-accent text-accent-contrast border-accent shadow-xs'
-                  : 'bg-surface text-fg-2 border-line hover:border-line-strong hover:text-fg'
+                  ? 'bg-accent text-on-accent border-accent shadow-xs font-semibold'
+                  : 'bg-surface text-fg-2 border-line hover:bg-subtle hover:text-fg hover:border-line-strong'
               }`}
             >
               <span>{tag.startsWith('#') ? tag : `#${tag}`}</span>
+              {isActive && <X className="size-3 shrink-0 opacity-80 hover:opacity-100" />}
             </button>
           );
         })}
