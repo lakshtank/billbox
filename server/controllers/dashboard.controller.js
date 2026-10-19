@@ -213,6 +213,7 @@ const getStats = async (req, res) => {
         : item._id;
       return {
         date: label,
+        label: label,
         rawDate: item._id,
         amount: item.total || 0,
       };

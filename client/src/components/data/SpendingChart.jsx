@@ -129,12 +129,13 @@ export function SpendingChart({
     }
   }, [inView, hasRevealed]);
 
-  // Normalize data so both total and amount are present for every point
+  // Normalize data so both total and amount are present for every point, with guaranteed label
   const normalizedData = React.useMemo(() => {
     return data.map((item) => {
       const val = item.total != null ? item.total : item.amount != null ? item.amount : item.spend || 0;
       return {
         ...item,
+        label: item.label || item.date || item.rawDate || '',
         total: val,
         amount: val,
       };
