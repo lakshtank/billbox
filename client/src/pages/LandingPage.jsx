@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as m from 'motion/react-m';
 import { AnimatePresence } from 'motion/react';
@@ -42,6 +42,18 @@ export default function LandingPage() {
   const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scannerRef = useRef(null);
+
+  // Recalculate smooth scroll limits on mount & after elements stabilize
+  useEffect(() => {
+    const t1 = setTimeout(() => window.lenis?.resize(), 100);
+    const t2 = setTimeout(() => window.lenis?.resize(), 600);
+    const t3 = setTimeout(() => window.lenis?.resize(), 1500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
 
   const scrollToScanner = () => {
     setMobileMenuOpen(false);
@@ -421,14 +433,14 @@ export default function LandingPage() {
       {/* ── 7. Spending & Warranty Intelligence Analytics Preview ──────── */}
       <section id="analytics" className="py-20 sm:py-28 bg-subtle/30 border-y border-line relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+          <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
             <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
               Dashboard Intelligence
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight">
-              Track Trends Across 30 Days, 90 Days &amp; Years
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight text-balance">
+              Track Spending Trends Across 30 Days, 90 Days &amp; Years
             </h2>
-            <p className="text-sm text-fg-3 leading-relaxed">
+            <p className="text-sm text-fg-3 leading-relaxed max-w-2xl mx-auto">
               Visualize hardware spending, active warranties, and quarterly budget allocations with interactive Recharts intelligence.
             </p>
           </div>

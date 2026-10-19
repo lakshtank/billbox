@@ -51,11 +51,30 @@ export function SmoothScroll({ children }) {
 
     lenisRef.current = instance;
     setLenisState(instance);
+    window.lenis = instance;
+
+    // Continuously observe document height changes to prevent scroll freezing
+    const resizeObserver = new ResizeObserver(() => {
+      if (lenisRef.current) {
+        lenisRef.current.resize();
+      }
+    });
+
+    if (document.body) {
+      resizeObserver.observe(document.body);
+    }
+    if (target && target !== window) {
+      resizeObserver.observe(target);
+    }
 
     return () => {
+      resizeObserver.disconnect();
       instance.destroy();
       lenisRef.current = null;
       setLenisState(null);
+      if (window.lenis === instance) {
+        window.lenis = null;
+      }
     };
   }, [tier, fine, isSmoothDisabled]);
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import * as m from 'motion/react-m';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -44,7 +45,44 @@ const DATA_1Y = [
 ];
 
 export default function AnalyticsPreviewDemo({ className = '' }) {
+  const containerRef = useRef(null);
   const [horizon, setHorizon] = useState('30d');
+  const [animKey, setAnimKey] = useState(0);
+  const [inView, setInView] = useState(false);
+
+  // Re-trigger animation every time user scrolls to/reaches this section
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setInView(true);
+          // Increment animation key to restart chart and card entrance animations
+          setAnimKey((k) => k + 1);
+          if (window.lenis) {
+            window.lenis.resize();
+          }
+        } else {
+          setInView(false);
+        }
+      },
+      { threshold: 0.12 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleHorizonChange = (h) => {
+    setHorizon(h);
+    setAnimKey((k) => k + 1);
+    if (window.lenis) {
+      setTimeout(() => window.lenis.resize(), 50);
+    }
+  };
 
   let currentData = DATA_30D;
   let totalSpend = '₹1,73,700';
@@ -67,7 +105,10 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
   }
 
   return (
-    <div className={`rounded-3xl bg-surface border border-line shadow-xl p-6 sm:p-8 relative overflow-hidden ${className}`}>
+    <div
+      ref={containerRef}
+      className={`rounded-3xl bg-surface border border-line shadow-xl p-6 sm:p-8 relative overflow-hidden transition-all duration-300 ${className}`}
+    >
       {/* Top Header & Range Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line">
         <div>
@@ -92,7 +133,7 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setHorizon(tab.id)}
+              onClick={() => handleHorizonChange(tab.id)}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                 horizon === tab.id
                   ? 'bg-surface text-fg shadow-xs font-bold'
@@ -105,9 +146,15 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 py-6">
-        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle">
+      {/* KPI Stats Cards with smooth entrance flourish on each visit */}
+      <m.div
+        key={`kpi-row-${animKey}`}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3 py-6"
+      >
+        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle hover:border-accent/30 transition-colors">
           <p className="text-[11px] font-medium text-fg-3 uppercase tracking-wider">
             Protected Expenditure
           </p>
@@ -122,7 +169,7 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle">
+        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle hover:border-accent/30 transition-colors">
           <p className="text-[11px] font-medium text-fg-3 uppercase tracking-wider">
             Active Hardware Warranties
           </p>
@@ -131,7 +178,7 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle">
+        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle hover:border-accent/30 transition-colors">
           <p className="text-[11px] font-medium text-fg-3 uppercase tracking-wider">
             Critical Expiry Alerts
           </p>
@@ -145,7 +192,7 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle">
+        <div className="p-4 rounded-2xl bg-subtle/50 border border-line-subtle hover:border-accent/30 transition-colors">
           <p className="text-[11px] font-medium text-fg-3 uppercase tracking-wider">
             Verified Store Proofs
           </p>
@@ -153,15 +200,19 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
             100% Synced
           </p>
         </div>
-      </div>
+      </m.div>
 
-      {/* Interactive Area Chart */}
-      <div className="w-full h-64 sm:h-72 mt-2">
+      {/* Interactive Area Chart - Keyed by animKey so it smoothly draws every time user scrolls to it */}
+      <div className="w-full h-64 sm:h-72 mt-2 select-none">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={currentData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart
+            key={`chart-${animKey}-${horizon}`}
+            data={currentData}
+            margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+          >
             <defs>
-              <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
+              <linearGradient id="spendGradientAnimated" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
               </linearGradient>
             </defs>
@@ -203,7 +254,10 @@ export default function AnalyticsPreviewDemo({ className = '' }) {
               stroke="#6366f1"
               strokeWidth={3}
               fillOpacity={1}
-              fill="url(#spendGradient)"
+              fill="url(#spendGradientAnimated)"
+              isAnimationActive={true}
+              animationDuration={1200}
+              animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>
