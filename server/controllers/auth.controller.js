@@ -49,11 +49,21 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = (email || '').toLowerCase().trim();
 
     // Find user — include password for comparison
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return sendError(res, 401, 'Invalid email or password.');
+    }
+
+    // If account has Google linked, exclusively require Google Sign-In
+    if (user.googleId || !user.password) {
+      return sendError(
+        res,
+        400,
+        'This account is linked with Google. Please sign in using the "Sign in with Google" button.'
+      );
     }
 
     // Compare password
@@ -505,22 +515,30 @@ const connectGoogle = async (req, res) => {
       return sendError(res, 404, 'User not found.');
     }
 
-    user.googleId = googleId;
-    if (!user.avatar && picture) {
-      user.avatar = picture;
-    }
-    await user.save();
+    // Unset password and set googleId so only Google login is active
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          googleId,
+          ...(picture && !user.avatar ? { avatar: picture } : {}),
+        },
+        $unset: { password: 1 },
+      }
+    );
 
-    return sendSuccess(res, 200, 'Google account connected successfully.', {
+    const updatedUser = await User.findById(req.userId);
+
+    return sendSuccess(res, 200, 'Google account connected. Password login has been disabled.', {
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        avatar: updatedUser.avatar,
         googleConnected: true,
-        hasPassword: Boolean(user.password),
-        timezone: user.timezone,
-        uiPreferences: user.uiPreferences,
+        hasPassword: false,
+        timezone: updatedUser.timezone,
+        uiPreferences: updatedUser.uiPreferences,
       },
     });
   } catch (error) {
@@ -532,6 +550,7 @@ const connectGoogle = async (req, res) => {
 // POST /api/auth/disconnect-google
 const disconnectGoogle = async (req, res) => {
   try {
+    const { newPassword } = req.body;
     const user = await User.findById(req.userId);
     if (!user) {
       return sendError(res, 404, 'User not found.');
@@ -541,19 +560,28 @@ const disconnectGoogle = async (req, res) => {
       return sendError(res, 400, 'No Google account is currently connected.');
     }
 
-    if (!user.password) {
+    if (!newPassword || newPassword.length < 6) {
       return sendError(
         res,
         400,
-        'You must set a password before disconnecting your Google account.'
+        'Please enter a new password (min 6 characters) to switch back to email and password login.'
       );
     }
 
-    // Remove googleId using $unset for clean sparse unique index
-    await User.updateOne({ _id: user._id }, { $unset: { googleId: 1 } });
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: { password: hashedPassword },
+        $unset: { googleId: 1 },
+      }
+    );
+
     const updatedUser = await User.findById(req.userId);
 
-    return sendSuccess(res, 200, 'Google account disconnected successfully.', {
+    return sendSuccess(res, 200, 'Google disconnected. Password login is now active.', {
       user: {
         _id: updatedUser._id,
         name: updatedUser.name,

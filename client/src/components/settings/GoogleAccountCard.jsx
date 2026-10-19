@@ -1,8 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle2, Link2, Unlink, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Link2, Unlink, Loader2, KeyRound } from 'lucide-react';
 import toast from '@/lib/toast';
 import { Button } from '@/components/ui/button';
-import ConfirmModal from '@/components/common/ConfirmModal';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useConnectGoogleMutation, useDisconnectGoogleMutation } from '@/queries/useUserQueries';
 import { usePreferences } from '@/context/PreferencesContext';
 import * as m from 'motion/react-m';
@@ -16,12 +22,14 @@ export function GoogleAccountCard({ user }) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
   const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const connectMutation = useConnectGoogleMutation();
   const disconnectMutation = useDisconnectGoogleMutation();
 
   const isConnected = Boolean(user?.googleConnected || user?.googleId);
-  const hasPassword = user?.hasPassword !== false;
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   // Handle GIS credential callback
@@ -36,7 +44,7 @@ export function GoogleAccountCard({ user }) {
         { credential: response.credential },
         {
           onSuccess: () => {
-            toast.success('Google account connected successfully!');
+            toast.success('Google account linked! Password login is now disabled.');
           },
           onError: (err) => {
             const msg =
@@ -108,19 +116,37 @@ export function GoogleAccountCard({ user }) {
     }
   }, [isConnected, scriptLoaded, clientId, isDark, handleCredentialResponse]);
 
-  const handleDisconnectConfirm = () => {
-    disconnectMutation.mutate(undefined, {
-      onSuccess: () => {
-        setShowDisconnectModal(false);
-        toast.success('Google account disconnected successfully.');
-      },
-      onError: (err) => {
-        const msg =
-          err.response?.data?.message ||
-          'Failed to disconnect Google account.';
-        toast.error(msg);
-      },
-    });
+  const handleDisconnectSubmit = (e) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+
+    disconnectMutation.mutate(
+      { newPassword },
+      {
+        onSuccess: () => {
+          setShowDisconnectModal(false);
+          setNewPassword('');
+          setConfirmPassword('');
+          toast.success('Google disconnected. Password login is now active.');
+        },
+        onError: (err) => {
+          const msg =
+            err.response?.data?.message ||
+            'Failed to disconnect Google account.';
+          setPasswordError(msg);
+        },
+      }
+    );
   };
 
   return (
@@ -140,7 +166,7 @@ export function GoogleAccountCard({ user }) {
               {isConnected ? (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-ok-tint text-ok-fg border border-ok/20">
                   <span className="size-1.5 rounded-full bg-ok animate-pulse" />
-                  Connected
+                  Active Login Method
                 </span>
               ) : (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-subtle text-fg-3 border border-line">
@@ -149,7 +175,9 @@ export function GoogleAccountCard({ user }) {
               )}
             </div>
             <p className="text-xs text-fg-3 mt-1">
-              Link your Google account to log into BillBox with 1-click while preserving all your receipts, warranties, and data.
+              {isConnected
+                ? 'Your account is exclusively authenticated with Google. Email & password login is disabled.'
+                : 'Link your Google account to log into BillBox with 1-click. Once linked, password login will be disabled.'}
             </p>
           </div>
 
@@ -179,7 +207,7 @@ export function GoogleAccountCard({ user }) {
         {/* Content based on connection status */}
         {isConnected ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-lg border border-line bg-subtle/50 gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-lg border border-line bg-subtle/50 gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="size-8 rounded-full bg-ok-tint border border-ok/30 flex items-center justify-center shrink-0 text-ok-fg">
                   <CheckCircle2 className="size-4" />
@@ -189,7 +217,7 @@ export function GoogleAccountCard({ user }) {
                     Google Single Sign-On Active
                   </div>
                   <div className="text-[11px] text-fg-3 truncate">
-                    You can sign in using either Google or your email and password.
+                    Old email and password login is disabled. You log in only via Google.
                   </div>
                 </div>
               </div>
@@ -198,23 +226,17 @@ export function GoogleAccountCard({ user }) {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setShowDisconnectModal(true)}
-                disabled={disconnectMutation.isPending || !hasPassword}
+                onClick={() => {
+                  setPasswordError('');
+                  setShowDisconnectModal(true);
+                }}
+                disabled={disconnectMutation.isPending}
                 className="shrink-0 text-xs border-line hover:border-bad/40 hover:text-bad-fg transition-colors"
               >
                 <Unlink className="size-3.5 mr-1.5" />
-                Disconnect
+                Switch to Password Login
               </Button>
             </div>
-
-            {!hasPassword && (
-              <div className="flex items-start gap-2.5 p-3 rounded-lg border border-warn/30 bg-warn-tint text-warn-fg text-xs">
-                <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                <span>
-                  You do not have a separate password set yet. To disconnect Google, please create an account password below first.
-                </span>
-              </div>
-            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -224,7 +246,7 @@ export function GoogleAccountCard({ user }) {
                 <span>Connect your Google account</span>
               </div>
               <p className="text-[11px] text-fg-3 leading-relaxed">
-                Click below to select your Google account. Your account credentials will be linked securely without affecting any of your current data.
+                Linking Google switches your authentication to Google Single Sign-On. Your old email & password will no longer work, keeping your account exclusively secured with Google.
               </p>
 
               {/* Rendered Google button or loading state */}
@@ -251,19 +273,90 @@ export function GoogleAccountCard({ user }) {
         )}
       </m.div>
 
-      {/* Disconnect Confirmation Modal */}
-      <ConfirmModal
-        isOpen={showDisconnectModal}
-        title="Disconnect Google Account"
-        message="Are you sure you want to disconnect your Google account? You will need to use your email and password to sign into BillBox in the future."
-        confirmText="Disconnect"
-        cancelText="Keep Connected"
-        isDestructive={true}
-        isLoading={disconnectMutation.isPending}
-        icon={Unlink}
-        onConfirm={handleDisconnectConfirm}
-        onClose={() => setShowDisconnectModal(false)}
-      />
+      {/* Switch to Password Modal */}
+      <Dialog
+        open={showDisconnectModal}
+        onOpenChange={(open) => {
+          if (!open && !disconnectMutation.isPending) {
+            setShowDisconnectModal(false);
+          }
+        }}
+      >
+        <DialogContent size="sm" showCloseButton={!disconnectMutation.isPending}>
+          <form onSubmit={handleDisconnectSubmit} className="space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="size-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-accent-tint border-accent-line text-accent">
+                <KeyRound className="size-5 text-accent" />
+              </div>
+
+              <div className="flex-1 min-w-0 pr-2">
+                <DialogTitle className="text-base font-semibold text-fg tracking-tight">
+                  Switch to Password Login
+                </DialogTitle>
+                <DialogDescription className="text-xs text-fg-2 leading-relaxed font-normal mt-1">
+                  To disconnect Google, set a new password. You will use this password and your email to sign in going forward.
+                </DialogDescription>
+              </div>
+            </div>
+
+            {passwordError && (
+              <div className="p-2.5 rounded-lg bg-bad-bg border border-bad-line text-bad-fg text-xs">
+                {passwordError}
+              </div>
+            )}
+
+            <div className="space-y-3 pt-1">
+              <div>
+                <label className="text-xs font-medium text-fg block mb-1">
+                  New Password (min 6 characters)
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  required
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-fg block mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  required
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:border-line-focus"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 pt-2 border-t border-line-subtle sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDisconnectModal(false)}
+                disabled={disconnectMutation.isPending}
+              >
+                Keep Google
+              </Button>
+
+              <Button
+                type="submit"
+                size="sm"
+                disabled={disconnectMutation.isPending}
+              >
+                {disconnectMutation.isPending ? 'Updating...' : 'Set Password & Disconnect'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

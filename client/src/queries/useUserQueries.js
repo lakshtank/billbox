@@ -70,8 +70,8 @@ export const useDisconnectGoogleMutation = () => {
   const { updateUser } = useAuth();
 
   return useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post('/auth/disconnect-google');
+    mutationFn: async ({ newPassword } = {}) => {
+      const { data } = await api.post('/auth/disconnect-google', { newPassword });
       return data.data;
     },
     onSuccess: (data) => {
