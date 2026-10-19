@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Logo from '@/components/brand/Logo';
 import useAuth from '@/hooks/useAuth';
-import ScrollDriven3DReceipt from '../components/landing/ScrollDriven3DReceipt';
+import Hero3DReceipt from '../components/landing/Hero3DReceipt';
 import LiveScannerDemo from '../components/landing/LiveScannerDemo';
 import WarrantyRadarDemo from '../components/landing/WarrantyRadarDemo';
 
@@ -62,9 +62,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-bg-app text-fg font-sans selection:bg-accent selection:text-white overflow-x-hidden relative">
-      {/* ── Fixed Full-Page Scroll-Driven 3D Receipt Canvas ─────────── */}
-      <ScrollDriven3DReceipt />
-
       {/* ── 1. Sticky Glass Top Navigation Bar ──────────────────────────── */}
       <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-surface/80 border-b border-line/70 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -130,14 +127,16 @@ export default function LandingPage() {
 
       {/* ── 2. Hero Section with 3D Canvas & Value Proposition ──────────── */}
       <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden">
-        {/* Subtle ambient lighting */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/8 rounded-full blur-[140px] pointer-events-none -z-10" />
+        {/* Subtle architectural dot grid & ambient spotlight */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.08),transparent_70%)] pointer-events-none -z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.25] pointer-events-none -z-10 [mask-image:radial-gradient(ellipse_70%_50%_at_50%_40%,#000_60%,transparent_100%)]" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Column: Headline & Call to Action */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-line text-xs font-medium text-fg-2 shadow-xs">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface/80 border border-line text-xs font-medium text-fg-2 shadow-xs backdrop-blur-md">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                 <ShieldCheck className="size-3.5 text-accent" />
                 <span>Intelligent Receipt Archiving &amp; Warranty Tracking</span>
               </div>
@@ -178,156 +177,95 @@ export default function LandingPage() {
 
               {/* Trust Pillars */}
               <div className="pt-6 grid grid-cols-3 gap-3 border-t border-line/60 max-w-lg mx-auto lg:mx-0 text-left">
-                <div>
+                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
                   <p className="text-lg sm:text-xl font-bold font-mono text-fg">&lt; 1.2s</p>
                   <p className="text-[11px] text-fg-3">Scan Latency</p>
                 </div>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold font-mono text-accent">30d &amp; 90d</p>
+                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
+                  <p className="text-lg sm:text-xl font-bold font-mono text-amber-600">30d &amp; 90d</p>
                   <p className="text-[11px] text-fg-3">Warranty Alerts</p>
                 </div>
-                <div>
-                  <p className="text-lg sm:text-xl font-bold font-mono text-fg">100%</p>
+                <div className="p-3 rounded-xl bg-surface/70 border border-line shadow-2xs">
+                  <p className="text-lg sm:text-xl font-bold font-mono text-emerald-600">100%</p>
                   <p className="text-[11px] text-fg-3">Cloud Synced</p>
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Hero Stage for 3D Receipt */}
-            <div className="lg:col-span-5 relative min-h-[360px] sm:min-h-[440px] flex flex-col items-center justify-end pb-6 pointer-events-none">
-              <div className="p-3.5 rounded-2xl bg-surface/75 border border-line-subtle shadow-xl backdrop-blur-md text-xs text-center space-y-1 max-w-[280px] pointer-events-auto">
-                <div className="flex items-center justify-center gap-1.5 text-fg font-semibold text-[11px]">
-                  <Receipt className="size-3.5 text-accent" />
-                  <span>Interactive 3D Walkthrough</span>
-                </div>
-                <p className="text-[11px] text-fg-3">
-                  Scroll down to watch the 3D receipt glide through the live scanner &amp; warranty radar
-                </p>
-              </div>
+            {/* Right Column: Hero Stage for Interactive 3D Physical Receipt */}
+            <div className="lg:col-span-5 flex items-center justify-center relative min-h-[480px]">
+              <Hero3DReceipt />
             </div>
           </div>
         </div>
       </section>
 
       {/* ── 3. Live Interactive Scanner Demo (No Auth Required) ────────── */}
-      <section ref={scannerRef} id="scanner" className="py-16 sm:py-24 bg-subtle/30 border-y border-line relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Left Column (lg:col-span-4): Dedicated Space for 3D Receipt */}
-            <div className="hidden lg:flex flex-col justify-between min-h-[520px] relative pointer-events-none pr-2">
-              <div className="space-y-2">
-                <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
-                  Stage 01 • Optical Ingestion
-                </Badge>
-                <h3 className="text-xl font-bold text-fg">
-                  Instant Digitization
-                </h3>
-                <p className="text-xs text-fg-3 leading-relaxed">
-                  As receipts pass through the scan field, store names, line items, taxes, and warranty durations are extracted into high-fidelity records.
-                </p>
-              </div>
-
-              {/* Bottom anchor card below the 3D receipt */}
-              <div className="p-4 rounded-xl bg-surface/80 border border-line-subtle shadow-sm backdrop-blur-md space-y-1.5 pointer-events-auto">
-                <div className="flex items-center gap-2 text-xs font-semibold text-fg">
-                  <Receipt className="size-3.5 text-accent" />
-                  <span>Optical Extraction Beam</span>
-                </div>
-                <p className="text-[11px] text-fg-3">
-                  Sub-second extraction for crumpled thermal paper and digital e-invoices.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Column (lg:col-span-8): Interactive Live Scanner */}
-            <div className="lg:col-span-8 space-y-4">
-              <div className="space-y-1.5 text-center lg:text-left">
-                <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono lg:hidden">
-                  Live Product Experience
-                </Badge>
-                <h2 className="text-2xl sm:text-3xl font-bold text-fg">
-                  Scan Any Receipt Right Now
-                </h2>
-                <p className="text-xs sm:text-sm text-fg-3">
-                  Click any verified sample bill or drag &amp; drop your own bill below. See instant OCR data extraction and warranty calculation without signing in.
-                </p>
-              </div>
-
-              <LiveScannerDemo />
-            </div>
+      <section ref={scannerRef} id="scanner" className="py-20 sm:py-28 bg-subtle/40 border-y border-line relative">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
+            <Badge variant="outline" className="text-xs text-accent border-accent/30 font-mono">
+              Live Interactive Demo
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight">
+              Test Real Document Processing Now
+            </h2>
+            <p className="text-sm text-fg-3 leading-relaxed">
+              Click any verified sample invoice or drag &amp; drop your own bill. Watch instant OCR parsing, warranty detection, and tax calculations with zero sign-in required.
+            </p>
           </div>
+
+          <LiveScannerDemo />
         </div>
       </section>
 
       {/* ── 4. Warranty Radar 30d / 90d Interactive Demo ──────────────── */}
-      <section id="warranty-radar" className="py-16 sm:py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Left Column (lg:col-span-4): Dedicated Space for 3D Receipt */}
-            <div className="hidden lg:flex flex-col justify-between min-h-[500px] relative pointer-events-none pr-2">
-              <div className="space-y-2">
+      <section id="warranty-radar" className="py-20 sm:py-28 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* Left Column (5 cols): Description & Milestones */}
+            <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
+              <div className="space-y-3">
                 <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono">
-                  Stage 02 • Expiry Protection
+                  Proactive Protection Radar
                 </Badge>
-                <h3 className="text-xl font-bold text-fg">
-                  Living Warranty Radar
-                </h3>
-                <p className="text-xs text-fg-3 leading-relaxed">
-                  BillBox continuously tracks warranty durations from your receipts, grouping them into 30-day and 90-day alert horizons.
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-fg tracking-tight leading-tight">
+                  Never Miss a Free Claim or Replacement
+                </h2>
+                <p className="text-sm text-fg-3 leading-relaxed">
+                  Most people forget their warranties until a week after they expire. BillBox automatically calculates expiry countdowns and triggers notifications before coverage lapses.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-surface/80 border border-line-subtle shadow-sm backdrop-blur-md space-y-1.5 pointer-events-auto">
-                <div className="flex items-center gap-2 text-xs font-semibold text-fg">
-                  <ShieldCheck className="size-3.5 text-amber-500" />
-                  <span>Automated Claim Tracking</span>
+              <div className="space-y-3 text-xs">
+                <div className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5">
+                  <div className="size-8 rounded-lg bg-warn-bg text-warn-fg flex items-center justify-center font-bold text-xs shrink-0">
+                    ≤30d
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-fg">Critical Milestone Alert</p>
+                    <p className="text-fg-3 text-[11px] mt-0.5 leading-relaxed">
+                      Instant alerts to schedule free manufacturer repairs, battery replacements, or exchange claims before coverage terminates.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-fg-3">
-                  Real-time alerts for battery replacements, free repairs, and store claim deadlines.
-                </p>
+
+                <div className="p-4 rounded-xl bg-surface border border-line shadow-xs flex items-start gap-3.5">
+                  <div className="size-8 rounded-lg bg-subtle text-fg-2 flex items-center justify-center font-bold text-xs shrink-0">
+                    90d
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-fg">Quarterly Review Horizon</p>
+                    <p className="text-fg-3 text-[11px] mt-0.5 leading-relaxed">
+                      Surfaces items entering their final quarter on your dashboard overview so you can plan service visits.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right Column (lg:col-span-8): Warranty Radar Description & Interactive Demo */}
-            <div className="lg:col-span-8 space-y-6">
-              <div className="space-y-2 text-center lg:text-left">
-                <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 font-mono lg:hidden">
-                  Proactive Protection
-                </Badge>
-                <h2 className="text-2xl sm:text-3xl font-bold text-fg leading-tight">
-                  Never Miss a Warranty Claim Again
-                </h2>
-                <p className="text-xs sm:text-sm text-fg-3 leading-relaxed">
-                  Most people forget about their warranties until an appliance breaks a week after expiration. BillBox keeps a living radar of every purchase:
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-surface border border-line flex items-start gap-3">
-                  <div className="size-6 rounded-md bg-warn-bg text-warn-fg flex items-center justify-center font-bold text-[10px] shrink-0">
-                    ≤30d
-                  </div>
-                  <div>
-                    <p className="font-semibold text-fg">Due Soon Critical Milestone</p>
-                    <p className="text-fg-3 text-[11px]">
-                      Trigger notifications and dashboard alerts to schedule free repairs or battery swaps before coverage lapses.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-surface border border-line flex items-start gap-3">
-                  <div className="size-6 rounded-md bg-subtle text-fg-2 flex items-center justify-center font-bold text-[10px] shrink-0">
-                    90d
-                  </div>
-                  <div>
-                    <p className="font-semibold text-fg">Quarterly Review Horizon</p>
-                    <p className="text-fg-3 text-[11px]">
-                      Surfaces items with 3 months remaining on your spending &amp; store overview.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
+            {/* Right Column (7 cols): Interactive Time Slider & Device Grid */}
+            <div className="lg:col-span-7">
               <WarrantyRadarDemo />
             </div>
           </div>

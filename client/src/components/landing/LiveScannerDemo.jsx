@@ -309,14 +309,13 @@ export default function LiveScannerDemo({ className = '' }) {
               key={p.id}
               type="button"
               onClick={() => handleSelectPreset(p)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 activePreset?.id === p.id
-                  ? 'bg-accent text-white shadow-xs'
+                  ? 'bg-accent text-white shadow-xs font-semibold'
                   : 'bg-surface hover:bg-hover border border-line-subtle text-fg-2'
               }`}
             >
-              <span>{p.icon}</span>
-              <span>{p.name.split(' ')[0]}</span>
+              <span>{p.name}</span>
             </button>
           ))}
         </div>
@@ -361,35 +360,73 @@ export default function LiveScannerDemo({ className = '' }) {
                 )}
               </AnimatePresence>
 
+              {/* Visual Bill Preview or Uploaded Image */}
               {previewImage ? (
-                <div className="relative w-full h-[180px] rounded-lg overflow-hidden border border-line">
+                <div className="relative w-full h-[220px] rounded-lg overflow-hidden border border-line bg-surface">
                   <img
                     src={previewImage}
                     alt="Uploaded receipt"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <span className="text-xs text-white bg-black/60 px-3 py-1.5 rounded-full font-medium">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <span className="text-xs text-white bg-black/70 px-3 py-1.5 rounded-full font-medium shadow-md">
                       Click to upload different bill
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2 pointer-events-none">
-                  <div className="size-12 rounded-xl bg-accent/10 border border-accent/20 mx-auto flex items-center justify-center text-accent">
-                    <UploadCloud className="size-6" />
+                /* Authentic Document Preview with AI Detection Bounding Boxes */
+                <div className="w-full rounded-xl bg-surface border border-line p-4 text-left font-mono relative overflow-hidden shadow-xs">
+                  {/* Subtle paper watermark */}
+                  <div className="text-[10px] text-fg-muted uppercase tracking-widest border-b border-line-subtle pb-2 flex items-center justify-between">
+                    <span>DOCUMENT PREVIEW</span>
+                    <span className="text-accent text-[9px] font-sans font-semibold px-1.5 py-0.5 rounded bg-accent/10">OCR ENGINE READY</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-fg">
-                      Drag & drop your own receipt here
-                    </p>
-                    <p className="text-[11px] text-fg-3 mt-0.5">
-                      Supports PNG, JPG, or PDF (up to 10MB)
-                    </p>
+
+                  <div className="mt-3 space-y-2.5">
+                    {/* Bounding Box 1: Store */}
+                    <div className="relative border border-dashed border-emerald-500/70 bg-emerald-500/5 p-2 rounded-md">
+                      <span className="absolute -top-2 left-2 text-[8px] font-sans font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded">
+                        MERCHANT
+                      </span>
+                      <p className="text-xs font-bold text-fg font-sans mt-0.5">
+                        {displayData.storeName}
+                      </p>
+                      <p className="text-[10px] text-fg-3">
+                        {displayData.invoiceNumber} • {displayData.purchaseDate}
+                      </p>
+                    </div>
+
+                    {/* Bounding Box 2: Detected Line Items */}
+                    <div className="relative border border-dashed border-sky-500/70 bg-sky-500/5 p-2 rounded-md">
+                      <span className="absolute -top-2 left-2 text-[8px] font-sans font-bold bg-sky-600 text-white px-1.5 py-0.2 rounded">
+                        ITEM &amp; WARRANTY
+                      </span>
+                      <p className="text-[11px] font-medium text-fg truncate mt-0.5">
+                        {displayData.items?.[0]?.productName || 'Detected Hardware'}
+                      </p>
+                      <p className="text-[10px] text-amber-600 font-sans font-semibold mt-0.5">
+                        🛡️ {displayData.items?.[0]?.warrantyPeriodMonths || 12}M Warranty Detected
+                      </p>
+                    </div>
+
+                    {/* Bounding Box 3: Total */}
+                    <div className="relative border border-dashed border-indigo-500/70 bg-indigo-500/5 p-2 rounded-md flex items-center justify-between">
+                      <span className="absolute -top-2 left-2 text-[8px] font-sans font-bold bg-indigo-600 text-white px-1.5 py-0.2 rounded">
+                        GRAND TOTAL
+                      </span>
+                      <span className="text-[10px] text-fg-3">PAYMENT VERIFIED</span>
+                      <span className="text-xs font-bold text-fg">
+                        ₹{Number(displayData.grandTotal || 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px] text-fg-3 border-line font-mono">
-                    Instant Document Processing
-                  </Badge>
+
+                  {/* Drag & drop overlay hint */}
+                  <div className="mt-3 pt-2 border-t border-line-subtle flex items-center justify-center gap-1.5 text-[11px] font-sans text-fg-3 hover:text-accent transition-colors">
+                    <UploadCloud className="size-3.5 text-accent" />
+                    <span>Click or drop file to test your own bill</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -401,7 +438,7 @@ export default function LiveScannerDemo({ className = '' }) {
               </span>
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5 text-accent" />
-                <span>Private & Ephemeral</span>
+                <span>Private &amp; Ephemeral</span>
               </span>
             </div>
           </div>
