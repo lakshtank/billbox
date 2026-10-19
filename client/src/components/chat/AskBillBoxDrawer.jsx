@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
 import * as m from 'motion/react-m';
 import {
   Sparkles,
   Send,
-  Bot,
-  User,
   X,
   Trash2,
   Copy,
@@ -17,9 +15,9 @@ import {
   TrendingUp,
   ArrowUpRight,
   Store,
-  RotateCcw,
-  AlertCircle,
-  HelpCircle,
+  Clock,
+  Shield,
+  CornerDownLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import useUiStore from '../../store/uiStore';
@@ -32,13 +30,12 @@ import { formatCurrency } from '../../utils/formatters';
  * Lightweight, safe parser for AI Markdown that transforms:
  * - [Store Name - Amount](receipt:ID) into clickable interactive badges
  * - [Product Name](product:ID) into clickable product badges
- * - Headers, bold text, lists, and tables
+ * - Headers, bold text, lists, and tables with rich styling
  */
 function MarkdownRenderer({ content, onNavigate }) {
   const renderedContent = useMemo(() => {
     if (!content) return null;
 
-    // Split text into paragraphs / lines
     const lines = content.split('\n');
     const elements = [];
     let inTable = false;
@@ -50,12 +47,12 @@ function MarkdownRenderer({ content, onNavigate }) {
       const dataRows = tableRows.slice(1).filter((r) => !r.every((c) => /^-+$/.test(c.trim())));
 
       elements.push(
-        <div key={`table-${key}`} className="my-3 overflow-x-auto rounded-lg border border-line bg-surface/80">
+        <div key={`table-${key}`} className="my-3 overflow-x-auto rounded-xl border border-line/80 bg-surface/90 shadow-2xs">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-line bg-subtle/60 text-fg-2 font-medium">
+              <tr className="border-b border-line bg-subtle/70 text-fg-2 font-medium">
                 {headers.map((h, i) => (
-                  <th key={i} className="p-2 whitespace-nowrap font-semibold">
+                  <th key={i} className="py-2.5 px-3 whitespace-nowrap font-semibold">
                     {parseInlineLinks(h.trim(), onNavigate)}
                   </th>
                 ))}
@@ -63,9 +60,9 @@ function MarkdownRenderer({ content, onNavigate }) {
             </thead>
             <tbody>
               {dataRows.map((row, rIdx) => (
-                <tr key={rIdx} className="border-b border-line/50 last:border-0 hover:bg-hover/40 transition-colors">
+                <tr key={rIdx} className="border-b border-line/40 last:border-0 hover:bg-hover/50 transition-colors">
                   {row.map((cell, cIdx) => (
-                    <td key={cIdx} className="p-2 whitespace-nowrap text-fg">
+                    <td key={cIdx} className="py-2 px-3 whitespace-nowrap text-fg">
                       {parseInlineLinks(cell.trim(), onNavigate)}
                     </td>
                   ))}
@@ -95,20 +92,26 @@ function MarkdownRenderer({ content, onNavigate }) {
         flushTable(idx);
       }
 
-      // Headers
+      // Headers (H3)
       if (trimmed.startsWith('### ')) {
         elements.push(
-          <h4 key={idx} className="text-sm font-semibold text-fg mt-3 mb-1">
-            {parseInlineLinks(trimmed.replace(/^###\s+/, ''), onNavigate)}
-          </h4>
+          <div key={idx} className="border-l-2 border-accent pl-2.5 my-2.5">
+            <h4 className="text-sm font-semibold text-fg tracking-tight">
+              {parseInlineLinks(trimmed.replace(/^###\s+/, ''), onNavigate)}
+            </h4>
+          </div>
         );
         return;
       }
+
+      // Headers (H2)
       if (trimmed.startsWith('## ')) {
         elements.push(
-          <h3 key={idx} className="text-base font-semibold text-fg mt-3.5 mb-1.5 pb-1 border-b border-line/60">
-            {parseInlineLinks(trimmed.replace(/^##\s+/, ''), onNavigate)}
-          </h3>
+          <div key={idx} className="border-l-2 border-accent pl-3 my-3">
+            <h3 className="text-base font-bold text-fg tracking-tight">
+              {parseInlineLinks(trimmed.replace(/^##\s+/, ''), onNavigate)}
+            </h3>
+          </div>
         );
         return;
       }
@@ -116,19 +119,28 @@ function MarkdownRenderer({ content, onNavigate }) {
       // Bullet points
       if (/^[-*•]\s+/.test(trimmed)) {
         elements.push(
-          <li key={idx} className="ml-4 list-disc text-xs sm:text-sm text-fg leading-relaxed my-0.5">
-            {parseInlineLinks(trimmed.replace(/^[-*•]\s+/, ''), onNavigate)}
-          </li>
+          <div key={idx} className="flex items-start gap-2 ml-1 my-1">
+            <span className="size-1.5 rounded-full bg-accent mt-2 shrink-0 shadow-xs" />
+            <span className="text-xs sm:text-sm text-fg leading-relaxed">
+              {parseInlineLinks(trimmed.replace(/^[-*•]\s+/, ''), onNavigate)}
+            </span>
+          </div>
         );
         return;
       }
 
       // Numbered points
       if (/^\d+\.\s+/.test(trimmed)) {
+        const num = trimmed.match(/^(\d+)\./)[1];
         elements.push(
-          <li key={idx} className="ml-4 list-decimal text-xs sm:text-sm text-fg leading-relaxed my-0.5">
-            {parseInlineLinks(trimmed.replace(/^\d+\.\s+/, ''), onNavigate)}
-          </li>
+          <div key={idx} className="flex items-start gap-2 ml-1 my-1">
+            <span className="text-[11px] font-mono font-bold text-accent mt-0.5 shrink-0 bg-accent/10 px-1.5 py-0.2 rounded">
+              {num}
+            </span>
+            <span className="text-xs sm:text-sm text-fg leading-relaxed">
+              {parseInlineLinks(trimmed.replace(/^\d+\.\s+/, ''), onNavigate)}
+            </span>
+          </div>
         );
         return;
       }
@@ -159,7 +171,6 @@ function MarkdownRenderer({ content, onNavigate }) {
  * Parses bold `**text**` and custom links `[label](receipt:id)` or `[label](product:id)`
  */
 function parseInlineLinks(text, onNavigate) {
-  // Regex to match markdown links: [Label](type:id)
   const regex = /\[(.*?)\]\((receipt|product):([a-f0-9]{24})\)/g;
   const parts = [];
   let lastIndex = 0;
@@ -178,16 +189,16 @@ function parseInlineLinks(text, onNavigate) {
         key={`link-${type}-${id}-${startIndex}`}
         type="button"
         onClick={() => onNavigate(type, id)}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 mx-0.5 text-[11px] font-medium rounded-md bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 transition-all cursor-pointer align-baseline"
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 mx-1 text-[11px] font-semibold rounded-lg bg-accent/10 hover:bg-accent/20 text-accent border border-accent/25 hover:border-accent/40 transition-all shadow-2xs hover:shadow-xs cursor-pointer align-baseline"
         title={`View ${type === 'receipt' ? 'Receipt' : 'Product'}`}
       >
         {type === 'receipt' ? (
-          <ReceiptText className="w-3 h-3 shrink-0" />
+          <ReceiptText className="size-3 shrink-0" />
         ) : (
-          <Package className="w-3 h-3 shrink-0" />
+          <Package className="size-3 shrink-0" />
         )}
-        <span className="font-semibold underline decoration-accent/40">{label}</span>
-        <ArrowUpRight className="w-2.5 h-2.5 opacity-70" />
+        <span className="underline decoration-accent/40 hover:decoration-accent">{label}</span>
+        <ArrowUpRight className="size-2.5 opacity-70" />
       </button>
     );
 
@@ -217,6 +228,8 @@ function parseBoldText(text) {
 
 /**
  * Main AskBillBoxDrawer Component
+ * Professional, high-end AI assistant with ambient gradient canvas,
+ * grounded vault intelligence, interactive citations, and follow-up suggestions.
  */
 export function AskBillBoxDrawer() {
   const { isAskBillBoxOpen, closeAskBillBox } = useUiStore();
@@ -266,7 +279,7 @@ export function AskBillBoxDrawer() {
     }
   }, [messages, askMutation.isPending, isAskBillBoxOpen]);
 
-  // Handle escape key
+  // Handle keyboard shortcuts (Esc, Cmd+J)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isAskBillBoxOpen) {
@@ -358,6 +371,7 @@ export function AskBillBoxDrawer() {
   };
 
   const handleCitationNavigate = (type, id) => {
+    closeAskBillBox();
     if (type === 'receipt') {
       navigate(`/receipts/${id}`);
     } else if (type === 'product') {
@@ -369,39 +383,64 @@ export function AskBillBoxDrawer() {
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden font-sans">
-      {/* Backdrop */}
+      {/* 1. Backdrop with deep blur and smooth fade */}
       <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.25 }}
         onClick={closeAskBillBox}
-        className="fixed inset-0 bg-scrim/50 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
       />
 
-      {/* Slide-over Drawer Panel */}
+      {/* 2. Slide-over Drawer Panel */}
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10">
         <m.div
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
-          transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-          className="w-screen max-w-full sm:max-w-xl flex flex-col bg-bg-app border-l border-line shadow-2xl overflow-hidden"
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          className="relative w-screen max-w-full sm:max-w-xl flex flex-col bg-gradient-to-b from-surface via-subtle/25 to-surface dark:from-card dark:via-bg-app/90 dark:to-card backdrop-blur-2xl border-l border-line/90 shadow-2xl ring-1 ring-black/5 dark:ring-white/5 overflow-hidden"
         >
-          {/* 1. Header Bar */}
-          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5 border-b border-line bg-surface/90 backdrop-blur-md shrink-0">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="size-8 rounded-lg bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center shadow-xs shrink-0">
-                <Sparkles className="size-4" />
+          {/* Ambient Lighting & Canvas Texture */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+            {/* Top-Right Glowing Orb */}
+            <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-accent/15 dark:bg-accent/20 blur-3xl" />
+            {/* Bottom-Left Ambient Glow */}
+            <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-teal-500/10 dark:bg-teal-500/15 blur-3xl" />
+            {/* Micro-dot pattern overlay for high-tech aesthetic */}
+            <div
+              className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+              style={{
+                backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+              }}
+            />
+          </div>
+
+          {/* ── Header Bar ── */}
+          <div className="relative flex items-center justify-between px-5 py-3.5 border-b border-line/70 bg-surface/80 dark:bg-card/80 backdrop-blur-xl shrink-0 z-10">
+            {/* Subtle Gradient Hairline at bottom of header */}
+            <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-accent/35 to-transparent pointer-events-none" />
+
+            <div className="flex items-center gap-3 min-w-0">
+              {/* Glowing Icon Badge with Active Ping */}
+              <div className="relative size-9 rounded-xl bg-gradient-to-tr from-accent via-accent to-teal-400 text-white flex items-center justify-center shadow-md shadow-accent/25 shrink-0">
+                <Sparkles className="size-4.5" />
+                <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-surface animate-pulse" />
               </div>
+
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-fg tracking-tight truncate">Ask BillBox</h2>
-                  <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full bg-accent/10 text-accent border border-accent/20">
+                  <h2 className="text-sm font-bold text-fg tracking-tight">Ask BillBox</h2>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20">
+                    <span className="size-1.5 rounded-full bg-accent animate-pulse" />
                     Gemini 3.8 Flash
                   </span>
                 </div>
-                <p className="text-[11px] text-fg-3 truncate">Personal Vault & Warranty Intelligence</p>
+                <p className="text-[11px] text-fg-3 truncate">
+                  Personal Vault & Warranty Intelligence
+                </p>
               </div>
             </div>
 
@@ -410,7 +449,7 @@ export function AskBillBoxDrawer() {
                 <button
                   type="button"
                   onClick={handleClearChat}
-                  className="p-1.5 rounded-md text-fg-3 hover:text-bad hover:bg-hover transition-colors cursor-pointer"
+                  className="p-2 rounded-lg text-fg-3 hover:text-bad hover:bg-bad-bg/50 transition-colors cursor-pointer"
                   title="Clear conversation"
                   aria-label="Clear conversation"
                 >
@@ -420,7 +459,7 @@ export function AskBillBoxDrawer() {
               <button
                 type="button"
                 onClick={closeAskBillBox}
-                className="p-1.5 rounded-md text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
+                className="p-2 rounded-lg text-fg-3 hover:text-fg hover:bg-hover transition-colors cursor-pointer"
                 title="Close (Esc)"
                 aria-label="Close"
               >
@@ -429,44 +468,63 @@ export function AskBillBoxDrawer() {
             </div>
           </div>
 
-          {/* 2. Messages Scroll Area */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">
+          {/* ── Messages Scroll Area ── */}
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 space-y-4">
             {messages.length === 0 ? (
-              // Empty State / Welcome Screen
-              <div className="flex flex-col items-center justify-center min-h-[380px] text-center space-y-5 my-auto py-8">
-                <div className="size-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent shadow-xs">
-                  <Sparkles className="size-7" />
+              // Empty State / Welcome Canvas
+              <div className="flex flex-col items-center justify-center min-h-[420px] text-center space-y-6 my-auto py-8">
+                {/* Glowing AI Orb */}
+                <div className="relative size-16 rounded-3xl bg-gradient-to-tr from-accent/20 via-accent/10 to-transparent border border-accent/30 flex items-center justify-center text-accent shadow-lg shadow-accent/15 group">
+                  <Sparkles className="size-8 text-accent animate-pulse" />
+                  <div className="absolute -inset-2 rounded-3xl bg-accent/10 blur-md pointer-events-none -z-10" />
                 </div>
-                <div className="space-y-1.5 max-w-sm">
-                  <h3 className="text-base font-semibold text-fg">
-                    Hi {user?.name ? user.name.split(' ')[0] : 'there'}!
+
+                <div className="space-y-2 max-w-sm">
+                  <h3 className="text-lg font-bold text-fg tracking-tight">
+                    Hi, {user?.name ? user.name.split(' ')[0] : 'there'}!
                   </h3>
                   <p className="text-xs text-fg-2 leading-relaxed">
                     Ask me anything about your scanned receipts, item warranties, spending habits, or store records.
                   </p>
                 </div>
 
-                {/* Quick-Prompt Suggestions */}
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-left">
+                {/* Quick-Prompt Suggestions (Frosted Cards) */}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 text-left">
                   {(starterSuggestions && starterSuggestions.length > 0
                     ? starterSuggestions
                     : [
-                        'Which warranties are expiring soon?',
+                        'Which of my items are under active warranty?',
                         'What is my total spending this month?',
-                        'Which store do I spend the most at?',
-                        'Show my 5 biggest purchases',
+                        'Which store do I spend the most money at?',
+                        'Show my 5 most expensive purchases',
                       ]
-                  ).map((promptText, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSendMessage(promptText)}
-                      className="p-3 rounded-xl border border-line bg-surface hover:bg-hover hover:border-accent/30 text-xs font-medium text-fg flex items-start gap-2.5 transition-all group cursor-pointer shadow-2xs"
-                    >
-                      <Sparkles className="size-3.5 text-accent shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                      <span className="line-clamp-2">{promptText}</span>
-                    </button>
-                  ))}
+                  ).map((promptText, idx) => {
+                    const IconComponent =
+                      idx === 0
+                        ? ShieldCheck
+                        : idx === 1
+                        ? TrendingUp
+                        : idx === 2
+                        ? Store
+                        : ReceiptText;
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSendMessage(promptText)}
+                        className="relative p-3.5 rounded-xl border border-line/75 bg-surface/80 dark:bg-subtle/30 backdrop-blur-sm hover:bg-surface dark:hover:bg-subtle/70 hover:border-accent/45 hover:shadow-md hover:shadow-accent/10 hover:-translate-y-0.5 text-xs font-medium text-fg flex items-start justify-between gap-3 transition-all duration-200 group cursor-pointer text-left shadow-2xs"
+                      >
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className="size-6 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
+                            <IconComponent className="size-3.5" />
+                          </div>
+                          <span className="line-clamp-2 leading-snug">{promptText}</span>
+                        </div>
+                        <ArrowUpRight className="size-3.5 text-fg-3 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 mt-0.5" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ) : (
@@ -481,18 +539,32 @@ export function AskBillBoxDrawer() {
                       isUser ? 'items-end' : 'items-start'
                     )}
                   >
+                    {/* Message Bubble Container */}
                     <div
                       className={cn(
-                        'max-w-[88%] sm:max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm shadow-2xs',
+                        'max-w-[88%] sm:max-w-[85%] text-xs sm:text-sm',
                         isUser
-                          ? 'bg-accent text-white rounded-br-xs'
-                          : 'bg-surface border border-line text-fg rounded-bl-xs'
+                          ? 'rounded-2xl rounded-tr-xs bg-gradient-to-br from-accent via-accent to-accent/90 text-white shadow-md shadow-accent/20 px-4 py-3'
+                          : 'relative rounded-2xl rounded-tl-xs bg-surface/90 dark:bg-card/90 backdrop-blur-xl border border-line/80 shadow-xs p-4.5 text-fg space-y-3'
                       )}
                     >
                       {isUser ? (
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                       ) : (
-                        <div className="space-y-2.5">
+                        <div className="space-y-3">
+                          {/* Assistant Meta Header */}
+                          <div className="flex items-center justify-between pb-2 border-b border-line/40 text-[11px] text-fg-3">
+                            <div className="flex items-center gap-1.5 font-semibold text-accent">
+                              <Sparkles className="size-3" />
+                              <span>BillBox Assistant</span>
+                            </div>
+                            <span className="flex items-center gap-1 text-[10px]">
+                              <Shield className="size-2.5 text-emerald-500" />
+                              Vault Grounded
+                            </span>
+                          </div>
+
+                          {/* Markdown Parsed Content */}
                           <MarkdownRenderer
                             content={message.content}
                             onNavigate={handleCitationNavigate}
@@ -503,7 +575,7 @@ export function AskBillBoxDrawer() {
                             <>
                               {message.references.products?.length > 0 && (
                                 <div className="pt-2 border-t border-line/60 space-y-1.5">
-                                  <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
+                                  <span className="text-[10px] font-bold text-fg-3 uppercase tracking-wider block">
                                     Referenced Products
                                   </span>
                                   <div className="grid grid-cols-1 gap-1.5">
@@ -512,19 +584,19 @@ export function AskBillBoxDrawer() {
                                         key={p.id}
                                         type="button"
                                         onClick={() => handleCitationNavigate('product', p.id)}
-                                        className="p-2 rounded-lg border border-line bg-subtle hover:bg-hover/80 text-left flex items-center justify-between transition-colors cursor-pointer"
+                                        className="p-2.5 rounded-xl border border-line/70 bg-subtle/50 hover:bg-hover text-left flex items-center justify-between transition-colors cursor-pointer group"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
-                                          <Package className="size-3.5 text-accent shrink-0" />
+                                          <Package className="size-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
                                           <div className="min-w-0">
                                             <p className="text-xs font-semibold text-fg truncate">{p.productName}</p>
-                                            <p className="text-[10px] text-fg-3">{p.brand}</p>
+                                            <p className="text-[10px] text-fg-3">{p.brand || 'Product'}</p>
                                           </div>
                                         </div>
                                         {p.daysRemaining != null && (
                                           <span
                                             className={cn(
-                                              'text-[10px] font-mono px-1.5 py-0.5 rounded-full font-semibold shrink-0 ml-2',
+                                              'text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold shrink-0 ml-2',
                                               p.daysRemaining <= 0
                                                 ? 'bg-bad-bg text-bad-fg'
                                                 : p.daysRemaining <= 30
@@ -545,7 +617,7 @@ export function AskBillBoxDrawer() {
 
                               {message.references.receipts?.length > 0 && (
                                 <div className="pt-2 border-t border-line/60 space-y-1.5">
-                                  <span className="text-[11px] font-semibold text-fg-3 uppercase tracking-wider block">
+                                  <span className="text-[10px] font-bold text-fg-3 uppercase tracking-wider block">
                                     Referenced Receipts
                                   </span>
                                   <div className="grid grid-cols-1 gap-1.5">
@@ -554,10 +626,10 @@ export function AskBillBoxDrawer() {
                                         key={r.id}
                                         type="button"
                                         onClick={() => handleCitationNavigate('receipt', r.id)}
-                                        className="p-2 rounded-lg border border-line bg-subtle hover:bg-hover/80 text-left flex items-center justify-between transition-colors cursor-pointer"
+                                        className="p-2.5 rounded-xl border border-line/70 bg-subtle/50 hover:bg-hover text-left flex items-center justify-between transition-colors cursor-pointer group"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
-                                          <Store className="size-3.5 text-accent shrink-0" />
+                                          <Store className="size-3.5 text-accent shrink-0 group-hover:scale-110 transition-transform" />
                                           <div className="min-w-0">
                                             <p className="text-xs font-semibold text-fg truncate">{r.storeName}</p>
                                             <p className="text-[10px] text-fg-3">
@@ -576,17 +648,22 @@ export function AskBillBoxDrawer() {
                             </>
                           )}
 
-                          {/* Copy Action */}
-                          <div className="flex justify-end pt-1">
+                          {/* Message Actions */}
+                          <div className="flex items-center justify-between pt-1 border-t border-line/40 text-[11px] text-fg-3">
+                            <span className="text-[10px] text-fg-3 flex items-center gap-1">
+                              <Clock className="size-2.5" />
+                              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+
                             <button
                               type="button"
                               onClick={() => handleCopyMessage(message.content, idx)}
-                              className="text-[11px] text-fg-3 hover:text-fg flex items-center gap-1 transition-colors cursor-pointer px-1 py-0.5 rounded"
+                              className="text-fg-3 hover:text-fg flex items-center gap-1 transition-colors cursor-pointer px-2 py-0.5 rounded hover:bg-hover"
                             >
                               {copiedIndex === idx ? (
                                 <>
                                   <Check className="size-3 text-ok" />
-                                  <span className="text-ok">Copied</span>
+                                  <span className="text-ok font-medium">Copied</span>
                                 </>
                               ) : (
                                 <>
@@ -608,9 +685,10 @@ export function AskBillBoxDrawer() {
                             key={sIdx}
                             type="button"
                             onClick={() => handleSendMessage(sug)}
-                            className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-surface hover:bg-hover border border-line text-fg-2 hover:text-accent transition-colors cursor-pointer text-left shadow-2xs"
+                            className="px-3 py-1.5 rounded-full text-[11px] font-medium bg-surface/80 dark:bg-card/80 hover:bg-accent/10 border border-line/80 hover:border-accent/40 text-fg-2 hover:text-accent transition-all duration-150 cursor-pointer text-left shadow-2xs hover:shadow-xs flex items-center gap-1.5"
                           >
-                            + {sug}
+                            <span className="text-accent font-bold">+</span>
+                            <span>{sug}</span>
                           </button>
                         ))}
                       </div>
@@ -623,13 +701,13 @@ export function AskBillBoxDrawer() {
             {/* Thinking / Loading Indicator */}
             {askMutation.isPending && (
               <div className="flex items-start gap-2.5">
-                <div className="size-6 rounded-md bg-accent/10 border border-accent/20 flex items-center justify-center text-accent shrink-0">
-                  <Sparkles className="size-3.5 animate-spin" />
+                <div className="size-7 rounded-lg bg-gradient-to-tr from-accent to-teal-400 text-white flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+                  <Sparkles className="size-3.5" />
                 </div>
-                <div className="rounded-2xl rounded-bl-xs bg-surface border border-line px-4 py-2.5 shadow-2xs flex items-center gap-2 text-xs text-fg-2 font-medium">
-                  <span className="animate-pulse">Analyzing your vault & warranties...</span>
+                <div className="rounded-2xl rounded-tl-xs bg-surface/90 dark:bg-card/90 border border-line/80 px-4 py-3 shadow-xs flex items-center gap-2.5 text-xs text-fg-2 font-medium">
+                  <span className="animate-pulse">Consulting your receipts & warranties...</span>
                   <span className="flex items-center gap-1">
-                    <span className="size-1 rounded-full bg-accent animate-ping" />
+                    <span className="size-1.5 rounded-full bg-accent animate-ping" />
                   </span>
                 </div>
               </div>
@@ -638,9 +716,12 @@ export function AskBillBoxDrawer() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* 3. Input Footer */}
-          <div className="p-3 sm:p-4 border-t border-line bg-surface/90 backdrop-blur-md shrink-0">
-            <div className="relative flex items-end gap-2 bg-bg-app border border-line focus-within:border-accent rounded-xl p-2 transition-all shadow-2xs">
+          {/* ── Input Composer Dock ── */}
+          <div className="relative p-4 border-t border-line/70 bg-surface/85 dark:bg-card/85 backdrop-blur-2xl shrink-0 z-10">
+            {/* Top Hairline Accent */}
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-line/80 to-transparent pointer-events-none" />
+
+            <div className="relative flex items-end gap-2 bg-subtle/50 dark:bg-subtle/30 border border-line/80 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15 rounded-2xl p-2.5 transition-all shadow-inner">
               <textarea
                 ref={textareaRef}
                 value={inputMessage}
@@ -648,7 +729,7 @@ export function AskBillBoxDrawer() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about spending, stores, warranties... (Enter to send)"
                 rows={1}
-                className="w-full max-h-32 bg-transparent text-xs sm:text-sm text-fg placeholder:text-fg-3 focus:outline-none resize-none py-1 px-1.5"
+                className="w-full max-h-32 bg-transparent text-xs sm:text-sm text-fg placeholder:text-fg-3 focus:outline-none resize-none py-1 px-1.5 leading-relaxed"
                 style={{ minHeight: '38px' }}
               />
               <button
@@ -656,10 +737,10 @@ export function AskBillBoxDrawer() {
                 onClick={() => handleSendMessage()}
                 disabled={!inputMessage.trim() || askMutation.isPending}
                 className={cn(
-                  'size-9 rounded-lg flex items-center justify-center shrink-0 transition-all cursor-pointer',
+                  'size-9 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer',
                   inputMessage.trim() && !askMutation.isPending
-                    ? 'bg-accent hover:bg-accent-hover text-white shadow-xs'
-                    : 'bg-subtle text-fg-3 cursor-not-allowed opacity-50'
+                    ? 'bg-gradient-to-tr from-accent to-accent-hover text-white shadow-md shadow-accent/25 hover:scale-105 active:scale-95'
+                    : 'bg-subtle text-fg-3 cursor-not-allowed opacity-40'
                 )}
                 title="Send query"
                 aria-label="Send query"
@@ -667,9 +748,13 @@ export function AskBillBoxDrawer() {
                 <Send className="size-4" />
               </button>
             </div>
-            <div className="flex items-center justify-between text-[10px] text-fg-3 px-1 pt-1.5">
-              <span>Press Enter to send · Shift+Enter for new line</span>
-              <kbd className="hidden sm:inline font-mono text-[9px] px-1 py-0.2 bg-subtle border border-line rounded">
+
+            <div className="flex items-center justify-between text-[10px] text-fg-3 px-1 pt-2">
+              <span className="flex items-center gap-1">
+                <CornerDownLeft className="size-2.5 opacity-70" />
+                Press Enter to send · Shift+Enter for new line
+              </span>
+              <kbd className="hidden sm:inline-flex items-center gap-1 font-mono text-[9px] px-1.5 py-0.5 bg-subtle border border-line/80 rounded">
                 Esc to close
               </kbd>
             </div>
