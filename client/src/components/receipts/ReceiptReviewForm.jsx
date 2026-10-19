@@ -72,11 +72,10 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
     : [];
   const categoryOptions = Array.from(new Set([...DEFAULT_CATEGORIES, ...userCatNames]));
 
-  // Mobile tab state: 'document' | 'details' (order: Document = 0, Details = 1)
   const isMobile = useMediaQuery('(max-width: 1023px)');
   const [mobileTab, setMobileTab] = useState('details');
   const [tabDirection, setTabDirection] = useState(0);
-  const [showDocModal, setShowDocModal] = useState(false);
+
 
   const handleMobileTabChange = (nextTab) => {
     if (nextTab === mobileTab) return;
@@ -442,36 +441,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
 
   return (
     <div className="font-sans">
-      {/* Mobile Document Quick Banner: Direct access to document without flipping away from form */}
-      {(documentSrc || fileUrl || fileData) && (
-        <div className="lg:hidden p-3 mb-3 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-8 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center text-accent shrink-0">
-              <FileText className="size-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-fg truncate">
-                {storeName || 'Scanned Bill'} Document
-              </div>
-              <div className="text-[11px] text-fg-3">
-                {fileType === 'pdf' ? 'PDF Invoice' : 'Receipt Image'} · Attached
-              </div>
-            </div>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setShowDocModal(true)}
-            className="h-7 text-xs gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer shrink-0"
-          >
-            <Eye className="size-3.5" />
-            <span>View Pop-up</span>
-          </Button>
-        </div>
-      )}
-
-      {/* Mobile Tab Toggle with Step 13.7 gliding pill and Step 16.3 Document | Details order */}
+      {/* Mobile Tab Toggle with gliding pill and Document | Details order */}
       <div className="flex lg:hidden items-center justify-between border-b border-line pb-3 mb-4">
         <div className="inline-flex items-center p-1 bg-subtle rounded-[8px] border border-line-subtle gap-1 text-xs relative">
           <button
@@ -513,49 +483,7 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
             <span className="relative">Details</span>
           </button>
         </div>
-
-        {(documentSrc || fileUrl || fileData) && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setShowDocModal(true)}
-            className="h-8 text-xs gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer shrink-0"
-          >
-            <Eye className="size-3.5" />
-            <span>View Pop-up</span>
-          </Button>
-        )}
       </div>
-
-      {/* Mobile Document Quick Banner (Visible when on details tab so user never loses sight of the original receipt) */}
-      {(documentSrc || fileUrl || fileData) && mobileTab === 'details' && (
-        <div className="lg:hidden p-3 mb-4 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-8 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center text-accent shrink-0">
-              <FileText className="size-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-fg truncate">
-                {storeName ? `${storeName} Receipt` : 'Original Receipt Document'}
-              </div>
-              <div className="text-[11px] text-fg-3">
-                {fileType === 'pdf' ? 'PDF Invoice' : 'Receipt Image'} · Attached
-              </div>
-            </div>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setShowDocModal(true)}
-            className="h-7.5 px-2.5 text-xs gap-1 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer shrink-0"
-          >
-            <Eye className="size-3" />
-            <span>Open Pop-up</span>
-          </Button>
-        </div>
-      )}
 
       {/* Two-Pane Review Container: Natural page flow with sticky document viewer on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -1118,40 +1046,6 @@ export function ReceiptReviewForm({ ocrData, handwritingDetected = false, onCanc
         </m.div>
       </div>
 
-      {/* Pop-up Document Viewer Modal on Mobile (Zero Scroll, Pop-up Type) */}
-      {showDocModal && (documentSrc || fileUrl || fileData) && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 select-none font-sans">
-          <div className="relative w-full max-w-4xl h-[90vh] bg-surface rounded-2xl border border-line shadow-2xl overflow-hidden flex flex-col">
-            <div className="h-12 px-4 border-b border-line flex items-center justify-between bg-surface/90 shrink-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="size-4 text-accent shrink-0" />
-                <span className="text-xs font-semibold text-fg truncate">
-                  {storeName || 'Receipt'} Document Preview
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowDocModal(false)}
-                className="size-8 rounded-full bg-hover flex items-center justify-center text-fg-3 hover:text-fg transition-colors cursor-pointer shrink-0"
-                aria-label="Close document pop-up"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 relative">
-              <DocumentViewer
-                url={documentSrc}
-                fileUrl={fileUrl}
-                fileData={fileData}
-                mimeType={mimeType}
-                type={fileType}
-                filename={`${storeName || 'Receipt'} Document`}
-                className="h-full w-full shadow-none border-0 rounded-none"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

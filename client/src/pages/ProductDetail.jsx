@@ -582,35 +582,6 @@ export function ProductDetail() {
         />
       )}
 
-      {/* Mobile Document Quick Banner: Direct access to source bill document on mobile */}
-      {hasDocument && (
-        <div className="lg:hidden p-3.5 rounded-xl bg-gradient-to-r from-accent/[0.08] via-surface to-accent/[0.04] border border-accent/20 flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-9 rounded-lg bg-accent/15 border border-accent/25 flex items-center justify-center text-accent shrink-0">
-              <FileText className="size-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-fg truncate">
-                Source Receipt Document
-              </div>
-              <div className="text-[11px] text-fg-3">
-                {isPdf ? 'PDF Invoice' : 'Receipt Image'} · {storeName}
-              </div>
-            </div>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setShowDocModal(true)}
-            className="h-8 text-xs gap-1.5 border-accent/30 text-accent hover:bg-accent/10 font-semibold cursor-pointer shrink-0"
-          >
-            <Eye className="size-3.5" />
-            <span>View Pop-up</span>
-          </Button>
-        </div>
-      )}
-
       {/* 3. Detail Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
         {/* Card 1: Purchase & Cost Information */}
