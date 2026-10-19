@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Logo from '@/components/brand/Logo';
 import useAuth from '@/hooks/useAuth';
-import Hero3DCanvas from '../components/landing/Hero3DCanvas';
+import ScrollDriven3DReceipt from '../components/landing/ScrollDriven3DReceipt';
 import LiveScannerDemo from '../components/landing/LiveScannerDemo';
 import WarrantyRadarDemo from '../components/landing/WarrantyRadarDemo';
 
@@ -61,15 +61,18 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg-app text-fg font-sans selection:bg-accent selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-bg-app text-fg font-sans selection:bg-accent selection:text-white overflow-x-hidden relative">
+      {/* ── Fixed Full-Page Scroll-Driven 3D Receipt Canvas ─────────── */}
+      <ScrollDriven3DReceipt />
+
       {/* ── 1. Sticky Glass Top Navigation Bar ──────────────────────────── */}
       <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-surface/80 border-b border-line/70 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2.5">
-              <Logo size="md" showWordmark={true} />
-            </Link>
+            <div className="flex items-center gap-2.5">
+              <Logo size="md" showWordmark={true} to="/" />
+            </div>
             <Badge variant="outline" className="hidden sm:inline-flex text-[10px] text-accent border-accent/30 font-mono">
               v2.0 Production
             </Badge>
@@ -196,9 +199,17 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right Column: Three.js 3D Interactive Mesh Canvas */}
-            <div className="lg:col-span-5 relative flex items-center justify-center">
-              <Hero3DCanvas />
+            {/* Right Column: Hero Stage for 3D Receipt */}
+            <div className="lg:col-span-5 relative min-h-[360px] sm:min-h-[440px] flex flex-col items-center justify-end pb-6 pointer-events-none">
+              <div className="p-3.5 rounded-2xl bg-surface/75 border border-line-subtle shadow-xl backdrop-blur-md text-xs text-center space-y-1 max-w-[280px] pointer-events-auto">
+                <div className="flex items-center justify-center gap-1.5 text-accent font-semibold text-[11px]">
+                  <Sparkles className="size-3.5 animate-spin-slow" />
+                  <span>Scroll-Driven 3D Journey</span>
+                </div>
+                <p className="text-[11px] text-fg-3">
+                  Scroll down to watch the 3D receipt glide through the live scanner &amp; warranty radar
+                </p>
+              </div>
             </div>
           </div>
         </div>
